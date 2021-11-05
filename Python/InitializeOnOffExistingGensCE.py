@@ -14,12 +14,12 @@ import copy, pandas as pd
 #Inputs: gen fleet, hours + hourly wind & solar gen + demand for CE model (1d list,
 #slimmed to CE hours), dict mapping time block to hours in that time block
 #Outputs: dict mapping block to dict mapping gen symbol to on/off in first hour of dict.
-def initializeOnOffExistingGens(genFleetForCE,hrsByBlock,netDemand):
+def initializeOnOffExistingGens(genFleetForCE,hoursForCE,netDemand):
     sortedSymbols,sortedCapacs,reGenSymbols = getGenStack(genFleetForCE)
     blockToOnOff = dict()
-    for bl in hrsByBlock:
-        firstHr = hrsByBlock[bl][0]-1 #hrsByBlock is 1-8760 basis
-        hrNetDemand = netDemand[firstHr]
+    for bl in hoursForCE.unique():
+        firstHr = hoursForCE.loc[hoursForCE == bl].index[0]
+        hrNetDemand = netDemand.loc[firstHr].values[0]
         genToOnOff = getGenOnOffForHour(sortedSymbols,sortedCapacs,reGenSymbols,hrNetDemand)
         blockToOnOff[bl] = genToOnOff
     return blockToOnOff
@@ -36,9 +36,9 @@ def getGenStack(genFleetForCE):
 
 #For given net demand value in hour, determine which gens should be on by 
 #dispatching them using gen stack.
-def getGenOnOffForHour(sortedSymbols,sortedCapacs,reGenSymbols,hourNetDemand):
+def getGenOnOffForHour(sortedSymbols,sortedCapacs,reGenSymbols,hrNetDemand):
     cumulativeCap = sortedCapacs.cumsum()
-    online = cumulativeCap<hourNetDemand
+    online = cumulativeCap<hrNetDemand
     if False in online.values: online[online[online==False].index[0]] = True #set marginal generator as online
     onGens = sortedSymbols[online[online==True].index]
     genToOnOff = {**pd.Series(1,index=onGens).to_dict(),**pd.Series(1,index=reGenSymbols).to_dict()}

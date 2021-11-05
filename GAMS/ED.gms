@@ -13,7 +13,6 @@ Options
          ;
 
 $include EDAndUCSharedFeatures.gms
-$include StorageSetsParamsVariables.gms
 $include StorageEDModule.gms
 
 Parameters

@@ -10,9 +10,8 @@ def extract0dVarResultsFromGAMSModel(gamsModel,varName):
     return varValue
 
 def extract1dVarResultsFromGAMSModel(modelResults,varName):
-    varResults = []
-    for rec in modelResults.out_db[varName]:
-        varResults.append((rec.key(0),rec.level))
+    varResults = dict()
+    for rec in modelResults.out_db[varName]: varResults[rec.key(0)] = rec.level
     return varResults
 
 def extract2dVarResultsIntoDict(modelResults,varName):

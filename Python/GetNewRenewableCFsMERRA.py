@@ -8,27 +8,32 @@ from netCDF4 import Dataset
 from GetRenewableCFsMERRA import *
 
 #Output: dfs of wind and solar generation (8760 dt rows, arbitrary cols)
-def getNewRenewableCFs(genFleet,tgtTz,reYear,reDownFactor): 
+def getNewRenewableCFs(genFleet,tgtTz,reYear,currYear,reDownFactor,interconn):
+    if currYear > 2050: currYear = 2050
     #Import state bounds (array of within state = 1, outside = 0)
-    stateBounds = pd.read_excel(os.path.join('Data','MERRA','state_MERRA_Format_Bounds.xlsx'),index_col=0)
+    if interconn == 'ERCOT':
+        stateBounds = pd.read_excel(os.path.join('Data','MERRA','state_MERRA_Format_Bounds.xlsx'),index_col=0)
+    elif interconn == 'EI':
+        stateBounds = pd.read_excel(os.path.join('Data', 'MERRA', 'EI_offshore_MERRA_Format_Bounds.xlsx'), index_col=0)
     #Isolate wind & solar units
     windUnits,solarUnits = getREInFleet('Wind',genFleet),getREInFleet('Solar PV',genFleet)
-    #Get list of wind / solar sites in region
-    lats,lons,cf = loadMerraData(reYear)
+    #Get list of wind / solar sites in region. 
+    lats,lons,cf = loadMerraData(reYear,interconn)
     assert(len(lats)==stateBounds.shape[0] and len(lons)==stateBounds.shape[1])
     #Match existing gens to CFs
     get_cf_index(windUnits,lats,lons),get_cf_index(solarUnits,lats,lons)
-    #Calculate new CFs
+    #Calculate new CFs. Use given met year data but set dt index to currYear.
     cf = enforceStateBounds(cf,stateBounds)
-    windCfs = calcNewCfs(windUnits,lats,lons,cf,'wind',reYear)
-    solarCfs = calcNewCfs(solarUnits,lats,lons,cf,'solar',reYear)
+    windCfs = calcNewCfs(windUnits,lats,lons,cf,'wind',currYear)
+    solarCfs = calcNewCfs(solarUnits,lats,lons,cf,'solar',currYear)
     #Downscale if desired
     windCfs,solarCfs = windCfs[windCfs.columns[::reDownFactor]],solarCfs[solarCfs.columns[::reDownFactor]]
     #Shift to target timezone
-    windCfs,solarCfs = shiftTz(windCfs,tgtTz,reYear,'wind'),shiftTz(solarCfs,tgtTz,reYear,'solar')
+    windCfs,solarCfs = shiftTz(windCfs,tgtTz,currYear,'wind'),shiftTz(solarCfs,tgtTz,currYear,'solar')
     return pd.concat([windCfs,solarCfs],axis=1)
     
-def calcNewCfs(existingGens,lats,lons,cf,re,reYear):
+def calcNewCfs(existingGens,lats,lons,cf,re,currYear):
+    if currYear > 2050: currYear = 2050
     density = .9 if re == 'wind' else 5.7 #W/m^2; from https://www.seas.harvard.edu/news/2018/10/large-scale-wind-power-would-require-more-land-and-cause-more-environmental-impact
     cfs = dict()
     for latIdx in range(len(lats)):
@@ -44,7 +49,7 @@ def calcNewCfs(existingGens,lats,lons,cf,re,reYear):
                     cfs[re+'lat'+str(round(lat,3))+'lon'+str(round(lon,3))] = 0
                     print('**Max RE capacity @ lat/long:',lat,lon,' (GetNewRenewableCFsMERRA)')
     #Add dt and set to Dataframe
-    idx = pd.date_range('1/1/'+str(reYear) + ' 0:00','12/31/' + str(reYear) + ' 23:00',freq='H')
+    idx = pd.date_range('1/1/'+str(currYear) + ' 0:00','12/31/' + str(currYear) + ' 23:00',freq='H')
     idx = idx.drop(idx[(idx.month==2) & (idx.day ==29)])    
     return pd.DataFrame(cfs,index=idx)
 

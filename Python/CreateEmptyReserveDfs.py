@@ -1,13 +1,10 @@
 import pandas as pd
 import numpy as np
 
-def createEmptyReserveDfs(windGenHr,newCfs=None):
+def createEmptyReserveDfs(windGenRegion,newCfs=None):
     #Reserves
-    zeros = np.zeros(windGenHr.shape[0])
-    reserves = pd.DataFrame({'Cont':zeros,'RegUp':zeros,'RegDown':zeros,'Flex':zeros},index=windGenHr.index)
-    reserveComponents = pd.DataFrame({'RegDemand':zeros,'RegUpSolar':zeros,
-        'RegDownSolar':zeros,'RegUpWind':zeros,'RegDownWind':zeros,
-        'FlexWind':zeros,'FlexSolar':zeros},index=windGenHr.index)
+    regUp = pd.DataFrame(0,columns=windGenRegion.columns,index=windGenRegion.index)
+    flex,cont,regDemand,regUpSolar,regUpWind,flexSolar,flexWind = regUp.copy(),regUp.copy(),regUp.copy(),regUp.copy(),regUp.copy(),regUp.copy(),regUp.copy()
     #Reserves for new plants - only run this for CE model
     if newCfs is not None: 
         windCfs = newCfs[[col for col in newCfs if 'wind' in col]]
@@ -19,4 +16,4 @@ def createEmptyReserveDfs(windGenHr,newCfs=None):
         regUpInc,flexInc = pd.concat([windRegUp,solarRegUp],axis=1),pd.concat([windFlex,solarFlex],axis=1)
     else:
         regUpInc,flexInc = None,None
-    return reserves,reserveComponents,regUpInc,flexInc
+    return cont,regUp,flex,regDemand,regUpSolar,regUpWind,flexSolar,flexWind,regUpInc,flexInc

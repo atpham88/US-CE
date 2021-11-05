@@ -17,28 +17,25 @@ import numpy as np
 #requirements. Based on WWSIS Phase 2 requirements.
 #Outputs: 1d list (1x8760) of hourly contingency, regulation up and down, and flexibility
 #reserve requirements; 2d list of all res and res components w/ labels
-def calcWWSISReserves(windGenHr,solarGenHr,demand,regLoadFrac,contLoadFrac,regErrorPercentile,flexErrorPercentile):
-    windGenHr,solarGenHr = windGenHr.sum(axis=1),solarGenHr.sum(axis=1)
-    contResHourly = setContReserves(contLoadFrac,demand)
-    (regUpHourly,regDownHourly,regDemand,regUpWind,regDownWind,
-            regUpSolar,regDownSolar) = setRegReserves(regErrorPercentile,regLoadFrac,
-            windGenHr,solarGenHr,demand)
-    flexResHourly,flexWind,flexSolar = setFlexReserves(flexErrorPercentile,windGenHr,solarGenHr)
-    # plotGenDemandAndRes(demand,windGenHr,solarGenHr,regUpHourly,flexResHourly,contResHourly)
-    # plotWindAndSolarRes(regUpWind,regUpSolar,windGenHr,solarGenHr,'RegUp')
-    # plotWindAndSolarRes(regDownWind,regDownSolar,windGenHr,solarGenHr,'RegDown')
-    # plotWindAndSolarRes(flexWind,flexSolar,windGenHr,solarGenHr,'Flex')
-    reserves = pd.DataFrame({'Cont':contResHourly,'RegUp':regUpHourly,'RegDown':regDownHourly,
-            'Flex':flexResHourly},index=windGenHr.index)
-    reserveComponents = pd.DataFrame({'RegDemand':regDemand,'RegUpSolar':regUpSolar,
-            'RegDownSolar':regDownSolar,'RegUpWind':regUpWind,'RegDownWind':regDownWind,
-            'FlexWind':flexWind,'FlexSolar':flexSolar},index=windGenHr.index)
-    # reserves = pd.DataFrame({'Cont':[100 for i in demand],'RegUp':[100 for i in demand],'RegDown':[100 for i in demand],
-    #         'Flex':[100 for i in demand]},index=windGenHr.index)
-    # reserveComponents = pd.DataFrame({'RegDemand':[100 for i in demand],'RegUpSolar':[100 for i in demand],
-    #         'RegDownSolar':[100 for i in demand],'RegUpWind':[100 for i in demand],'RegDownWind':[100 for i in demand],
-    #         'FlexWind':[100 for i in demand],'FlexSolar':[100 for i in demand]},index=windGenHr.index)
-    return reserves,reserveComponents
+def calcWWSISReserves(windGenRegion,solarGenRegion,demandRegion,regLoadFrac,contLoadFrac,regErrorPercentile,flexErrorPercentile):
+    #Set contingency reserves as a fraction of hourly demand
+    cont = contLoadFrac * demandRegion
+    #Set regulation & flexibility reserves based on demand, wind & solar
+    regUp,flex = pd.DataFrame(index=cont.index),pd.DataFrame(index=cont.index)
+    regDemand,regUpSolar,regUpWind,flexSolar,flexWind = flex.copy(),flex.copy(),flex.copy(),flex.copy(),flex.copy()
+    for region in demandRegion.columns:
+        demand,wind,solar = demandRegion[region],windGenRegion[region],solarGenRegion[region]
+        (regUpRegion,regDownRegion,regDemRegion,regUpWindRegion,regDownWindRegion,regUpSolarRegion,
+            regDownSolarRegion) = setRegReserves(regErrorPercentile,regLoadFrac,wind,solar,demand)
+        flexResRegion,flexWindRegion,flexSolarRegion = setFlexReserves(flexErrorPercentile,wind,solar)
+        regUp[region],flex[region] = regUpRegion,flexResRegion
+        regDemand[region],regUpSolar[region],regUpWind[region],flexSolar[region],flexWind[region] = regDemRegion,regUpSolarRegion,regUpWindRegion,flexSolarRegion,flexWindRegion
+        #Visualization  
+        # plotGenDemandAndRes(demand,windGenRegion,solarGenRegion,regUpHourly,flexResHourly,contResHourly)
+        # plotWindAndSolarRes(regUpWind,regUpSolar,windGenRegion,solarGenRegion,'RegUp')
+        # plotWindAndSolarRes(regDownWind,regDownSolar,windGenRegion,solarGenRegion,'RegDown')
+        # plotWindAndSolarRes(flexWind,flexSolar,windGenRegion,solarGenRegion,'Flex')        
+    return cont,regUp,flex,regDemand,regUpSolar,regUpWind,flexSolar,flexWind
 ################################################################################
 
 ########## SET RESERVE REQUIREMENTS ############################################
@@ -49,7 +46,7 @@ def setContReserves(contLoadFrac,demand):
 
 #Set reg reserve requirement as % of hourly load plus percentile of subhourly wind and solar gen (ideally)
 def setRegReserves(regErrorPercentile,regLoadFrac,windGen,solarGen,demand):
-    regDemand = [val*regLoadFrac for val in demand]
+    regDemand = regLoadFrac*demand
     regUpWind,regDownWind = calcWindReserves(windGen,regErrorPercentile)
     regUpSolar,regDownSolar = calcSolarReserves(solarGen,regErrorPercentile)
     regUpTotal = [(regDemand[idx]**2 + regUpWind[idx]**2 + 
@@ -75,17 +72,20 @@ def setFlexReserves(flexErrorPercentile,windGenHourlyTotal,solarGenHourlyTotal):
 #for percentile error (%)
 #Outputs: 1d lists of up and down res at hourly timescale
 def calcWindReserves(windGen,errorPercentile):
-    #Get errors
-    gen = windGen.values
-    errors = [-(gen[idx]-gen[idx-1]) for idx in range(1,len(gen))]
-    genErrors = gen[1:] #cut off first gen entry since no error for it
-    #Divide into groups and get average power & percentile errors per group
-    numGroups = 10
-    # plotWindErrors(genErrors,errors,numGroups,errorPercentile)
-    avgGens,lowPtlVals,upPtlVals = getAvgPowerAndPtlErrorPerGroup(numGroups,errorPercentile,
-                            genErrors,errors)
-    res = windGen.apply(getResForGen,args=(avgGens,lowPtlVals,upPtlVals,))
-    res = pd.DataFrame(res.tolist(),columns=['up','down']) #split tuples
+    if windGen.max()>0:
+        #Get errors
+        gen = windGen.values
+        errors = [-(gen[idx]-gen[idx-1]) for idx in range(1,len(gen))]
+        genErrors = gen[1:] #cut off first gen entry since no error for it
+        #Divide into groups and get average power & percentile errors per group
+        numGroups = 10
+        # plotWindErrors(genErrors,errors,numGroups,errorPercentile)
+        avgGens,lowPtlVals,upPtlVals = getAvgPowerAndPtlErrorPerGroup(numGroups,errorPercentile,
+                                genErrors,errors)
+        res = windGen.apply(getResForGen,args=(avgGens,lowPtlVals,upPtlVals,))
+        res = pd.DataFrame(res.tolist(),columns=['up','down']) #split tuples
+    else:
+        res = pd.DataFrame({'up':0,'down':0},index=windGen.index)
     return res['up'].tolist(),abs(res['down']).tolist() 
     
 #Get average power & percentile errors for each group
@@ -151,27 +151,29 @@ def calcSolarReserves(solarGen,errorPercentile):
     # plotSolarErrorsVsReserves(solarGen,errorPercentile)
     # plotSolarGen([[mnth,mnth+1] for mnth in range(1,13,2)],solarGen)
     # plotSolarErrors(solarGen)
-    #Offsets for which errors are used to calculate percentiles; sunrise & sunset have
-    #large but predictable ramps. Offsets try to skip those ramps.
-    if len(solarGen)>8761: sunriseOffset,sunsetOffset = 5,8 #skip several intervals when 
-    else: sunriseOffset,sunsetOffset = 2,2 #skip first & last 2 hours of gen each day (sunrise & sunset)
-    lowPtl,upPtl = (100 - errorPercentile)/2,errorPercentile + (100 - errorPercentile)/2
-    monthGroups = [[mnth,mnth+1] for mnth in range(1,13,2)] #months in groups of 2; datetime month is 1..12
-    upRes,downRes,dts = list(),list(),list()
-    for months in monthGroups: #months is list of months
-        monthsRows = solarGen[(solarGen.index.month==months[0]) | (solarGen.index.month==months[1])]
-        preMiddayErrorsMonths,postMiddayErrorsMonths = getMonthsErrors(months,
-                            monthsRows,sunriseOffset,sunsetOffset)
-        lowPtlPre = np.percentile(np.array(preMiddayErrorsMonths),lowPtl)
-        highPtlPre = np.percentile(np.array(preMiddayErrorsMonths),upPtl)
-        lowPtlPost = np.percentile(np.array(postMiddayErrorsMonths),lowPtl)
-        highPtlPost = np.percentile(np.array(postMiddayErrorsMonths),upPtl)           
-        upResMonths,downResMonths = assignReserves(months,monthsRows,lowPtlPre,
-                                                highPtlPre,lowPtlPost,highPtlPost)
-        upRes.extend(copy.copy(upResMonths))
-        downRes.extend(copy.copy(downResMonths))
-        dts.extend(list(monthsRows.index))
-    # if len(upRes) > 8760: upRes,downRes = aggregateResToHourly(upRes,downRes,dts)     
+    if solarGen.max()>0:
+        #Offsets for which errors are used to calculate percentiles; sunrise & sunset have
+        #large but predictable ramps. Offsets try to skip those ramps.
+        if solarGen.shape[0]>8761: sunriseOffset,sunsetOffset = 5,8 #skip several intervals when using sub-hourly data
+        else: sunriseOffset,sunsetOffset = 2,2 #skip first & last 2 hours of gen each day (sunrise & sunset)
+        lowPtl,upPtl = (100 - errorPercentile)/2,errorPercentile + (100 - errorPercentile)/2
+        monthGroups = [[mnth,mnth+1] for mnth in range(1,13,2)] #months in groups of 2; datetime month is 1..12
+        upRes,downRes,dts = list(),list(),list()
+        for months in monthGroups: #months is list of months
+            monthsRows = solarGen[(solarGen.index.month==months[0]) | (solarGen.index.month==months[1])]
+            preMiddayErrorsMonths,postMiddayErrorsMonths = getMonthsErrors(months,
+                                monthsRows,sunriseOffset,sunsetOffset)
+            lowPtlPre = np.percentile(np.array(preMiddayErrorsMonths),lowPtl)
+            highPtlPre = np.percentile(np.array(preMiddayErrorsMonths),upPtl)
+            lowPtlPost = np.percentile(np.array(postMiddayErrorsMonths),lowPtl)
+            highPtlPost = np.percentile(np.array(postMiddayErrorsMonths),upPtl)           
+            upResMonths,downResMonths = assignReserves(months,monthsRows,lowPtlPre,
+                                                    highPtlPre,lowPtlPost,highPtlPost)
+            upRes.extend(copy.copy(upResMonths))
+            downRes.extend(copy.copy(downResMonths))
+            dts.extend(list(monthsRows.index))
+    else:
+        upRes,downRes = [0 for i in range(solarGen.shape[0])],[0 for i in range(solarGen.shape[0])]
     return upRes,downRes
 
 #Get power output errors for months divided by pre- and post-midday, skipping errors
@@ -440,9 +442,9 @@ def plotWindErrors(gen,errors,numGroups,errorPercentile):
 ################################################################################
 
 ########## PLOT DEMAND, WIND AND SOLAR GEN, AND RESERVES #######################
-def plotGenDemandAndRes(demand,windGenHr,solarGenHr,regResHourly,flexResHourly,contResHourly):
-    dateCol,genCol = windGenHr[0].index('datetime'),windGenHr[0].index('totalGen(MWh)')
-    windGen,solarGen = [row[genCol] for row in windGenHr[1:]],[row[genCol] for row in solarGenHr[1:]]
+def plotGenDemandAndRes(demand,windGenRegion,solarGenRegion,regResHourly,flexResHourly,contResHourly):
+    dateCol,genCol = windGenRegion[0].index('datetime'),windGenRegion[0].index('totalGen(MWh)')
+    windGen,solarGen = [row[genCol] for row in windGenRegion[1:]],[row[genCol] for row in solarGenRegion[1:]]
     aug5DayOfYear,jan5DayOfYear,daysToPlot = 217, 5, 3
     tSliceJan = [val for val in range(24*(jan5DayOfYear-1)-1,24*(jan5DayOfYear-1)-1+24*daysToPlot)]
     tSliceAug = [val for val in range(24*(aug5DayOfYear-1)-1,24*(aug5DayOfYear-1)-1+24*daysToPlot)] 
@@ -479,9 +481,9 @@ def plotGenDemandAndRes(demand,windGenHr,solarGenHr,regResHourly,flexResHourly,c
         plt.xlabel('Hour in Year')
     plt.show()
 
-def plotWindAndSolarRes(resWind,resSolar,windGenHr,solarGenHr,resType):
-    dateCol,genCol = windGenHr[0].index('datetime'),windGenHr[0].index('totalGen(MWh)')
-    windGen,solarGen = [row[genCol] for row in windGenHr[1:]],[row[genCol] for row in solarGenHr[1:]]
+def plotWindAndSolarRes(resWind,resSolar,windGenRegion,solarGenRegion,resType):
+    dateCol,genCol = windGenRegion[0].index('datetime'),windGenRegion[0].index('totalGen(MWh)')
+    windGen,solarGen = [row[genCol] for row in windGenRegion[1:]],[row[genCol] for row in solarGenRegion[1:]]
     aug5DayOfYear,jan5DayOfYear,daysToPlot = 217, 5, 5
     tSliceJan = [val for val in range(24*(jan5DayOfYear-1)-1,24*(jan5DayOfYear-1)-1+24*daysToPlot)]
     tSliceAug = [val for val in range(24*(aug5DayOfYear-1)-1,24*(aug5DayOfYear-1)-1+24*daysToPlot)] 

@@ -7,8 +7,8 @@ Options
          reslim = 100000
                  threads = 0
          solvelink = 5
-         limcol = 999
-         limrow = 999
+*         limcol = 999
+*         limrow = 999
 *         solprint = silent
          ;
 
@@ -63,12 +63,8 @@ limitreguprestech(tech,h)$[pMaxregupoffertech(tech)>0].. vReguptech(tech,h) =l= 
 *Limit up reserves plus generation to spare capacity for generating technologies
 limitallresuptech(gentechs,h).. vGentech(gentechs,h) + vFlextech(gentechs,h) + vConttech(gentechs,h) + vReguptech(gentechs,h) =l= pCapactech(gentechs) * vN(gentechs);
 
-*Set lower bound to zero for generation by storage and generating techs
-vGentech.lo(notdacstech,h) = 0;
-
 *Limit DACS generation and reserves
 limitdacsgen(dacstech,h).. vGentech(dacstech,h) =g= pCapactech(dacstech)*vN(dacstech);
-vGentech.up(dacstech,h) = 0;
 
 *Limit new wind and solar generation
 setrenewgentech(renewtech,h)..   vGentech(renewtech,h) =l= pCapactech(renewtech)*pCf(renewtech,h)*vN(renewtech);

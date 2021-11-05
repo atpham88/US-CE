@@ -2,324 +2,282 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import xlsxwriter as xw
+import numpy as np
 
 
-def results_summary(case_to_run, zeroSys, planningDACs, elect_demand):
+def results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear,
+                    yearIncDACS, electrifiedDemand, elecDemandScen):
 
-    m_dir = "C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\\Python\\"
+    m_dir = "C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\"
 
-    resultCase = 'ResultsC1'
-    if zeroSys: sysCase = 'zeroSys'
-    elif not zeroSys: sysCase = 'negSys'
 
-    if planningDACs == 1: planningCase = 'noDAC'
-    elif planningDACs == 2: planningCase = 'lateDAC'
-    elif planningDACs == 3: planningCase = "earlyDAC"
+    if buildLimitsCase == 1: case_name = "reference"
+    elif buildLimitsCase == 2: case_name = "lNuclear"
+    elif buildLimitsCase == 3: case_name = "lNuclearCCS"
+    elif buildLimitsCase == 4: case_name = "lH2"
 
-    if case_to_run == 1: case_name = "reference"
-    elif case_to_run == 2: case_name = "lNuclear"
-    elif case_to_run == 3: case_name = "lNuclearCCS"
-    elif case_to_run == 4: case_name = "lH2"
+    pythonFolder = 'C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\'
 
-    if elect_demand == 1: high_elect = "highElectrification"
-    elif elect_demand == 0: high_elect = ""
+    if emissionSystem == 'Negative':
+        resultsDir = 'Results_' + emissionSystem + 'NEin' + str(planNESystem) + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
+                     + '_' + str(electrifiedDemand) + elecDemandScen + case_name
+        resultsFolder = pythonFolder + 'Results' + emissionSystem + str(int(co2EmsCapInFinalYear/1e6)) + 'DACS' + str(yearIncDACS) \
+                        + 'NEin' + str(planNESystem) + '_' + case_name + '_' + str(electrifiedDemand) + elecDemandScen
+    elif emissionSystem == 'NetZero':
+        resultsDir = 'Results_' + emissionSystem + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
+                     + '_' + str(electrifiedDemand) + elecDemandScen + case_name
+        resultsFolder = pythonFolder + 'Results' + emissionSystem + str(int(co2EmsCapInFinalYear/1e6)) + 'DACS' + str(yearIncDACS) \
+                        + '_' + case_name + '_' + str(electrifiedDemand) + elecDemandScen
 
-    resultsDir = resultCase + '_' + sysCase + '_' + planningCase + '_' + case_name + '_' + high_elect
-    pythonFolder = 'C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\Python\\'
-    resultsFolder = pythonFolder + resultsDir + '\\CE\\'
+
+    resultsFolder2030 = '\\2030' + 'CO2Cap' + str(int(co2EmsCapInFinalYear/1e6)) + '\\CE\\'
+    resultsFolder2040 = '\\2040' + 'CO2Cap' + str(int(co2EmsCapInFinalYear / 1e6)) + '\\CE\\'
+    resultsFolder2050 = '\\2050' + 'CO2Cap' + str(int(co2EmsCapInFinalYear / 1e6)) + '\\CE\\'
 
     # Set up the excel file
-    results_book = xw.Workbook(pythonFolder + 'Results\\' + sysCase + '_' + planningCase + '_' + case_name + '_' + high_elect + '.xlsx')
+    results_book = xw.Workbook(pythonFolder + 'Results Summary\\' + resultsDir + '.xlsx')
     result_sheet_cost = results_book.add_worksheet('Costs')
     result_sheet_CE = results_book.add_worksheet('CE')
     result_sheet_Generation = results_book.add_worksheet('Generation')
     result_sheet_Generation_new = results_book.add_worksheet('New Generation')
 
     # read in new capacity investment solution:
-    genFleetAfter2050 = pd.read_csv(resultsFolder + 'genFleetAfterCE2050.csv')
+    genFleetAfter2050 = pd.read_csv(resultsFolder + resultsFolder2050 + 'genFleetAfterCE2050.csv')
     genFleetAfter2050 = genFleetAfter2050[genFleetAfter2050.YearAddedCE >= 2030]
 
+    # Costs:
+    vZannual_2030 = pd.read_csv(resultsFolder + resultsFolder2030 + 'vZannualCE2030.csv', header=None)
+    vZannual_2040 = pd.read_csv(resultsFolder + resultsFolder2040 + 'vZannualCE2040.csv', header=None)
+    vVarcostannual_2030 = pd.read_csv(resultsFolder + resultsFolder2030 + 'vVarcostannualCE2030.csv', header=None)
+    vVarcostannual_2040 = pd.read_csv(resultsFolder + resultsFolder2040 + 'vVarcostannualCE2040.csv', header=None)
 
+    vZannual_2030 = vZannual_2030.iloc[0,0]/1000
+    vZannual_2040 = vZannual_2040.iloc[0,0]/1000
 
+    vVarcostannual_2030 = vVarcostannual_2030.iloc[0, 0] / 1000
+    vVarcostannual_2040 = vVarcostannual_2040.iloc[0, 0] / 1000
 
-    if planningDACs != 3:
-        # Costs:
-        vZannual_2030 = pd.read_csv(resultsFolder + 'vZannualCE2030.csv', header=None)
-        vZannual_2040 = pd.read_csv(resultsFolder + 'vZannualCE2040.csv', header=None)
-        vVarcostannual_2030 = pd.read_csv(resultsFolder + 'vVarcostannualCE2030.csv', header=None)
-        vVarcostannual_2040 = pd.read_csv(resultsFolder + 'vVarcostannualCE2040.csv', header=None)
+    vFixedcostannual_2030 = vZannual_2030 - vVarcostannual_2030
+    vFixedcostannual_2040 = vZannual_2040 - vVarcostannual_2040
 
-        vZannual_2030 = vZannual_2030.iloc[0,0]/1000
-        vZannual_2040 = vZannual_2040.iloc[0,0]/1000
+    result_sheet_cost.write("A1", "total Operating cost 2030 (million $)")
+    result_sheet_cost.write("B1", vVarcostannual_2030)
+    result_sheet_cost.write("A2", "total Operating cost 2040 (million $)")
+    result_sheet_cost.write("B2", vVarcostannual_2040)
 
-        vVarcostannual_2030 = vVarcostannual_2030.iloc[0, 0] / 1000
-        vVarcostannual_2040 = vVarcostannual_2040.iloc[0, 0] / 1000
+    result_sheet_cost.write("A6", "total Fixed cost 2030 (million $)")
+    result_sheet_cost.write("B6", vFixedcostannual_2030)
+    result_sheet_cost.write("A7", "total Fixed cost 2040 (million $)")
+    result_sheet_cost.write("B7", vFixedcostannual_2040)
 
-        vFixedcostannual_2030 = vZannual_2030 - vVarcostannual_2030
-        vFixedcostannual_2040 = vZannual_2040 - vVarcostannual_2040
+    result_sheet_cost.write("A12", "total cost 2030 (million $)")
+    result_sheet_cost.write("B12", vZannual_2030)
+    result_sheet_cost.write("A13", "total cost 2040 (million $)")
+    result_sheet_cost.write("B13", vZannual_2040)
 
-        result_sheet_cost.write("A1", "total Operating cost 2030 (million $)")
-        result_sheet_cost.write("B1", vVarcostannual_2030)
-        result_sheet_cost.write("A2", "total Operating cost 2040 (million $)")
-        result_sheet_cost.write("B2", vVarcostannual_2040)
+    # CE:
+    genFleetAfter2030 = genFleetAfter2050[genFleetAfter2050.YearAddedCE == 2030]
+    genFleetAfter2040 = genFleetAfter2050[genFleetAfter2050.YearAddedCE == 2040]
 
-        result_sheet_cost.write("A6", "total Fixed cost 2030 (million $)")
-        result_sheet_cost.write("B6", vFixedcostannual_2030)
-        result_sheet_cost.write("A7", "total Fixed cost 2040 (million $)")
-        result_sheet_cost.write("B7", vFixedcostannual_2040)
+    genFleetAfter2030 = genFleetAfter2030[['PlantType', 'Capacity (MW)']]
+    genFleetAfter2040 = genFleetAfter2040[['PlantType', 'Capacity (MW)']]
 
-        result_sheet_cost.write("A12", "total cost 2030 (million $)")
-        result_sheet_cost.write("B12", vZannual_2030)
-        result_sheet_cost.write("A13", "total cost 2040 (million $)")
-        result_sheet_cost.write("B13", vZannual_2040)
+    CoalCCS_2030 = genFleetAfter2030[genFleetAfter2030['PlantType'].str.contains('Coal Steam CCS')]
+    CC_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'].str.contains('Combined Cycle')]
+    CCCCS_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'].str.contains('Combined Cycle CCS')]
+    Nuclear_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'].str.contains('Nuclear')]
+    Hydrogen_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'].str.contains('Hydrogen')]
+    Battery_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'].str.contains('Battery Storage')]
+    DAC_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'].str.contains('DAC')]
+    Wind_2030 = genFleetAfter2030[genFleetAfter2030['PlantType'].str.contains('wind')]
+    Solar_2030 = genFleetAfter2030[genFleetAfter2030['PlantType'].str.contains('solar')]
 
-        # CE:
-        genFleetAfter2030 = genFleetAfter2050[genFleetAfter2050.YearAddedCE == 2030]
-        genFleetAfter2040 = genFleetAfter2050[genFleetAfter2050.YearAddedCE == 2040]
+    CoalCCS_2030 = CoalCCS_2030['Capacity (MW)'].sum()
+    CC_2030 = CC_2030['Capacity (MW)'].sum()
+    CCCCS_2030 = CCCCS_2030['Capacity (MW)'].sum()
+    Nuclear_2030 = Nuclear_2030['Capacity (MW)'].sum()
+    Hydrogen_2030 = Hydrogen_2030['Capacity (MW)'].sum()
+    Battery_2030 = Battery_2030['Capacity (MW)'].sum()
+    DAC_2030 = DAC_2030['Capacity (MW)'].sum()
+    Wind_2030 = Wind_2030['Capacity (MW)'].sum()
+    Solar_2030 = Solar_2030['Capacity (MW)'].sum()
 
-        genFleetAfter2030 = genFleetAfter2030[['PlantType', 'Capacity (MW)']]
-        genFleetAfter2040 = genFleetAfter2040[['PlantType', 'Capacity (MW)']]
+    CoalCCS_2040 = genFleetAfter2040[genFleetAfter2040['PlantType'].str.contains('Coal Steam CCS')]
+    CC_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'].str.contains('Combined Cycle')]
+    CCCCS_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'].str.contains('Combined Cycle CCS')]
+    Nuclear_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'].str.contains('Nuclear')]
+    Hydrogen_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'].str.contains('Hydrogen')]
+    Battery_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'].str.contains('Battery Storage')]
+    DAC_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'].str.contains('DAC')]
+    Wind_2040 = genFleetAfter2040[genFleetAfter2040['PlantType'].str.contains('wind')]
+    Solar_2040 = genFleetAfter2040[genFleetAfter2040['PlantType'].str.contains('solar')]
 
-        CoalCCS_2030 = genFleetAfter2030[genFleetAfter2030['PlantType'].str.contains('Coal Steam CCS')]
-        CC_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'] == 'Combined Cycle']
-        CCCCS_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'] == 'Combined Cycle CCS']
-        Nuclear_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'] == 'Nuclear']
-        Hydrogen_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'] == 'Hydrogen']
-        Battery_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'] == 'Battery Storage']
-        DAC_2030 = genFleetAfter2030.loc[genFleetAfter2030['PlantType'] == 'DAC']
-        Wind_2030 = genFleetAfter2030[genFleetAfter2030['PlantType'].str.contains('wind')]
-        Solar_2030 = genFleetAfter2030[genFleetAfter2030['PlantType'].str.contains('solar')]
+    CoalCCS_2040 = CoalCCS_2040['Capacity (MW)'].sum()
+    CC_2040 = CC_2040['Capacity (MW)'].sum()
+    CCCCS_2040 = CCCCS_2040['Capacity (MW)'].sum()
+    Nuclear_2040 = Nuclear_2040['Capacity (MW)'].sum()
+    Hydrogen_2040 = Hydrogen_2040['Capacity (MW)'].sum()
+    Battery_2040 = Battery_2040['Capacity (MW)'].sum()
+    DAC_2040 = DAC_2040['Capacity (MW)'].sum()
+    Wind_2040 = Wind_2040['Capacity (MW)'].sum()
+    Solar_2040 = Solar_2040['Capacity (MW)'].sum()
 
-        CoalCCS_2030 = CoalCCS_2030['Capacity (MW)'].sum()
-        CC_2030 = CC_2030['Capacity (MW)'].sum()
-        CCCCS_2030 = CCCCS_2030['Capacity (MW)'].sum()
-        Nuclear_2030 = Nuclear_2030['Capacity (MW)'].sum()
-        Hydrogen_2030 = Hydrogen_2030['Capacity (MW)'].sum()
-        Battery_2030 = Battery_2030['Capacity (MW)'].sum()
-        DAC_2030 = DAC_2030['Capacity (MW)'].sum()
-        Wind_2030 = Wind_2030['Capacity (MW)'].sum()
-        Solar_2030 = Solar_2030['Capacity (MW)'].sum()
+    # Existing Generation:
+    # 2030:
+    vGen_2030 = pd.read_csv(resultsFolder + resultsFolder2030 + 'vGenCE2030.csv')
+    vGen_2030.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+    vGen_2030 = vGen_2030.T
+    vGen_2030.columns = vGen_2030.iloc[0]
+    vGen_2030 = vGen_2030.drop(vGen_2030.index[0])
+    vGen_2030 = vGen_2030.reset_index()
+    vGen_2030.rename(columns={'index': 'Unit'}, inplace=True)
 
-        CoalCCS_2040 = genFleetAfter2040[genFleetAfter2040['PlantType'].str.contains('Coal Steam CCS')]
-        CC_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'] == 'Combined Cycle']
-        CCCCS_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'] == 'Combined Cycle CCS']
-        Nuclear_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'] == 'Nuclear']
-        Hydrogen_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'] == 'Hydrogen']
-        Battery_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'] == 'Battery Storage']
-        DAC_2040 = genFleetAfter2040.loc[genFleetAfter2040['PlantType'] == 'DAC']
-        Wind_2040 = genFleetAfter2040[genFleetAfter2040['PlantType'].str.contains('wind')]
-        Solar_2040 = genFleetAfter2040[genFleetAfter2040['PlantType'].str.contains('solar')]
+    genforCE2030_existing = pd.read_csv(resultsFolder + resultsFolder2030 + 'genFleetForCE2030.csv')
+    genforCE2030_existing = genforCE2030_existing[['PlantType']]
 
-        CoalCCS_2040 = CoalCCS_2040['Capacity (MW)'].sum()
-        CC_2040 = CC_2040['Capacity (MW)'].sum()
-        CCCCS_2040 = CCCCS_2040['Capacity (MW)'].sum()
-        Nuclear_2040 = Nuclear_2040['Capacity (MW)'].sum()
-        Hydrogen_2040 = Hydrogen_2040['Capacity (MW)'].sum()
-        Battery_2040 = Battery_2040['Capacity (MW)'].sum()
-        DAC_2040 = DAC_2040['Capacity (MW)'].sum()
-        Wind_2040 = Wind_2040['Capacity (MW)'].sum()
-        Solar_2040 = Solar_2040['Capacity (MW)'].sum()
+    vGen_2030['Total Gen'] = vGen_2030.iloc[:, 1:].sum(axis=1)
+    vGen_2030 = vGen_2030[['Total Gen']]
+    vGen_2030['PlantType'] = genforCE2030_existing
 
-        # Existing Generation:
-        # 2030:
-        vGen_2030 = pd.read_csv(resultsFolder + 'vGenCE2030.csv')
-        genforCE2030_existing = pd.read_csv(resultsFolder + 'genFleetForCE2030.csv')
-        genforCE2030_existing = genforCE2030_existing[['PlantType']]
+    gen_CoalSteam_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Coal Steam']
+    gen_CC_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Combined Cycle']
+    gen_CCCCS_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Combined Cycle CCS']
+    gen_CT_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Combustion Turbine']
+    gen_OG_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'O/G Steam']
+    gen_Bio_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Biomass']
+    gen_Bat_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Energy Storage']
+    gen_H2_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Hydrogen']
+    gen_Nuclear_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Nuclear']
+    gen_DAC_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'DAC']
+    gen_Solar_2030 = vGen_2030[vGen_2030['PlantType'].str.contains('solar')]
+    gen_Wind_2030 = vGen_2030[vGen_2030['PlantType'].str.contains('wind')]
 
-        vGen_2030['Total Gen'] = vGen_2030.iloc[:, 1:].sum(axis=1)
-        vGen_2030_temp = vGen_2030[['Total Gen']]
-        vGen_2030_temp['PlantType'] = genforCE2030_existing
-        vGen_2030 = vGen_2030_temp
-        gen_CoalSteam_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Coal Steam']
-        gen_CC_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Combined Cycle']
-        gen_CCCCS_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Combined Cycle CCS']
-        gen_CT_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Combustion Turbine']
-        gen_OG_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'O/G Steam']
-        gen_Bio_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Biomass']
-        gen_Bat_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Energy Storage']
-        gen_H2_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Hydrogen']
-        gen_Nuclear_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'Nuclear']
-        gen_DAC_2030 = vGen_2030.loc[vGen_2030['PlantType'] == 'DAC']
-        gen_Solar_2030 = vGen_2030[vGen_2030['PlantType'].str.contains('solar')]
-        gen_Wind_2030 = vGen_2030[vGen_2030['PlantType'].str.contains('wind')]
+    gen_CoalSteam_2030 = gen_CoalSteam_2030['Total Gen'].sum()
+    gen_CC_2030 = gen_CC_2030['Total Gen'].sum()
+    gen_CCCCS_2030 = gen_CCCCS_2030['Total Gen'].sum()
+    gen_Bat_2030 = gen_Bat_2030['Total Gen'].sum()
+    gen_H2_2030 = gen_H2_2030['Total Gen'].sum()
+    gen_Nuclear_2030 = gen_Nuclear_2030['Total Gen'].sum()
+    gen_Solar_2030 = gen_Solar_2030['Total Gen'].sum()
+    gen_Wind_2030 = gen_Wind_2030['Total Gen'].sum()
+    gen_DAC_2030 = gen_DAC_2030['Total Gen'].sum()
+    gen_CT_2030 = gen_CT_2030['Total Gen'].sum()
+    gen_OG_2030 = gen_OG_2030['Total Gen'].sum()
+    gen_Bio_2030 = gen_Bio_2030['Total Gen'].sum()
 
-        gen_CoalSteam_2030 = gen_CoalSteam_2030['Total Gen'].sum()
-        gen_CC_2030 = gen_CC_2030['Total Gen'].sum()
-        gen_CCCCS_2030 = gen_CCCCS_2030['Total Gen'].sum()
-        gen_Bat_2030 = gen_Bat_2030['Total Gen'].sum()
-        gen_H2_2030 = gen_H2_2030['Total Gen'].sum()
-        gen_Nuclear_2030 = gen_Nuclear_2030['Total Gen'].sum()
-        gen_Solar_2030 = gen_Solar_2030['Total Gen'].sum()
-        gen_Wind_2030 = gen_Wind_2030['Total Gen'].sum()
-        gen_DAC_2030 = gen_DAC_2030['Total Gen'].sum()
-        gen_CT_2030 = gen_CT_2030['Total Gen'].sum()
-        gen_OG_2030 = gen_OG_2030['Total Gen'].sum()
-        gen_Bio_2030 = gen_Bio_2030['Total Gen'].sum()
+    # 2040:
+    vGen_2040 = pd.read_csv(resultsFolder + resultsFolder2040 + 'vGenCE2040.csv')
+    vGen_2040.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+    vGen_2040 = vGen_2040.T
+    vGen_2040.columns = vGen_2040.iloc[0]
+    vGen_2040 = vGen_2040.drop(vGen_2040.index[0])
+    vGen_2040 = vGen_2040.reset_index()
+    vGen_2040.rename(columns={'index': 'Unit'}, inplace=True)
 
-        # 2040:
-        vGen_2040 = pd.read_csv(resultsFolder + 'vGenCE2040.csv')
-        genforCE2040_existing = pd.read_csv(resultsFolder + 'genFleetForCE2040.csv')
-        genforCE2040_existing = genforCE2040_existing[['PlantType']]
+    genforCE2040_existing = pd.read_csv(resultsFolder + resultsFolder2040 + 'genFleetForCE2040.csv')
+    genforCE2040_existing = genforCE2040_existing[['PlantType']]
 
-        vGen_2040['Total Gen'] = vGen_2040.iloc[:, 1:].sum(axis=1)
-        vGen_2040_temp = vGen_2040[['Total Gen']]
-        vGen_2040_temp['PlantType'] = genforCE2040_existing
-        vGen_2040 = vGen_2040_temp
-        gen_CoalSteam_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Coal Steam']
-        gen_CC_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Combined Cycle']
-        gen_CCCCS_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Combined Cycle CCS']
-        gen_CT_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Combustion Turbine']
-        gen_OG_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'O/G Steam']
-        gen_Bio_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Biomass']
-        gen_Bat_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Energy Storage']
-        gen_H2_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Hydrogen']
-        gen_Nuclear_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Nuclear']
-        gen_DAC_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'DAC']
-        gen_Solar_2040 = vGen_2040[vGen_2040['PlantType'].str.contains('solar')]
-        gen_Wind_2040 = vGen_2040[vGen_2040['PlantType'].str.contains('wind')]
+    vGen_2040['Total Gen'] = vGen_2040.iloc[:, 1:].sum(axis=1)
+    vGen_2040 = vGen_2040[['Total Gen']]
+    vGen_2040['PlantType'] = genforCE2040_existing
 
-        gen_CoalSteam_2040 = gen_CoalSteam_2040['Total Gen'].sum()
-        gen_CC_2040 = gen_CC_2040['Total Gen'].sum()
-        gen_CCCCS_2040 = gen_CCCCS_2040['Total Gen'].sum()
-        gen_Bat_2040 = gen_Bat_2040['Total Gen'].sum()
-        gen_H2_2040 = gen_H2_2040['Total Gen'].sum()
-        gen_Nuclear_2040 = gen_Nuclear_2040['Total Gen'].sum()
-        gen_Solar_2040 = gen_Solar_2040['Total Gen'].sum()
-        gen_Wind_2040 = gen_Wind_2040['Total Gen'].sum()
-        gen_DAC_2040 = gen_DAC_2040['Total Gen'].sum()
-        gen_CT_2040 = gen_CT_2040['Total Gen'].sum()
-        gen_OG_2040 = gen_OG_2040['Total Gen'].sum()
-        gen_Bio_2040 = gen_Bio_2040['Total Gen'].sum()
+    gen_CoalSteam_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Coal Steam']
+    gen_CC_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Combined Cycle']
+    gen_CCCCS_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Combined Cycle CCS']
+    gen_CT_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Combustion Turbine']
+    gen_OG_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'O/G Steam']
+    gen_Bio_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Biomass']
+    gen_Bat_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Energy Storage']
+    gen_H2_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Hydrogen']
+    gen_Nuclear_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'Nuclear']
+    gen_DAC_2040 = vGen_2040.loc[vGen_2040['PlantType'] == 'DAC']
+    gen_Solar_2040 = vGen_2040[vGen_2040['PlantType'].str.contains('solar')]
+    gen_Wind_2040 = vGen_2040[vGen_2040['PlantType'].str.contains('wind')]
 
-        # New generation:
-        # 2030:
-        vGen_new_2030 = pd.read_csv(resultsFolder + 'vGentechCE2030.csv')
-        vGen_new_2030['Total Gen'] = vGen_new_2030.iloc[:, 1:].sum(axis=1)
-        vGen_new_2030_temp = vGen_new_2030[['Total Gen', 'GAMS Symbol']]
-        vGen_new_2030 = vGen_new_2030_temp
-        gen_CoalSteam_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'] == 'Coal Steam CCS']
-        gen_CC_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'] == 'Combined Cycle']
-        gen_CCCCS_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'] == 'Combined Cycle CCS']
-        gen_Bat_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'] == 'Battery Storage']
-        gen_H2_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'] == 'Hydrogen']
-        gen_Nuclear_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'] == 'Nuclear']
-        gen_DAC_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'] == 'DAC']
-        gen_Solar_new_2030 = vGen_new_2030[vGen_new_2030['GAMS Symbol'].str.contains('solar')]
-        gen_Wind_new_2030 = vGen_new_2030[vGen_new_2030['GAMS Symbol'].str.contains('wind')]
+    gen_CoalSteam_2040 = gen_CoalSteam_2040['Total Gen'].sum()
+    gen_CC_2040 = gen_CC_2040['Total Gen'].sum()
+    gen_CCCCS_2040 = gen_CCCCS_2040['Total Gen'].sum()
+    gen_Bat_2040 = gen_Bat_2040['Total Gen'].sum()
+    gen_H2_2040 = gen_H2_2040['Total Gen'].sum()
+    gen_Nuclear_2040 = gen_Nuclear_2040['Total Gen'].sum()
+    gen_Solar_2040 = gen_Solar_2040['Total Gen'].sum()
+    gen_Wind_2040 = gen_Wind_2040['Total Gen'].sum()
+    gen_DAC_2040 = gen_DAC_2040['Total Gen'].sum()
+    gen_CT_2040 = gen_CT_2040['Total Gen'].sum()
+    gen_OG_2040 = gen_OG_2040['Total Gen'].sum()
+    gen_Bio_2040 = gen_Bio_2040['Total Gen'].sum()
 
-        gen_CoalSteam_new_2030 = gen_CoalSteam_new_2030['Total Gen'].sum()
-        gen_CC_new_2030 = gen_CC_new_2030['Total Gen'].sum()
-        gen_CCCCS_new_2030 = gen_CCCCS_new_2030['Total Gen'].sum()
-        gen_Bat_new_2030 = gen_Bat_new_2030['Total Gen'].sum()
-        gen_H2_new_2030 = gen_H2_new_2030['Total Gen'].sum()
-        gen_Nuclear_new_2030 = gen_Nuclear_new_2030['Total Gen'].sum()
-        gen_Solar_new_2030 = gen_Solar_new_2030['Total Gen'].sum()
-        gen_Wind_new_2030 = gen_Wind_new_2030['Total Gen'].sum()
-        gen_DAC_new_2030 = gen_DAC_new_2030['Total Gen'].sum()
+    # New generation:
+    # 2030:
+    vGen_new_2030 = pd.read_csv(resultsFolder + resultsFolder2030 + 'vGentechCE2030.csv')
+    vGen_new_2030.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+    vGen_new_2030 = vGen_new_2030.T
+    vGen_new_2030.columns = vGen_new_2030.iloc[0]
+    vGen_new_2030 = vGen_new_2030.drop(vGen_new_2030.index[0])
+    vGen_new_2030 = vGen_new_2030.reset_index()
+    vGen_new_2030.rename(columns={'index': 'GAMS Symbol'}, inplace=True)
 
-        # 2040:
-        vGen_new_2040 = pd.read_csv(resultsFolder + 'vGentechCE2040.csv')
-        vGen_new_2040['Total Gen'] = vGen_new_2040.iloc[:, 1:].sum(axis=1)
-        vGen_new_2040_temp = vGen_new_2040[['Total Gen', 'GAMS Symbol']]
-        vGen_new_2040 = vGen_new_2040_temp
-        gen_CoalSteam_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'] == 'Coal Steam CCS']
-        gen_CC_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'] == 'Combined Cycle']
-        gen_CCCCS_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'] == 'Combined Cycle CCS']
-        gen_Bat_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'] == 'Battery Storage']
-        gen_H2_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'] == 'Hydrogen']
-        gen_Nuclear_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'] == 'Nuclear']
-        gen_DAC_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'] == 'DAC']
-        gen_Solar_new_2040 = vGen_new_2040[vGen_new_2040['GAMS Symbol'].str.contains('solar')]
-        gen_Wind_new_2040 = vGen_new_2040[vGen_new_2040['GAMS Symbol'].str.contains('wind')]
+    vGen_new_2030['Total Gen'] = vGen_new_2030.iloc[:, 1:].sum(axis=1)
+    vGen_new_2030 = vGen_new_2030[['Total Gen', 'GAMS Symbol']]
 
-        gen_CoalSteam_new_2040 = gen_CoalSteam_new_2040['Total Gen'].sum()
-        gen_CC_new_2040 = gen_CC_new_2040['Total Gen'].sum()
-        gen_CCCCS_new_2040 = gen_CCCCS_new_2040['Total Gen'].sum()
-        gen_Bat_new_2040 = gen_Bat_new_2040['Total Gen'].sum()
-        gen_H2_new_2040 = gen_H2_new_2040['Total Gen'].sum()
-        gen_Nuclear_new_2040 = gen_Nuclear_new_2040['Total Gen'].sum()
-        gen_Solar_new_2040 = gen_Solar_new_2040['Total Gen'].sum()
-        gen_Wind_new_2040 = gen_Wind_new_2040['Total Gen'].sum()
-        gen_DAC_new_2040 = gen_DAC_new_2040['Total Gen'].sum()
+    gen_CoalSteam_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'].str.contains('Coal Steam CCS')]
+    gen_CC_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'].str.contains('Combined Cycle')]
+    gen_CCCCS_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'].str.contains('Combined Cycle CCS')]
+    gen_Bat_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'].str.contains('Battery Storage')]
+    gen_H2_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'].str.contains('Hydrogen')]
+    gen_Nuclear_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'].str.contains('Nuclear')]
+    gen_DAC_new_2030 = vGen_new_2030.loc[vGen_new_2030['GAMS Symbol'].str.contains('DAC')]
+    gen_Solar_new_2030 = vGen_new_2030[vGen_new_2030['GAMS Symbol'].str.contains('solar')]
+    gen_Wind_new_2030 = vGen_new_2030[vGen_new_2030['GAMS Symbol'].str.contains('wind')]
 
-    else:
-        vZannual_2030 = 0
-        vZannual_2040 = 0
-        vVarcostannual_2030 = 0
-        vVarcostannual_2040 = 0
-        vFixedcostannual_2030 = 0
-        vFixedcostannual_2040 = 0
+    gen_CoalSteam_new_2030 = gen_CoalSteam_new_2030['Total Gen'].sum()
+    gen_CC_new_2030 = gen_CC_new_2030['Total Gen'].sum()
+    gen_CCCCS_new_2030 = gen_CCCCS_new_2030['Total Gen'].sum()
+    gen_Bat_new_2030 = gen_Bat_new_2030['Total Gen'].sum()
+    gen_H2_new_2030 = gen_H2_new_2030['Total Gen'].sum()
+    gen_Nuclear_new_2030 = gen_Nuclear_new_2030['Total Gen'].sum()
+    gen_Solar_new_2030 = gen_Solar_new_2030['Total Gen'].sum()
+    gen_Wind_new_2030 = gen_Wind_new_2030['Total Gen'].sum()
+    gen_DAC_new_2030 = gen_DAC_new_2030['Total Gen'].sum()
+    gen_CC_new_2030 = gen_CC_new_2030 - gen_CCCCS_new_2030
 
-        CoalCCS_2030 = 0
-        CC_2030 = 0
-        CCCCS_2030 = 0
-        Nuclear_2030 = 0
-        Hydrogen_2030 = 0
-        Battery_2030 = 0
-        DAC_2030 = 0
-        Wind_2030 = 0
-        Solar_2030 = 0
+    # 2040:
+    vGen_new_2040 = pd.read_csv(resultsFolder + resultsFolder2040 + 'vGentechCE2040.csv')
+    vGen_new_2040.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+    vGen_new_2040 = vGen_new_2040.T
+    vGen_new_2040.columns = vGen_new_2040.iloc[0]
+    vGen_new_2040 = vGen_new_2040.drop(vGen_new_2040.index[0])
+    vGen_new_2040 = vGen_new_2040.reset_index()
+    vGen_new_2040.rename(columns={'index': 'GAMS Symbol'}, inplace=True)
 
-        CoalCCS_2040 = 0
-        CC_2040 = 0
-        CCCCS_2040 = 0
-        Nuclear_2040 = 0
-        Hydrogen_2040 = 0
-        Battery_2040 = 0
-        DAC_2040 = 0
-        Wind_2040 = 0
-        Solar_2040 = 0
+    vGen_new_2040['Total Gen'] = vGen_new_2040.iloc[:, 1:].sum(axis=1)
+    vGen_new_2040 = vGen_new_2040[['Total Gen', 'GAMS Symbol']]
 
-        gen_CoalSteam_2030 = 0
-        gen_CC_2030 = 0
-        gen_CCCCS_2030 = 0
-        gen_Bat_2030 = 0
-        gen_H2_2030 = 0
-        gen_Nuclear_2030 = 0
-        gen_Solar_2030 = 0
-        gen_Wind_2030 = 0
-        gen_DAC_2030 = 0
-        gen_CT_2030 = 0
-        gen_OG_2030 = 0
-        gen_Bio_2030 = 0
+    gen_CoalSteam_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'].str.contains('Coal Steam CCS')]
+    gen_CC_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'].str.contains('Combined Cycle')]
+    gen_CCCCS_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'].str.contains('Combined Cycle CCS')]
+    gen_Bat_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'].str.contains('Battery Storage')]
+    gen_H2_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'].str.contains('Hydrogen')]
+    gen_Nuclear_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'].str.contains('Nuclear')]
+    gen_DAC_new_2040 = vGen_new_2040.loc[vGen_new_2040['GAMS Symbol'].str.contains('DAC')]
+    gen_Solar_new_2040 = vGen_new_2040[vGen_new_2040['GAMS Symbol'].str.contains('solar')]
+    gen_Wind_new_2040 = vGen_new_2040[vGen_new_2040['GAMS Symbol'].str.contains('wind')]
 
-        gen_CoalSteam_2040 = 0
-        gen_CC_2040 = 0
-        gen_CCCCS_2040 = 0
-        gen_Bat_2040 = 0
-        gen_H2_2040 = 0
-        gen_Nuclear_2040 = 0
-        gen_Solar_2040 = 0
-        gen_Wind_2040 = 0
-        gen_DAC_2040 = 0
-        gen_CT_2040 = 0
-        gen_OG_2040 = 0
-        gen_Bio_2040 = 0
-
-        gen_CoalSteam_new_2030 = 0
-        gen_CC_new_2030 = 0
-        gen_CCCCS_new_2030 = 0
-        gen_Bat_new_2030 = 0
-        gen_H2_new_2030 = 0
-        gen_Nuclear_new_2030 = 0
-        gen_Solar_new_2030 = 0
-        gen_Wind_new_2030 = 0
-        gen_DAC_new_2030 = 0
-
-        gen_CoalSteam_new_2040 = 0
-        gen_CC_new_2040 = 0
-        gen_CCCCS_new_2040 = 0
-        gen_Bat_new_2040 = 0
-        gen_H2_new_2040 = 0
-        gen_Nuclear_new_2040 = 0
-        gen_Solar_new_2040 = 0
-        gen_Wind_new_2040 = 0
-        gen_DAC_new_2040 = 0
+    gen_CoalSteam_new_2040 = gen_CoalSteam_new_2040['Total Gen'].sum()
+    gen_CC_new_2040 = gen_CC_new_2040['Total Gen'].sum()
+    gen_CCCCS_new_2040 = gen_CCCCS_new_2040['Total Gen'].sum()
+    gen_Bat_new_2040 = gen_Bat_new_2040['Total Gen'].sum()
+    gen_H2_new_2040 = gen_H2_new_2040['Total Gen'].sum()
+    gen_Nuclear_new_2040 = gen_Nuclear_new_2040['Total Gen'].sum()
+    gen_Solar_new_2040 = gen_Solar_new_2040['Total Gen'].sum()
+    gen_Wind_new_2040 = gen_Wind_new_2040['Total Gen'].sum()
+    gen_DAC_new_2040 = gen_DAC_new_2040['Total Gen'].sum()
+    gen_CC_new_2040 = gen_CC_new_2040 - gen_CCCCS_new_2040
 
 
     # Costs:
-    vZannual_2050 = pd.read_csv(resultsFolder + 'vZannualCE2050.csv', header=None)
-    vVarcostannual_2050 = pd.read_csv(resultsFolder + 'vVarcostannualCE2050.csv', header=None)
+    vZannual_2050 = pd.read_csv(resultsFolder + resultsFolder2050 + 'vZannualCE2050.csv', header=None)
+    vVarcostannual_2050 = pd.read_csv(resultsFolder + resultsFolder2050 + 'vVarcostannualCE2050.csv', header=None)
 
     vZannual_2050 = vZannual_2050.iloc[0,0]/1000
     vVarcostannual_2050 = vVarcostannual_2050.iloc[0, 0] / 1000
@@ -368,18 +326,24 @@ def results_summary(case_to_run, zeroSys, planningDACs, elect_demand):
 
     # Generation:
     # read in existing plant type solution:
-    vGen_2050 = pd.read_csv(resultsFolder + 'vGenCE2050.csv')
+    vGen_2050 = pd.read_csv(resultsFolder + resultsFolder2050 + 'vGenCE2050.csv')
+    vGen_2050.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+    vGen_2050 = vGen_2050.T
+    vGen_2050.columns = vGen_2050.iloc[0]
+    vGen_2050 = vGen_2050.drop(vGen_2050.index[0])
+    vGen_2050 = vGen_2050.reset_index()
+    vGen_2050.rename(columns={'index': 'Unit'}, inplace=True)
 
     # read in plant type for existing generation:
-    genforCE2050_existing = pd.read_csv(resultsFolder + 'genFleetForCE2050.csv')
+    genforCE2050_existing = pd.read_csv(resultsFolder + resultsFolder2050 + 'genFleetForCE2050.csv')
     genforCE2050_existing = genforCE2050_existing[['PlantType']]
 
     # Generation:
     # 2050:
     vGen_2050['Total Gen'] = vGen_2050.iloc[:, 1:].sum(axis=1)
-    vGen_2050_temp = vGen_2050[['Total Gen']]
-    vGen_2050_temp['PlantType'] = genforCE2050_existing
-    vGen_2050 = vGen_2050_temp
+    vGen_2050 = vGen_2050[['Total Gen']]
+    vGen_2050['PlantType'] = genforCE2050_existing
+
     gen_CoalSteam_2050 = vGen_2050.loc[vGen_2050['PlantType'] == 'Coal Steam']
     gen_CC_2050 = vGen_2050.loc[vGen_2050['PlantType'] == 'Combined Cycle']
     gen_CCCCS_2050 = vGen_2050.loc[vGen_2050['PlantType'] == 'Combined Cycle CCS']
@@ -408,19 +372,25 @@ def results_summary(case_to_run, zeroSys, planningDACs, elect_demand):
 
     # New generation:
     # read in new plant type generation:
-    vGen_new_2050 = pd.read_csv(resultsFolder + 'vGentechCE2050.csv')
+    vGen_new_2050 = pd.read_csv(resultsFolder + resultsFolder2050 + 'vGentechCE2050.csv')
+    vGen_new_2050.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+    vGen_new_2050 = vGen_new_2050.T
+    vGen_new_2050.columns = vGen_new_2050.iloc[0]
+    vGen_new_2050 = vGen_new_2050.drop(vGen_new_2050.index[0])
+    vGen_new_2050 = vGen_new_2050.reset_index()
+    vGen_new_2050.rename(columns={'index': 'GAMS Symbol'}, inplace=True)
 
     # 2050:
     vGen_new_2050['Total Gen'] = vGen_new_2050.iloc[:, 1:].sum(axis=1)
-    vGen_new_2050_temp = vGen_new_2050[['Total Gen', 'GAMS Symbol']]
-    vGen_new_2050 = vGen_new_2050_temp
-    gen_CoalSteam_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'] == 'Coal Steam CCS']
-    gen_CC_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'] == 'Combined Cycle']
-    gen_CCCCS_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'] == 'Combined Cycle CCS']
-    gen_Bat_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'] == 'Battery Storage']
-    gen_H2_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'] == 'Hydrogen']
-    gen_Nuclear_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'] == 'Nuclear']
-    gen_DAC_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'] == 'DAC']
+    vGen_new_2050 = vGen_new_2050[['Total Gen', 'GAMS Symbol']]
+
+    gen_CoalSteam_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'].str.contains('Coal Steam CCS')]
+    gen_CC_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'].str.contains('Combined Cycle')]
+    gen_CCCCS_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'].str.contains('Combined Cycle CCS')]
+    gen_Bat_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'].str.contains('Battery Storage')]
+    gen_H2_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'].str.contains('Hydrogen')]
+    gen_Nuclear_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'].str.contains('Nuclear')]
+    gen_DAC_new_2050 = vGen_new_2050.loc[vGen_new_2050['GAMS Symbol'].str.contains('DAC')]
     gen_Solar_new_2050 = vGen_new_2050[vGen_new_2050['GAMS Symbol'].str.contains('solar')]
     gen_Wind_new_2050 = vGen_new_2050[vGen_new_2050['GAMS Symbol'].str.contains('wind')]
 
@@ -433,6 +403,7 @@ def results_summary(case_to_run, zeroSys, planningDACs, elect_demand):
     gen_Solar_new_2050 = gen_Solar_new_2050['Total Gen'].sum()
     gen_Wind_new_2050 = gen_Wind_new_2050['Total Gen'].sum()
     gen_DAC_new_2050 = gen_DAC_new_2050['Total Gen'].sum()
+    gen_CC_new_2050 = gen_CC_new_2050 - gen_CCCCS_new_2050
 
     # Write in excel:
     result_sheet_CE.write("A2", "Coal Steam CCS")
@@ -616,5 +587,192 @@ def results_summary(case_to_run, zeroSys, planningDACs, elect_demand):
     result_sheet_Generation_new.write("E8", gen_Bat_new_2030 + gen_Bat_new_2040 + gen_Bat_new_2050)
     result_sheet_Generation_new.write("E9", gen_H2_new_2030 + gen_H2_new_2040 + gen_H2_new_2050)
     result_sheet_Generation_new.write("E10", gen_DAC_new_2030 + gen_DAC_new_2040 + gen_DAC_new_2050)
+
+    if planNESystem == 2050:
+        resultsFolder2060 = '\\2060' + 'CO2Cap' + str(int(co2EmsCapInFinalYear / 1e6)) + '\\CE\\'
+
+        # read in new capacity investment solution:
+        genFleetAfter2060 = pd.read_csv(resultsFolder + resultsFolder2060 + 'genFleetAfterCE2060.csv')
+        genFleetAfter2060 = genFleetAfter2060[genFleetAfter2060.YearAddedCE > 2050]
+
+        # Costs:
+        vZannual_2060 = pd.read_csv(resultsFolder + resultsFolder2060 + 'vZannualCE2060.csv', header=None)
+        vVarcostannual_2060 = pd.read_csv(resultsFolder + resultsFolder2060 + 'vVarcostannualCE2060.csv', header=None)
+        vZannual_2060 = vZannual_2060.iloc[0, 0] / 1000
+        vVarcostannual_2060 = vVarcostannual_2060.iloc[0, 0] / 1000
+        vFixedcostannual_2060 = vZannual_2060 - vVarcostannual_2060
+
+        result_sheet_cost.write("D1", "total Operating cost 2051 (million $)")
+        result_sheet_cost.write("E1", vVarcostannual_2060)
+
+        result_sheet_cost.write("D6", "total Fixed cost 2051 (million $)")
+        result_sheet_cost.write("E6", vFixedcostannual_2060)
+
+        result_sheet_cost.write("D12", "total cost 2051 (million $)")
+        result_sheet_cost.write("E12", vZannual_2060)
+
+        # CE:
+        genFleetAfter2060 = genFleetAfter2060[genFleetAfter2060.YearAddedCE == 2060]
+        genFleetAfter2060 = genFleetAfter2060[['PlantType', 'Capacity (MW)']]
+
+        CoalCCS_2060 = genFleetAfter2060[genFleetAfter2060['PlantType'].str.contains('Coal Steam CCS')]
+        CC_2060 = genFleetAfter2060.loc[genFleetAfter2060['PlantType'].str.contains('Combined Cycle')]
+        CCCCS_2060 = genFleetAfter2060.loc[genFleetAfter2060['PlantType'].str.contains('Combined Cycle CCS')]
+        Nuclear_2060 = genFleetAfter2060.loc[genFleetAfter2060['PlantType'].str.contains('Nuclear')]
+        Hydrogen_2060 = genFleetAfter2060.loc[genFleetAfter2060['PlantType'].str.contains('Hydrogen')]
+        Battery_2060 = genFleetAfter2060.loc[genFleetAfter2060['PlantType'].str.contains('Battery Storage')]
+        DAC_2060 = genFleetAfter2060.loc[genFleetAfter2060['PlantType'].str.contains('DAC')]
+        Wind_2060 = genFleetAfter2060[genFleetAfter2060['PlantType'].str.contains('wind')]
+        Solar_2060 = genFleetAfter2060[genFleetAfter2060['PlantType'].str.contains('solar')]
+
+        CoalCCS_2060 = CoalCCS_2060['Capacity (MW)'].sum()
+        CC_2060 = CC_2060['Capacity (MW)'].sum()
+        CCCCS_2060 = CCCCS_2060['Capacity (MW)'].sum()
+        Nuclear_2060 = Nuclear_2060['Capacity (MW)'].sum()
+        Hydrogen_2060 = Hydrogen_2060['Capacity (MW)'].sum()
+        Battery_2060 = Battery_2060['Capacity (MW)'].sum()
+        DAC_2060 = DAC_2060['Capacity (MW)'].sum()
+        Wind_2060 = Wind_2060['Capacity (MW)'].sum()
+        Solar_2060 = Solar_2060['Capacity (MW)'].sum()
+
+        # Existing Generation:
+        vGen_2060 = pd.read_csv(resultsFolder + resultsFolder2060 + 'vGenCE2060.csv')
+        vGen_2060.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+        vGen_2060 = vGen_2060.T
+        vGen_2060.columns = vGen_2060.iloc[0]
+        vGen_2060 = vGen_2060.drop(vGen_2060.index[0])
+        vGen_2060 = vGen_2060.reset_index()
+        vGen_2060.rename(columns={'index': 'Unit'}, inplace=True)
+
+        genforCE2060_existing = pd.read_csv(resultsFolder + resultsFolder2060 + 'genFleetForCE2060.csv')
+        genforCE2060_existing = genforCE2060_existing[['PlantType']]
+
+        vGen_2060['Total Gen'] = vGen_2060.iloc[:, 1:].sum(axis=1)
+        vGen_2060 = vGen_2060[['Total Gen']]
+        vGen_2060['PlantType'] = genforCE2060_existing
+
+        gen_CoalSteam_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Coal Steam']
+        gen_CC_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Combined Cycle']
+        gen_CCCCS_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Combined Cycle CCS']
+        gen_CT_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Combustion Turbine']
+        gen_OG_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'O/G Steam']
+        gen_Bio_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Biomass']
+        gen_Bat_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Energy Storage']
+        gen_H2_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Hydrogen']
+        gen_Nuclear_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'Nuclear']
+        gen_DAC_2060 = vGen_2060.loc[vGen_2060['PlantType'] == 'DAC']
+        gen_Solar_2060 = vGen_2060[vGen_2060['PlantType'].str.contains('solar')]
+        gen_Wind_2060 = vGen_2060[vGen_2060['PlantType'].str.contains('wind')]
+
+        gen_CoalSteam_2060 = gen_CoalSteam_2060['Total Gen'].sum()
+        gen_CC_2060 = gen_CC_2060['Total Gen'].sum()
+        gen_CCCCS_2060 = gen_CCCCS_2060['Total Gen'].sum()
+        gen_Bat_2060 = gen_Bat_2060['Total Gen'].sum()
+        gen_H2_2060 = gen_H2_2060['Total Gen'].sum()
+        gen_Nuclear_2060 = gen_Nuclear_2060['Total Gen'].sum()
+        gen_Solar_2060 = gen_Solar_2060['Total Gen'].sum()
+        gen_Wind_2060 = gen_Wind_2060['Total Gen'].sum()
+        gen_DAC_2060 = gen_DAC_2060['Total Gen'].sum()
+        gen_CT_2060 = gen_CT_2060['Total Gen'].sum()
+        gen_OG_2060 = gen_OG_2060['Total Gen'].sum()
+        gen_Bio_2060 = gen_Bio_2060['Total Gen'].sum()
+
+        # New generation:
+        vGen_new_2060 = pd.read_csv(resultsFolder + resultsFolder2060 + 'vGentechCE2060.csv')
+        vGen_new_2060.rename(columns={'Unnamed: 0': 'hour'}, inplace=True)
+        vGen_new_2060 = vGen_new_2060.T
+        vGen_new_2060.columns = vGen_new_2060.iloc[0]
+        vGen_new_2060 = vGen_new_2060.drop(vGen_new_2060.index[0])
+        vGen_new_2060 = vGen_new_2060.reset_index()
+        vGen_new_2060.rename(columns={'index': 'GAMS Symbol'}, inplace=True)
+
+        vGen_new_2060['Total Gen'] = vGen_new_2060.iloc[:, 1:].sum(axis=1)
+        vGen_new_2060 = vGen_new_2060[['Total Gen', 'GAMS Symbol']]
+
+        gen_CoalSteam_new_2060 = vGen_new_2060.loc[vGen_new_2060['GAMS Symbol'].str.contains('Coal Steam CCS')]
+        gen_CC_new_2060 = vGen_new_2060.loc[vGen_new_2060['GAMS Symbol'].str.contains('Combined Cycle')]
+        gen_CCCCS_new_2060 = vGen_new_2060.loc[vGen_new_2060['GAMS Symbol'].str.contains('Combined Cycle CCS')]
+        gen_Bat_new_2060 = vGen_new_2060.loc[vGen_new_2060['GAMS Symbol'].str.contains('Battery Storage')]
+        gen_H2_new_2060 = vGen_new_2060.loc[vGen_new_2060['GAMS Symbol'].str.contains('Hydrogen')]
+        gen_Nuclear_new_2060 = vGen_new_2060.loc[vGen_new_2060['GAMS Symbol'].str.contains('Nuclear')]
+        gen_DAC_new_2060 = vGen_new_2060.loc[vGen_new_2060['GAMS Symbol'].str.contains('DAC')]
+        gen_Solar_new_2060 = vGen_new_2060[vGen_new_2060['GAMS Symbol'].str.contains('solar')]
+        gen_Wind_new_2060 = vGen_new_2060[vGen_new_2060['GAMS Symbol'].str.contains('wind')]
+
+        gen_CoalSteam_new_2060 = gen_CoalSteam_new_2060['Total Gen'].sum()
+        gen_CC_new_2060 = gen_CC_new_2060['Total Gen'].sum()
+        gen_CCCCS_new_2060 = gen_CCCCS_new_2060['Total Gen'].sum()
+        gen_Bat_new_2060 = gen_Bat_new_2060['Total Gen'].sum()
+        gen_H2_new_2060 = gen_H2_new_2060['Total Gen'].sum()
+        gen_Nuclear_new_2060 = gen_Nuclear_new_2060['Total Gen'].sum()
+        gen_Solar_new_2060 = gen_Solar_new_2060['Total Gen'].sum()
+        gen_Wind_new_2060 = gen_Wind_new_2060['Total Gen'].sum()
+        gen_DAC_new_2060 = gen_DAC_new_2060['Total Gen'].sum()
+        gen_CC_new_2060 = gen_CC_new_2060 - gen_CCCCS_new_2060
+
+        # Write in excel:
+        result_sheet_CE.write("G1", "2051")
+        result_sheet_CE.write("H1", "Total (including 2051)")
+
+        result_sheet_CE.write("G2", CoalCCS_2060)
+        result_sheet_CE.write("G3", CC_2060)
+        result_sheet_CE.write("G4", CCCCS_2060)
+        result_sheet_CE.write("G5", Nuclear_2060)
+        result_sheet_CE.write("G6", Wind_2060)
+        result_sheet_CE.write("G7", Solar_2060)
+        result_sheet_CE.write("G8", Battery_2060)
+        result_sheet_CE.write("G9", Hydrogen_2060)
+        result_sheet_CE.write("G10", DAC_2060)
+
+        result_sheet_CE.write("H2", CoalCCS_2030 + CoalCCS_2040 + CoalCCS_2050 + CoalCCS_2060)
+        result_sheet_CE.write("H3", CC_2030 + CC_2040 + CC_2050 + CC_2060)
+        result_sheet_CE.write("H4", CCCCS_2030 + CCCCS_2040 + CCCCS_2050 + CCCCS_2060)
+        result_sheet_CE.write("H5", Nuclear_2030 + Nuclear_2040 + Nuclear_2050 + Nuclear_2060)
+        result_sheet_CE.write("H6", Wind_2030 + Wind_2040 + Wind_2050 + Wind_2060)
+        result_sheet_CE.write("H7", Solar_2030 + Solar_2040 + Solar_2050 + Solar_2060)
+        result_sheet_CE.write("H8", Battery_2030 + Battery_2040 + Battery_2050 + Battery_2060)
+        result_sheet_CE.write("H9", Hydrogen_2030 + Hydrogen_2040 + Hydrogen_2050 + Hydrogen_2060)
+        result_sheet_CE.write("H10", DAC_2030 + DAC_2040 + DAC_2050 + DAC_2060)
+
+        # Generation:
+        result_sheet_Generation.write("G1", "2051")
+        result_sheet_Generation.write("H1", "Total (including 2051")
+
+        result_sheet_Generation.write("G2", gen_CoalSteam_2060)
+        result_sheet_Generation.write("G3", gen_CC_2060)
+        result_sheet_Generation.write("G4", gen_CCCCS_2060)
+        result_sheet_Generation.write("G5", gen_Nuclear_2060)
+        result_sheet_Generation.write("G6", gen_Wind_2060)
+        result_sheet_Generation.write("G7", gen_Solar_2060)
+        result_sheet_Generation.write("G8", gen_Bat_2060)
+        result_sheet_Generation.write("G9", gen_H2_2060)
+        result_sheet_Generation.write("G10", gen_DAC_2060)
+        result_sheet_Generation.write("G11", gen_CT_2060)
+        result_sheet_Generation.write("G12", gen_OG_2060)
+        result_sheet_Generation.write("G13", gen_Bio_2060)
+
+        # new Generation:
+        result_sheet_Generation_new.write("G1", "2051")
+        result_sheet_Generation_new.write("H1", "Total (including 2051)")
+
+        result_sheet_Generation_new.write("G2", gen_CoalSteam_new_2060)
+        result_sheet_Generation_new.write("G3", gen_CC_new_2060)
+        result_sheet_Generation_new.write("G4", gen_CCCCS_new_2060)
+        result_sheet_Generation_new.write("G5", gen_Nuclear_new_2060)
+        result_sheet_Generation_new.write("G6", gen_Wind_new_2060)
+        result_sheet_Generation_new.write("G7", gen_Solar_new_2060)
+        result_sheet_Generation_new.write("G8", gen_Bat_new_2060)
+        result_sheet_Generation_new.write("G9", gen_H2_new_2060)
+        result_sheet_Generation_new.write("G10", gen_DAC_new_2060)
+
+        result_sheet_Generation_new.write("H2", gen_CoalSteam_new_2030 + gen_CoalSteam_new_2040 + gen_CoalSteam_new_2050 + gen_CoalSteam_new_2060)
+        result_sheet_Generation_new.write("H3", gen_CC_new_2030 + gen_CC_new_2040 + gen_CC_new_2050 + gen_CC_new_2060)
+        result_sheet_Generation_new.write("H4", gen_CCCCS_new_2030 + gen_CCCCS_new_2040 + gen_CCCCS_new_2050 + gen_CCCCS_new_2060)
+        result_sheet_Generation_new.write("H5", gen_Nuclear_new_2030 + gen_Nuclear_new_2040 + gen_Nuclear_new_2050 + gen_Nuclear_new_2060)
+        result_sheet_Generation_new.write("H6", gen_Wind_new_2030 + gen_Wind_new_2040 + gen_Wind_new_2050 + gen_Wind_new_2060)
+        result_sheet_Generation_new.write("H7", gen_Solar_new_2030 + gen_Solar_new_2040 + gen_Solar_new_2050 + gen_Solar_new_2060)
+        result_sheet_Generation_new.write("H8", gen_Bat_new_2030 + gen_Bat_new_2040 + gen_Bat_new_2050 + gen_Bat_new_2060)
+        result_sheet_Generation_new.write("H9", gen_H2_new_2030 + gen_H2_new_2040 + gen_H2_new_2050 + gen_H2_new_2060)
+        result_sheet_Generation_new.write("H10", gen_DAC_new_2030 + gen_DAC_new_2040 + gen_DAC_new_2050 + gen_DAC_new_2060)
 
     results_book.close()

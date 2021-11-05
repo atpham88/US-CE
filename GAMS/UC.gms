@@ -14,7 +14,6 @@ Options
          ;
 
 $include EDAndUCSharedFeatures.gms
-$include StorageSetsParamsVariables.gms
 $include UCFeatures.gms
 
 Parameters

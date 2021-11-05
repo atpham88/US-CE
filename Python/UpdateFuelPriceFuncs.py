@@ -5,6 +5,7 @@
 from SetupGeneratorFleet import *
 
 def updateFuelPricesAndCosts(fleet,currYear,fuelPrices,regCostFrac):
+    if currYear > 2050: currYear = 2050
     fleet = addFuelPrices(fleet,currYear,fuelPrices)
     fleet = calcOpCost(fleet)
     fleet['RegOfferCost($/MW)'] = regCostFrac*fleet['OpCost($/MWh)']*fleet['RegOfferElig']

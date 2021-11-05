@@ -4,17 +4,18 @@
 
 #Inputs: gen fleet (2d list)
 def combineWindSolarStoPlants(genFleet):
-    genFleet = combinePlants(genFleet,'FuelType','Wind')
-    genFleet = combinePlants(genFleet,'FuelType','Solar')
-    print('**NOTE: Combining storage facilities in CombinePlants.py')
-    genFleet = combinePlants(genFleet,'PlantType','Battery Storage',True)
-    genFleet = combinePlants(genFleet,'PlantType','Hydrogen',True)
+    print('Combining storage facilities in CombinePlants.py')
+    for r in genFleet['region'].unique():
+        genFleet = combinePlantsByRegion(genFleet,'FuelType','Wind',r)
+        genFleet = combinePlantsByRegion(genFleet,'FuelType','Solar',r)
+        genFleet = combinePlantsByRegion(genFleet,'PlantType','Battery Storage',r,True)
+        genFleet = combinePlantsByRegion(genFleet,'PlantType','Hydrogen',r,True)
     return genFleet
 
 #Adds new combined unit, then removes other units
 #Inputs: gen fleet (2d list), fuel type to combine, plant type to combine
-def combinePlants(fleet,paramCombinedOn,fuelType,storage=False):
-    gens = fleet.loc[fleet[paramCombinedOn]==fuelType]
+def combinePlantsByRegion(fleet,paramCombinedOn,fuelType,r,storage=False):
+    gens = fleet.loc[(fleet[paramCombinedOn]==fuelType) & (fleet['region']==r)]
     if gens.shape[0] > 0:
         newRow = gens.iloc[-1].copy()
         newRow['Capacity (MW)'] = gens['Capacity (MW)'].sum()

@@ -10,23 +10,26 @@ from AuxFuncs import *
 #Inputs: gen fleet, demand profile (1d list of hourly demand values)
 #Outputs: gen fleet w/out hydro units, demand profile w/ average monthly 
 #hydro generation subtracted (1d list of hourly values)
-def removeHydroFromFleetAndDemand(genFleet,demandProfile):
+def removeHydroFromFleetAndDemand(genFleet,demand):
     eia923years = list(range(2016,2019))
     hydroRows,genFleet = genFleet.loc[genFleet['FuelType']=='Hydro'],genFleet.loc[genFleet['FuelType']!='Hydro']
-    # (hydroFleetRows,genFleetNoHydro) = getHydroRows(genFleet) #hydroFleetRows has fleet header & full fleet rows w/ hydro plants
-    demandMinusHydroGen = removeHydroGenFromDemand(hydroRows,demandProfile,eia923years)
+    demandMinusHydroGen = removeHydroGenFromDemand(hydroRows,demand,eia923years)
     return (genFleet,demandMinusHydroGen)
 ################################################################################
 
 ########### REMOVE HYDRO GENERATION FROM DEMAND ################################
 #Returns 1d list of demand minus average monthly hydro generation
-def removeHydroGenFromDemand(hydroRows,demandProfile,eia923years):
-    plantCapacs = hydroRows.groupby('ORIS Plant Code')['Capacity (MW)'].apply(lambda x: np.sum(x.astype(float))).reset_index()
-    plantCapacs.index = plantCapacs['ORIS Plant Code']
-    orisIDtoCapac = plantCapacs['Capacity (MW)'].to_dict()
-    hydroAvgMonthlyGen = getTotalHydroAvgMonthlyGen(orisIDtoCapac,eia923years)
-    hourlyHydroGen = expandMonthlyGenToHourly(hydroAvgMonthlyGen)
-    return list(map(operator.sub,demandProfile,hourlyHydroGen))
+def removeHydroGenFromDemand(allHydroRows,demand,eia923years):
+    for region in allHydroRows['region'].unique():
+        hydroRows = allHydroRows.loc[allHydroRows['region']==region]
+        plantCapacs = hydroRows.groupby('ORIS Plant Code')['Capacity (MW)'].apply(lambda x: np.sum(x.astype(float))).reset_index()
+        plantCapacs.index = plantCapacs['ORIS Plant Code']
+        orisIDtoCapac = plantCapacs['Capacity (MW)'].to_dict()
+        hydroAvgMonthlyGen = getTotalHydroAvgMonthlyGen(orisIDtoCapac,eia923years)
+        hourlyHydroGen = expandMonthlyGenToHourly(hydroAvgMonthlyGen)
+        assert(demand[region].shape[0] == len(hourlyHydroGen)) #make sure same length
+        demand[region] -= hourlyHydroGen
+    return demand
 
 #Get total average monthly hydro generation by getting monthly generation per year
 #for each unit, then adding average values.
@@ -103,5 +106,5 @@ def toNum(s):
     result = ""
     for segment in numSegments:
         result += segment
-    return float(result)
+    return float(result) if result != '.' else 0
 ################################################################################

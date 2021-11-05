@@ -8,19 +8,12 @@ import copy, os, pandas as pd, numpy as np
 from AuxFuncs import *
 
 ########### SELECT WEEKS FOR EXPANSION #########################################
-#Inputs: demand for current CE run (1d list w/out head), net demand for current CE run (1d list w/out head),
-#hourly wind and solar gen (1d lists w/out heads), num representative days per block,
-#current CE year.
-#Outputs: hourly demand, wind and solar values for CE (1d lists w/out headers),
-#and hour numbers for whole CE, representative per block, special days, and 
-#all other block hours (1d lists, all 1-8760 basis). 
-def getDemandForCE(demandWithGrowth,netDemand,hourlyWindGen,hourlySolarGen,daysPerRepBlock,
-                daysPerPeak,fullYearCE,currYear,resultsDir,numBlocks,demandYear,planningReserveMargin):
+def getHoursForCE(demand,netDemand,windGen,solarGen,daysPerRepBlock,
+                daysPerPeak,fullYearCE,currYear,resultsDir,numBlocks,metYear,planningReserveMargin):
     #Create dfs
-    dates = pd.date_range('1/1/'+str(demandYear)+' 0:00','12/31/' + str(demandYear) + ' 23:00',freq='H')
-    dates = dates[~((dates.month == 2) & (dates.day == 29))] #ditch leap day
-    dfNet = pd.DataFrame({'netDemand(MW)':netDemand},index=dates)
-    dfTotal = pd.DataFrame({'demand(MW)':demandWithGrowth},index=dates)
+    if currYear > 2050: currYear = 2050
+    dfTotal = pd.DataFrame(demand.sum(axis=1),columns=['demand(MW)'])
+    dfNet = pd.DataFrame(netDemand.sum(axis=1),columns=['netDemand(MW)'])
     prm = max(dfTotal['demand(MW)'])*(1+planningReserveMargin)
     #Create dictionary for representative and all demand per block
     specialBlocks = dict()
@@ -43,23 +36,14 @@ def getDemandForCE(demandWithGrowth,netDemand,hourlyWindGen,hourlySolarGen,daysP
     #Get all hours by going from dfs to 1-8760 values
     if len(blockRepNetDemand) == 1: #if running full year, add demand here
         blockRepNetDemand[0] = dfNoSpecial.loc[blockRepNetDemand[0].index]
-    (hoursForCE,allBlockHours,peakDemandHour,blockWeights,socScalars,blockNamesChronoList,
-        lastRepBlockNames,specialBlocksPrior) = getHours(specialBlocks,blockRepNetDemand,dates,blockWeights,daysPerRepBlock)
-    write2dListToCSV([[k,v] for k,v in socScalars.items()],os.path.join(resultsDir,'socScalars'+str(currYear)+'.csv'))
-    l = list()
-    for k,v in allBlockHours.items(): l.append([k]+v)
-    write2dListToCSV(l,os.path.join(resultsDir,'hoursCEByBlock'+str(currYear)+'.csv'))
-    #Extract demand values
-    (demandCE,hourlyWindGenCE,hourlySolarGenCE) = isolateDemandAndREGenForCE(hoursForCE,
-            demandWithGrowth,list(hourlyWindGen.sum(axis=1).values),list(hourlySolarGen.sum(axis=1).values))
-    return (demandCE,hourlyWindGenCE,hourlySolarGenCE,hoursForCE,allBlockHours,
-            prm,blockWeights,socScalars,peakDemandHour,blockNamesChronoList,lastRepBlockNames,specialBlocksPrior)
+    (allBlockHours,peakDemandHour,blockWeights,socScalars,blockNamesChronoList,lastRepBlockNames,
+        specialBlocksPrior) = getHours(specialBlocks,blockRepNetDemand,blockWeights,daysPerRepBlock)
+    return (allBlockHours['block'],prm,blockWeights,socScalars,peakDemandHour,blockNamesChronoList,lastRepBlockNames,specialBlocksPrior)
 
 ##### SELECT CE HOURS FOR DAY WITH PEAK DEMAND
 def getPeakDayHours(df,daysPerPeak,dfNoSpecial=None):
     days = list()
-    if dfNoSpecial is not None:
-        df = df[df.index.isin(dfNoSpecial.index)].dropna()
+    if dfNoSpecial is not None: df = df[df.index.isin(dfNoSpecial.index)].dropna()
     #Day w/ peak demand or net demand
     dfMax = df.loc[df.idxmax()].index
     #Find extra days on either side based on daysPerPeak
@@ -130,11 +114,20 @@ def getRMSE(sampleData,originalData):
     return np.sqrt(np.mean((sampleNLDC-originalNLDC)**2))
 
 #Convert dfs to hours 1-8760
-def getHours(specialBlocks,blockRepNetDemand,dates,blockWeights,daysPerRepBlock):
-    allPeriods,blockNames,blockWeightsAll,firstHours,blocks = sortAndRenameBlocks(specialBlocks,blockRepNetDemand,blockWeights)
+def getHours(specialBlocks,blockRepNetDemand,blockWeights,daysPerRepBlock):
+    #Sort and rename blocks
+    allBlockHours,blockNames,blockWeightsAll,firstHours,blocks = sortAndRenameBlocks(specialBlocks,blockRepNetDemand,blockWeights)
+
+    #Get SOC scalars between blocks for long-duration storage
     socScalarsAll,lastRepBlockNames,specialBlocksPrior = setSOCScalars(specialBlocks,firstHours,daysPerRepBlock)
-    hoursForCE,allHours,peakDemandHour = getHoursInBlocks(allPeriods,dates,blocks)
-    return hoursForCE,allHours,peakDemandHour,blockWeightsAll,socScalarsAll,blockNames,lastRepBlockNames,specialBlocksPrior
+    # hoursForCE,allHours,peakDemandHour = getHoursInBlocks(allPeriods,dates,blocks)
+
+    #Assign block names as column in hours DF
+    allBlockHours['block'] = ''
+    for b in blocks: allBlockHours.loc[blocks[b].index,'block'] = b
+    #Get hour with peak demand
+    peakDemandHour = allBlockHours['demand(MW)'].idxmax()
+    return allBlockHours,peakDemandHour,blockWeightsAll,socScalarsAll,blockNames,lastRepBlockNames,specialBlocksPrior
 
 def sortAndRenameBlocks(specialBlocks,blockRepNetDemand,blockWeights):
     blockWeightsAll = dict()
@@ -145,37 +138,10 @@ def sortAndRenameBlocks(specialBlocks,blockRepNetDemand,blockWeights):
     for b in allBlocks: firstHours.append(pd.Series([b],index=[allBlocks[b].index[0]]))
     firstHours = pd.concat(firstHours)
     firstHours = firstHours.sort_index()
-    #if firstHours.iloc[0] in specialBlocks:
-    #    firstHours1 = firstHours.iloc[1:]
-    #    firstHours2 = firstHours.iloc[0:1]
-    #    firstHours = pd.concat([firstHours1, firstHours2])
-    #if firstHours.iloc[0] in specialBlocks and firstHours.iloc[1] in specialBlocks:
-    #    firstHours1 = firstHours.iloc[2:]
-    #    firstHours2 = firstHours.iloc[0:2]
-    #    firstHours = pd.concat([firstHours1, firstHours2])
-    #if firstHours.iloc[0] in specialBlocks and firstHours.iloc[1] in specialBlocks and firstHours.iloc[2] in specialBlocks:
-    #    firstHours1 = firstHours.iloc[3:]
-    #    firstHours2 = firstHours.iloc[0:3]
-    #    firstHours = pd.concat([firstHours1, firstHours2])
-
-    #if firstHours.iloc[0] in specialBlocks and firstHours.iloc[1] in specialBlocks and firstHours.iloc[2] in specialBlocks:
-    #    firstHours1 = firstHours.iloc[3:]
-    #    firstHours2 = firstHours.iloc[0:3]
-    #    firstHours = pd.concat([firstHours1, firstHours2])
-    #elif firstHours.iloc[0] in specialBlocks and firstHours.iloc[1] in specialBlocks:
-    #    firstHours1 = firstHours.iloc[2:]
-    #    firstHours2 = firstHours.iloc[0:2]
-    #    firstHours = pd.concat([firstHours1, firstHours2])
-    #elif firstHours.iloc[0] in specialBlocks:
-    #    firstHours1 = firstHours.iloc[1:]
-    #    firstHours2 = firstHours.iloc[0:1]
-    #    firstHours = pd.concat([firstHours1, firstHours2])
-
     while firstHours.iloc[0] in specialBlocks:
         firstHours1 = firstHours.iloc[1:]
         firstHours2 = firstHours.iloc[0:1]
         firstHours = pd.concat([firstHours1, firstHours2])
-
     #firstHours df has 1 row for first hour of each block, sorted chronologically, w/
     #column giving block name
     blocks,blockNames,allPeriods,nameCtr = dict(),list(),list(),0
@@ -219,6 +185,33 @@ def setSOCScalars(specialBlocks,firstHours,daysPerRepBlock):
         nameCtr += 1
     return socScalarsAll,lastRepBlockNames,specialBlocksPrior
 
+# #Now sort all periods chronologically, get corresponding hour numbers, and save with new names
+# def getHoursInBlocks(allPeriods,dates,blocks):
+#     df = allPeriods.sort_index()
+#     hourNums = pd.DataFrame({'num':list(range(1,len(dates)+1))},index=dates)
+#     hourNums = hourNums.loc[df.index]
+#     hoursForCE = hourNums['num'].tolist()
+#     peakDemandHour = hourNums.loc[df['demand(MW)'].idxmax()].values[0]
+#     allHours = dict()
+#     for b in blocks: 
+#         hours = hourNums.loc[blocks[b].index]
+#         allHours[b] = hours['num'].tolist()
+#     return hoursForCE,allHours,peakDemandHour
+
+########### CALCULATE blockAL WEIGHTS TO SCALE REP. DEMAND TO block VALUE ####
+#Inputs: hourly demand in curr CE year (1d list w/out headers), 1d list of 
+#representative hours per block (1-8760 basis), 1d list of regular (i.e. non-rep) 
+#hours per block (1-8760 basis)
+#Outputs: map of block to weight to scale rep demand to full block demand (scalar)
+def calculateBlockWeights(dfTotal,blockRepNetDemand,blockAllNetDemand):
+    blockDemandWeights,weightsList = dict(),[['block','blockWeight']]
+    for block in blockRepNetDemand:
+        repDemand = dfTotal.loc[blockRepNetDemand[block].index].sum().values[0]
+        blockDemand = dfTotal.loc[blockAllNetDemand[block].index].sum().values[0]
+        blockDemandWeights[block] = blockDemand/repDemand
+        weightsList.append([block,blockDemandWeights[block]])
+    return blockDemandWeights,weightsList
+
 # def setSOCScalars(specialBlocks,firstHours,daysPerRepBlock):    
 #     socScalarsAll,lastRepBlockNames,nameCtr,specialBlocksPrior,specialBlocksPriorList = dict(),dict(),0,dict(),list()
 #     for i in range(firstHours.shape[0]):
@@ -241,39 +234,3 @@ def setSOCScalars(specialBlocks,firstHours,daysPerRepBlock):
 #     aa
 #     return socScalarsAll,lastRepBlockNames,specialBlocksPrior
         
-#Now sort all periods chronologically, get corresponding hour numbers, and save with new names
-def getHoursInBlocks(allPeriods,dates,blocks):
-    df = allPeriods.sort_index()
-    hourNums = pd.DataFrame({'num':list(range(1,len(dates)+1))},index=dates)
-    hourNums = hourNums.loc[df.index]
-    hoursForCE = hourNums['num'].tolist()
-    peakDemandHour = hourNums.loc[df['demand(MW)'].idxmax()].values[0]
-    allHours = dict()
-    for b in blocks: 
-        hours = hourNums.loc[blocks[b].index]
-        allHours[b] = hours['num'].tolist()
-    return hoursForCE,allHours,peakDemandHour
-
-##### ISOLATE DEMAND AND RE GENERATION FOR HOURS FOR CE
-#Inputs: hours for CE model (1-8760 basis, 1d list), hourly demand, wind and solar
-#for whole year for curr CE year (1d lists)
-#Outputs: hourly demand, wind & solar for next CE run (1d lists)
-def isolateDemandAndREGenForCE(hoursForCE,demandScaled,hourlyWindGen,hourlySolarGen):
-    demandCE = [demandScaled[hr-1] for hr in hoursForCE] #-1 b/c hours in year start @ 1, not 0 like Python idx
-    hourlyWindGenCE = [hourlyWindGen[hr-1] for hr in hoursForCE] #-1 b/c hours in year start @ 1, not 0 like Python idx
-    hourlySolarGenCE = [hourlySolarGen[hr-1] for hr in hoursForCE] #-1 b/c hours in year start @ 1, not 0 like Python idx
-    return (demandCE,hourlyWindGenCE,hourlySolarGenCE) 
-
-########### CALCULATE blockAL WEIGHTS TO SCALE REP. DEMAND TO block VALUE ####
-#Inputs: hourly demand in curr CE year (1d list w/out headers), 1d list of 
-#representative hours per block (1-8760 basis), 1d list of regular (i.e. non-rep) 
-#hours per block (1-8760 basis)
-#Outputs: map of block to weight to scale rep demand to full block demand (scalar)
-def calculateBlockWeights(dfTotal,blockRepNetDemand,blockAllNetDemand):
-    blockDemandWeights,weightsList = dict(),[['block','blockWeight']]
-    for block in blockRepNetDemand:
-        repDemand = dfTotal.loc[blockRepNetDemand[block].index].sum().values[0]
-        blockDemand = dfTotal.loc[blockAllNetDemand[block].index].sum().values[0]
-        blockDemandWeights[block] = blockDemand/repDemand
-        weightsList.append([block,blockDemandWeights[block]])
-    return blockDemandWeights,weightsList

@@ -33,19 +33,15 @@ def writeParameters(blockNamesChronoList,stoInCE,seasSto,ceOps):
    paramText,paramDefns = 'Parameters\n','\n'
    #Weights to scale up costs and emissions
    for nB in blockNamesChronoList: paramText += '\tpWeight' + createHourSubsetName(nB) + '\n'
-   #Init SOC and init hours
+   #Init SOC parameters, initial hour, and final hour parameters
    if stoInCE:
+      for et in ['storageegu','storagetech']: paramText += createNameWithSets('pInitSOC',et) + '\n'
       for nB in blockNamesChronoList: 
          nBInitHour = createInitHourName(nB)
          nBFinalHour = createFinalHourName(nB)
          paramText += '\t' + nBInitHour + '\n' + '\t' + nBFinalHour + '\n'
          if seasSto:
             paramText += '\tpSOCScalar{0}\n'.format(createHourSubsetName(nB)) if nB != blockNamesChronoList[0] else '' #no SOC scalar for first block
-         for et in ['storageegu','storagetech']:
-            if not seasSto: 
-               paramText += createNameWithSets(createInitSOCName(nB),et) + '\n'
-            elif seasSto and nB == blockNamesChronoList[0]:
-               paramText += createNameWithSets(createInitSOCName(nB),et) + '\n'
          paramDefns += nBInitHour + ' = smin(h$' + createHourSubsetName(nB) + '(h),ord(h));\n'
          paramDefns += nBFinalHour + ' = smax(h$' + createHourSubsetName(nB) + '(h),ord(h));\n'
          if ceOps == 'UC': paramText += 'pOnoroffinit' + createHourSubsetName(nB) + '(egu)\n'
@@ -60,6 +56,7 @@ def createFinalHourName(nB):
 def createInitHourName(nB):
    return 'pHourInit' + createHourSubsetName(nB)# + createSetsText(['h'])
 
+#Write $load block text for importing parameters defined above
 def writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps):
    importText = """\n$if not set gdxincname $abort 'no include file name for data file provided'\n"""
    importText += '$gdxin %gdxincname%\n'
@@ -69,11 +66,7 @@ def writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps):
       if seasSto:
          scalars = ','.join(['pSOCScalar' + createHourSubsetName(nB) for nB in blockNamesChronoList[1:]]) #no SOC scalar for first block
       ets,initSOCs = ['storageegu','storagetech'],''
-      for nB in blockNamesChronoList:
-         if seasSto and nB == blockNamesChronoList[0]:
-            initSOCs += ','.join([createInitSOCName(nB) + techLbl(et) for et in ets]) + ','
-         elif not seasSto:
-            initSOCs += ','.join([createInitSOCName(nB) + techLbl(et) for et in ets]) + ','
+      initSOCs += ','.join(['pInitSOC' + techLbl(et) for et in ets]) + ','
    if ceOps == 'UC': onOffInits = ','.join(['pOnoroffinit' + createHourSubsetName(nB) for nB in blockNamesChronoList])
    #Combine all text
    if stoInCE and seasSto: allText = [blocks,weights,scalars,initSOCs.rstrip(',')]
@@ -83,6 +76,7 @@ def writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps):
    importText += '\n'.join(['$load ' + l for l in allText])
    return importText + '\n$gdxin\n'
 
+#Write variables
 def writeVariables(blockNamesChronoList):
    varText = '\nVariables\n'
    for v in ['vInitSOC']:
@@ -95,6 +89,7 @@ def writeVariables(blockNamesChronoList):
             varText += ('\t' + v + createHourSubsetName(nB) + techLbl(et) + '(' + et + ')' + '\n')
    return varText + '\t;\n'
 
+#Write equation names
 def writeEquationsNames(blockNamesChronoList,stoInCE,seasSto,ceOps):
    eqnText = '\nEquations\n'
    gens,stos = ['egu','tech'],['storageegu','storagetech']
@@ -105,11 +100,13 @@ def writeEquationsNames(blockNamesChronoList,stoInCE,seasSto,ceOps):
             eqnText += createNameWithSets(eqn,et,'h') + '\n'
          if seasSto:
             for nB in blockNamesChronoList[1:]:
-               # eqnText += createNameWithSets(eqn+createHourSubsetName(nB),et,'h') + '\n'
-               eqnText += createNameWithSets('setInitSOC'+createHourSubsetName(nB),et) + '\n'
+               eqnText += 'setInitSOC{b}{e}({e})'.format(b=createHourSubsetName(nB),e='lt'+et) + '\n'
+               # createNameWithSets('setInitSOC'+createHourSubsetName(nB)+'lt','lt' + et) + '\n'
             for nB in blockNamesChronoList:
                eqnText += createNameWithSets('defFinalSOC'+createHourSubsetName(nB),et,'h') + '\n'
                eqnText += createNameWithSets('defChangeSOC'+createHourSubsetName(nB),et) + '\n'
+         for nB in blockNamesChronoList[1:]:
+               eqnText += 'setInitSOC{b}{e}({e})'.format(b=createHourSubsetName(nB),e='st'+et) + '\n'
    for g in gens:
       for nB in blockNamesChronoList:
          eqnText += createNameWithSets('rampUp'+createHourSubsetName(nB),g,createHourSubsetName(nB)) + '\n'
@@ -134,6 +131,7 @@ def getGenPlusReserves(et,setsText):
 def getGenAboveMinPlusReserves(et,setsText):
    return 'vGenabovemin{0}{1}+vRegup{0}{1}+vFlex{0}{1}+vCont{0}{1}'.format(techLbl(et),setsText)   
 
+#Write equations
 def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,specialBlocksPrior):
    eqns = ''
    #Storage equations
@@ -141,42 +139,35 @@ def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,
       for et in ['storageegu','storagetech']:
          eqns += '\n'
          setsText = createSetsText([et,'h'])
+
+         #create text for initial SOC in each time block (pInitSOC in first block & vInitSOC for other blocks)
+         initsText = ''
+         for nB in blockNamesChronoList:
+            if nB == blockNamesChronoList[0]: socName = 'pInitSOC'
+            else: socName = ' + vInitSOC' + createHourSubsetName(nB)
+            # socName += createHourSubsetName(nB) #10/20/21
+            initsText += '{0}{1}({2})$[ord(h)={3}]'.format(socName,techLbl(et),et,createInitHourName(nB))
+            if 'tech' in et and 'pInit' in socName: initsText += '*vEneBuiltSto({t})'.format(t=et) #multiply by # built if pInit (otherwise RHS > 0)
+
+         #defSOC
          socDefnSharedText = '''vStateofcharge{0}({1}, h-1)$nonInitH(h) - 
                1/sqrt(pEfficiency{0}({1})) * vGen{0}({1},h) + 
                sqrt(pEfficiency{0}({1})) * vCharge{0}({1},h)'''.format(techLbl(et),et)
-         genSOCSharedText = getGenPlusReserves(et,setsText)
-         if seasSto:
-            initsText = ''
-            for nB in blockNamesChronoList:
-               if nB == blockNamesChronoList[0]: socName = 'pInitSOC'
-               else: socName = ' + vInitSOC'
-               socName += createHourSubsetName(nB)
-               initsText += '{0}{1}({2})$[ord(h)={3}]'.format(socName,techLbl(et),et,createInitHourName(nB))
-               if 'tech' in et and 'pInit' in socName: initsText += '*vN({t})'.format(t=et) #multiply by # built if pInit (otherwise RHS > 0)
-         else:
-            initsText = ''
-            for nB in blockNamesChronoList:
-               initsText += ' + pInitSOC{b}{t}({e})$[ord(h)={i}]'.format(b=createHourSubsetName(nB),t=techLbl(et),e=et,i=createInitHourName(nB))
-               if 'tech' in et: initsText += '*vN({t})'.format(t=et) #multiply by # built if pInit (otherwise RHS > 0)
-            initsText = initsText.lstrip(' + ')
-         #defSOC
          eqns += 'defSOC{0}{1}.. vStateofcharge{0}{1} =e= {2} +\n\t{3};\n'.format(techLbl(et),setsText,initsText,socDefnSharedText)
          #genPlusUpResToSOC
+         genSOCSharedText = getGenPlusReserves(et,setsText)
          eqns += '''genPlusUpResToSOC{0}{1}.. {2} =l= vStateofcharge{0}({3}, h-1)$nonInitH(h)
                      + {4};\n'''.format(techLbl(et),setsText,genSOCSharedText,et,initsText) 
-         #set initial SOC for short-term (st) storage
-         # for nB in blockNamesChronoList[1:]:
-         #    eqns += 'pInitSOC{b}{t}({e}) = {isf}*pMaxsoc{t}({e});\n'.format(b=createHourSubsetName(nB),
-         #                                                 t=techLbl(et),e='st'+et,isf=str(initSOCFraction))
+
+         #set initial SOC variable for long-term (seasonal) (lt) storage
          if seasSto:
-            #set initial SOC for long-term (lt) storage
+            #define initial SOC
             for bNum in range(1,len(blockNamesChronoList)):
                nB,blockName = blockNamesChronoList[bNum],createHourSubsetName(blockNamesChronoList[bNum])
                lastBlock,priorSpBlocks = lastRepBlockNames[nB],specialBlocksPrior[nB]
                socChangeText = ''
                for psb in priorSpBlocks: socChangeText += '+ vChangeSOC{b}{t}({e})'.format(b=createHourSubsetName(psb),t=techLbl(et),e='lt'+et)
-               # eqns += '''setInitSOC{b}{t}({e},h)$[ord(h)={i}].. vInitSOC{b}{t}({e}) =l= vFinalSOC{blast}{t}({e}) + vChangeSOC{blast}{t}({e})*pSOCScalar{b} {sct}
-               eqns += '''setInitSOC{b}{t}({e}).. vInitSOC{b}{t}({e}) =e= vFinalSOC{blast}{t}({e}) + vChangeSOC{blast}{t}({e})*pSOCScalar{b} {sct}
+               eqns += '''setInitSOC{b}{e}({e}).. vInitSOC{b}{t}({e}) =e= vFinalSOC{blast}{t}({e}) + vChangeSOC{blast}{t}({e})*pSOCScalar{b} {sct}
                         ;\n'''.format(b=blockName,blast=createHourSubsetName(lastBlock),t=techLbl(et),e='lt'+et,i=createInitHourName(nB),sct=socChangeText)
             #set final and change in SOC for lt storage
             for nB in blockNamesChronoList:
@@ -184,11 +175,20 @@ def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,
                eqns += '''defFinalSOC{b}{t}({e},h)$[ord(h)=pHourFinal{b}].. vFinalSOC{b}{t}({e}) =e= 
                            vStateofcharge{t}({e},h);\n'''.format(b=createHourSubsetName(nB),t=techLbl(et),
                            e='lt'+et)
-               initSOCText = 'pInitSOC' if nB == blockNamesChronoList[0] else 'vInitSOC'
-               initSOCText = initSOCText + '{b}{t}({s})'.format(b=createHourSubsetName(nB),t=techLbl(et),s='lt'+et)
-               if 'tech' in et and 'pInit' in initSOCText: initSOCText += '*vN({s})'.format(s='lt'+et) #multiply by # built if pInit (otherwise RHS > 0)
+               initSOCText = 'pInitSOC' if nB == blockNamesChronoList[0] else 'vInitSOC' + createHourSubsetName(nB)
+               initSOCText += '{t}({s})'.format(t=techLbl(et),s='lt'+et)
+               if 'tech' in et and 'pInit' in initSOCText: initSOCText += '*vEneBuiltSto({s})'.format(s='lt'+et) #multiply by # built if pInit (otherwise RHS > 0)
                eqns += '''defChangeSOC{0}{1}({2}).. vChangeSOC{0}{1}({2}) =e= vFinalSOC{0}{1}({2}) 
                               - {3};\n'''.format(createHourSubsetName(nB),techLbl(et),'lt'+et,initSOCText)
+
+         #set initial SOC for short-term (st) storage as fixed initial SOC fraction
+         for bNum in range(1,len(blockNamesChronoList)):
+            blockName = createHourSubsetName(blockNamesChronoList[bNum])
+            setInitSocSTSto = '''setInitSOC{b}{e}({e}).. vInitSOC{b}{t}({e}) =l= 
+                                    pInitSOC{t}({e})'''.format(b=blockName,t=techLbl(et),e='st'+et)
+            setInitSocSTSto = setInitSocSTSto + ('*vEneBuiltSto({e})'.format(e='st'+et) if 'tech' in et else '') + ';\n'                   
+            eqns += setInitSocSTSto
+
    #Emission and cost equations
    eqns += '\n'
    eguSets = ['egu','tech']

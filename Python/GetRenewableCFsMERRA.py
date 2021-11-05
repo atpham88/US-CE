@@ -3,24 +3,32 @@ from os import path
 from statistics import mode
 from AuxFuncs import *
 import pandas as pd
+import geopandas as gpd
 import datetime as dt
 import numpy as np
 from netCDF4 import Dataset
 
 #Output: dfs of wind and solar generation (8760 dt rows, arbitrary cols)
-def getREGen(genFleet,tgtTz,reYear):
-    #Isolate wind & solar units - TO DO: UPDATE ONCE CONVERT GENERATORS TO DF
+def getREGen(genFleet,tgtTz,reYear,currYear,interconn):
+    if currYear > 2050: currYear = 2050
+    #Isolate wind & solar units
     windUnits,solarUnits = getREInFleet('Wind',genFleet),getREInFleet('Solar',genFleet)
     #Get list of wind / solar sites in region
-    lats,lons,cf = loadMerraData(reYear)
+    lats,lons,cf = loadMerraData(reYear,interconn)
     #Match to CFs
     get_cf_index(windUnits,lats,lons),get_cf_index(solarUnits,lats,lons)
-    #Get hourly generation (8760 x n array, n = num generators)
-    windGen = get_hourly_RE_impl(windUnits,cf['wind'],reYear)
-    solarGen = get_hourly_RE_impl(solarUnits,cf['solar'],reYear)
+    #Get hourly generation (8760 x n df, n = num generators). Use given met year data but set dt index to currYear.
+    windGen = get_hourly_RE_impl(windUnits,cf['wind'],currYear)
+    solarGen = get_hourly_RE_impl(solarUnits,cf['solar'],currYear)
     #Shift into right tz
-    windGen,solarGen = shiftTz(windGen,tgtTz,reYear,'wind'),shiftTz(solarGen,tgtTz,reYear,'solar')
-    return windGen,solarGen
+    windGen,solarGen = shiftTz(windGen,tgtTz,currYear,'wind'),shiftTz(solarGen,tgtTz,currYear,'solar')
+    #Combine by region and fill in missing regions with zeros
+    windGenByRegion = windGen.groupby(level='region',axis=1).sum()
+    solarGenByRegion = solarGen.groupby(level='region',axis=1).sum()
+    for genByRegion in [windGenByRegion,solarGenByRegion]:
+        regionsNoGen = [r for r in genFleet['region'].unique() if r not in genByRegion.columns]
+        for r in regionsNoGen: genByRegion[r] = 0
+    return windGen,solarGen,windGenByRegion,solarGenByRegion
 
 def getREInFleet(reType,genFleet):
     reUnits = genFleet.loc[genFleet['FuelType']==reType]
@@ -29,10 +37,13 @@ def getREInFleet(reType,genFleet):
 # Get all necessary information from powGen netCDF files, VRE capacity factors and lat/lons
 # Outputs: numpy arrays of lats and lons, and then a dictionary w/ wind and solar cfs
 # as an np array of axbxc, where a/b/c = # lats/# longs/# hours in year
-def loadMerraData(reYear):
+def loadMerraData(reYear, interconn):
     #File and dir
     dataDir = 'Data\\MERRA'
-    solarFile,windFile = path.join(dataDir,str(reYear) + '_solar_generation_cf.nc'),path.join(dataDir,str(reYear) + '_wind_generation_cf.nc')
+    if interconn == 'ERCOT':
+        solarFile,windFile = path.join(dataDir,str(reYear) + '_solar_generation_cf.nc'),path.join(dataDir,str(reYear) + '_wind_generation_cf.nc')
+    else:
+        solarFile, windFile = path.join(dataDir, str(reYear) + '_solar_generation_cf_US.nc'), path.join(dataDir, str(reYear) + '_wind_generation_cf_US.nc')
     # Error Handling
     if not (path.exists(solarFile) and path.exists(windFile)):
         error_message = 'Renewable Generation files not available:\n\t'+solarFile+'\n\t'+windFile
@@ -40,13 +51,41 @@ def loadMerraData(reYear):
     #Load data
     solarPowGen = Dataset(solarFile)
     windPowGen = Dataset(windFile) #assume solar and wind cover same geographic region
+
+    #ic_EI = list(range(35,58)) + [66] + list(range(68,134))
+    #ic_TX = list(range(60,65)) + [67]
+    #ic_WI = list(range(1, 34)) + [59]
+
+    #for p in list(range(len(ic_EI))):
+    #    ic_EI[p] = 'p' + str(ic_EI[p])
+    #for p in list(range(len(ic_TX))):
+    #    ic_TX[p] = 'p' + str(ic_TX[p])
+    #for p in list(range(len(ic_WI))):
+    #    ic_WI[p] = 'p' + str(ic_WI[p])
+
+    #icgis = gpd.read_file(os.path.join('Data', 'REEDS', 'Shapefiles', 'PCAs.shp'))
+
+    #if interconn == 'EI':
+    #    icgis["IC"] = np.where(icgis["PCA_Code"].isin(ic_EI), "EI", "Other")
+    #elif interconn == 'ERCOT':
+    #    icgis["IC"] = np.where(icgis["PCA_Code"].isin(ic_TX), "ERCOT", "Other")
+    #elif interconn == 'WECC':
+    #    icgis["IC"] = np.where(icgis["PCA_Code"].isin(ic_WI), "WI", "Other")
+    #icgis = icgis[icgis['IC'] != interconn]
+
     #Get lat and lons for both datasets
     lats,lons = np.array(solarPowGen.variables['lat'][:]), np.array(solarPowGen.variables['lon'][:])
+
+    lons = lons[(lons >= -108.5)]
     #Store data
     cf = dict()
-    cf["solar"] = np.array(solarPowGen.variables['cf'][:]) 
+    cf["solar"] = np.array(solarPowGen.variables['cf'][:])
     cf["wind"] = np.array(windPowGen.variables['cf'][:])
     solarPowGen.close(),windPowGen.close()
+
+    if interconn == 'EI':
+        cf["solar"] = cf["solar"][:,27:,:]
+        cf["wind"] = cf["wind"][:,27:,:]
     # Error Handling
     if cf['solar'].shape != (lats.size, lons.size, 8760):
         print("powGen Error. Expected array of shape",lats.size,lons.size,8760,"Found:",cf['solar'].shape)
@@ -81,16 +120,17 @@ def get_hourly_RE_impl(RE_generators,cf,yr):
     yr = str(yr)
     idx = pd.date_range('1/1/'+yr + ' 0:00','12/31/' + yr + ' 23:00',freq='H')
     idx = idx.drop(idx[(idx.month==2) & (idx.day ==29)])
-    return pd.DataFrame(RE_capacity,index=idx,columns=RE_generators['GAMS Symbol'].values)
+    reGen = pd.DataFrame(RE_capacity,index=idx,columns=[RE_generators['GAMS Symbol'].values,RE_generators['region'].values])
+    reGen.columns.names = ['GAMS Symbol','region']
+    return reGen
 
 #shift tz (MERRA in UTC)
-def shiftTz(reGen,tz,reYear,reType):
+def shiftTz(reGen,tz,yr,reType):
     origIdx = reGen.index
-    tzOffsetDict = {'CST': -6}
+    tzOffsetDict = {'CST': -6,'EST': -5}
     reGen.index = reGen.index.shift(tzOffsetDict[tz],freq='H')
-    reGen = reGen[reGen.index.year==reYear]
+    reGen = reGen[reGen.index.year==yr]
     reGen = reGen.append([reGen.iloc[-1]]*abs(tzOffsetDict[tz]),ignore_index=True)
     if reType=='solar': reGen.iloc[-5:] = 0 #set nighttime hours to 0
     reGen.index=origIdx
     return reGen
-

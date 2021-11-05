@@ -16,9 +16,10 @@ def importHourlyERCOTDemand(demandYear):
     demand = rawDemand['ERCOT']
     leapDays=demand.index[demand.index.str.find("02/29",0,10) != -1]
     demand.drop(leapDays, inplace=True) 
-    demand = demand.values.tolist()
-    hourlyDemand = [float(val.replace(',','')) for val in demand]
-    return hourlyDemand
+    print(demand)
+    print(demand.dtypes())
+    demand.atpe(float)
+    return demand
 
 # #This is for importing cleaned BA data from Ruggles: https://zenodo.org/record/3690240
 # def get_demand_data(demand_file_in, year_in, hrsShift=0):

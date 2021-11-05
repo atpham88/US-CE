@@ -18,7 +18,7 @@ import pandas as pd
 #wind CFs for each wind generator in fleet, col 1 = dt, subsequent cols = gen),
 #same formatted 2d lists subhourly wind CFs & solar hourly & subhourly CFs, 
 #MW of wind and solar added to fleet in order to get new wind & solar CFs.
-#Outputs: 1d lists for entire year of incremental res requirements per MW
+#Outputs: dfs for entire year of incremental MW res requirements per MW
 #wind or solar added.
 def getIncResForAddedRE(newCfs,regErrorPercentile,flexErrorPercentile):
     #Calculate wind reg + flex increase

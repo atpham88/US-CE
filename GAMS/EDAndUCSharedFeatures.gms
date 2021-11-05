@@ -1,11 +1,20 @@
 *Michael Craig 14 May 2020
 
+$onEmpty
+
 Sets
 *Existing generators
          egu                             existing generators
-         windegu(egu)                    existing wind generators
-         solaregu(egu)                   existing solar generators
+		 renewegu(egu)					existing wind and solar generators
+		 windegu(renewegu)				existing wind generators
+		 solaregu(renewegu)				existing solar generators
+		 genegu(egu)                  egus that are not dacs or storage
+		 dacsegu(egu)                 direct air capture units
+		 notdacsegu(egu)              egus that are not dac units
+         storageegu(egu)                 storage units
          h                               hours
+		 z 								zones
+		 l 								lines
          ;
 
 Parameters
@@ -22,18 +31,29 @@ Parameters
 *EMISSIONS COST [$/short ton]
          pCO2cost
 *RENEWABLE GENERATION CAPS
-         pMaxgenwind(h)                  max hourly generation for existing wind [GWh]
-         pMaxgensolar(h)                 max hourly generation for existing solar [GWh]
+         pMaxgenwind(z,h)                  max hourly generation for existing wind [GWh]
+         pMaxgensolar(z,h)                 max hourly generation for existing solar [GWh]
+*STORAGE PARAMETERS	
+		 pStoinenergymarket              whether storage can provide energy (1) or not (0)
+         pEfficiency(storageegu)         round trip storage efficiency
+         pCapaccharge(storageegu)        max charging capacity (GW)
+         pMaxsoc(storageegu)             max stored energy (GWh)
+         pMinsoc(storageegu)             min stored energy (GWh)
+*ZONAL PROPERTIES
+		pGenzone(egu)					zone in which egu is located
+		pDemand(z,h)                      hourly electricity demand [GWh]
+        pLinesource(l)					zone that is the source of line l
+		pLinesink(l)					zone that is the sink of line l
+		pLinecapac(l)					MW capacity of line l
 *HOURLY ELECTRICITY DEMAND [GWh]
-         pDemand(h)                      hourly electricity demand [GWh]
          pDemandShifter                  demand shifter (percentage)
          pDemandShiftingBlock
 *COST OF NONSERVED ENERGY [THOUSAND$/GWH]
          pCnse                                   cost of non-served energy [thousandUSD per GWh]
 *HOURLY RESERVE REQUIREMENTS [GW]
-         pRegupreserves(h)         regulation up reserve [GW]
-         pFlexreserves(h)
-         pContreserves(h)
+         pRegupreserves(z,h)         regulation up reserve [GW]
+         pFlexreserves(z,h)
+         pContreserves(z,h)
 *RESERVE PROVISION PARAMETERS
 *Convert ramp rate to reserve timeframe
          pRampratetoregreservescalar     converts ramp rate timeframe to reg reserve timeframe
@@ -51,13 +71,19 @@ Parameters
 
 $if not set gdxincname $abort 'no include file name for data file provided'
 $gdxin %gdxincname%
-$load egu, windegu, solaregu, h
+$load egu, renewegu, windegu, solaregu, h, z, l, dacsegu, storageegu
 $load pCapac, pHr, pOpcost, pRamprate, pCO2emrate, pCO2cost
 $load pMaxgensolar, pMaxgenwind
-$load pDemand, pDemandShifter, pDemandShiftingBlock, pCnse, pRegupreserves, pFlexreserves, pContreserves
+$load pStoinenergymarket,pEfficiency,pMaxsoc,pMinsoc,pCapaccharge
+$load pGenzone, pDemand, pLinesource, pLinesink, pLinecapac
+$load pDemandShifter, pDemandShiftingBlock, pCnse, pRegupreserves, pFlexreserves, pContreserves
 $load pRampratetoregreservescalar, pRampratetoflexreservescalar, pRampratetocontreservescalar
 $load pFlexeligible, pConteligible, pRegeligible
 $gdxin
+
+*DEFINE EGU SUBSETS
+notdacsegu(egu) = not dacsegu(egu);
+genegu(egu) = not (dacsegu(egu) + storageegu(egu));
 
 *CALCULATE MAX RESERVE OFFERS
 pMaxflexoffer(egu) = pFlexeligible(egu)*pRamprate(egu)*pRampratetoflexreservescalar;
@@ -65,16 +91,25 @@ pMaxcontoffer(egu) = pConteligible(egu)*pRamprate(egu)*pRampratetocontreservesca
 pMaxregupoffer(egu) = pRegeligible(egu)*pRamprate(egu)*pRampratetoregreservescalar;
 
 Variables
+*COSTS
                  vVarcost(egu,h)
-                 vShiftedDemand(h)
+*DEMAND RESPONSE
+                 vShiftedDemand(z,h)
                  ;
 
 Positive variables
-         vGen(egu,h)                     hourly electricity generation by existing plant [GWh]
+*GENERATION AND RESERVES
+		 vGen(egu,h)                     hourly electricity generation by existing plant [GWh]
          vRegup(egu,h)                   hourly reg up reserves provided by existing plant [GWh]
          vFlex(egu,h)
          vCont(egu,h)
+*STORAGE VARIABLES
+         vStateofcharge(storageegu,h)            "energy stored in storage unit at end of hour h (GWh)"
+         vCharge(storageegu,h)                   "charged energy by storage unit in hour h (GWh)"
+*EMISSIONS
          vCO2ems(egu,h)
+*TRANSMISSION LINE FLOWS
+		vLineflow(l,h)
          ;
 
 Equations
@@ -83,8 +118,10 @@ Equations
 *Generation and reserve constraints
          limitallresup(egu,h)            limit total generation plus up reserves of existing plants to capacity
 *Renewable generation
-         eguwindgen(h)                   restrict electricity generation by existing wind generation to maximum aggregate output
-         egusolargen(h)                  restrict electricity generation by existing solar generation to maximum aggregate output
+         limitWindGen(z,h)
+		 limitSolarGen(z,h)
+*Line flows
+*		limitLineFlow(l,h)
 *Carbon limits
          calcco2ems(egu,h)                    sum annual co2 emissions
          ;
@@ -100,13 +137,36 @@ vCont.fx(egu,h)$[pMaxcontoffer(egu)=0] = 0;
 vRegup.fx(egu,h)$[pMaxregupoffer(egu)=0] = 0;
 
 *Limit spinning and regulation up reserves together to spare capacity
-limitallresup(egu,h) .. vGen(egu,h) + vFlex(egu,h) + vCont(egu,h) + vRegup(egu,h) =l= pCapac(egu);
+limitallresup(genegu,h) .. vGen(genegu,h) + vFlex(genegu,h) + vCont(genegu,h) + vRegup(genegu,h) =l= pCapac(genegu);
+
+*Set lower bound to zero for generation by storage and generating techs.
+vGen.lo(notdacsegu,h) = 0;
+*Set upper bound to zero for DACS. DACS max capacity is negative and has negative vGen values.
+vGen.up(dacsegu,h) = 0;
 ********************************************************************
 
-******************RENEWABLE GENERATION*****************
-eguwindgen(h)..  pMaxgenwind(h) =g= sum(windegu,vGen(windegu,h));
-egusolargen(h).. pMaxgensolar(h) =g= sum(solaregu,vGen(solaregu,h));
+******************STORAGE PARAMETERS*******************
+*LIMIT GENERATION AND RESERVES
+*Bound generation to capacity and ability to participate in energy market
+vGen.up(storageegu,h) = pStoinenergymarket * pCapac(storageegu);
+
+*CHARGE CONSTRAINTS
+*Place upper bound on charging
+vCharge.up(storageegu,h) = pCapaccharge(storageegu);
+
+*STATE OF CHARGE BOUNDS
+vStateofcharge.lo(storageegu,h) = pMinsoc(storageegu);
+vStateofcharge.up(storageegu,h) = pMaxsoc(storageegu);
 *******************************************************
+
+******************RENEWABLE GENERATION*****************
+limitWindGen(z,h)..  pMaxgenwind(z,h) =g= sum(windegu$[pGenzone(windegu)=ORD(z)],vGen(windegu,h));
+limitSolarGen(z,h).. pMaxgensolar(z,h) =g= sum(solaregu$[pGenzone(solaregu)=ORD(z)],vGen(solaregu,h));
+*******************************************************
+
+******************TRANSMISSION LINE FLOWS*****************
+*limitLineFlow(l,h).. pLinecapac(l) =g= vLineflow(l,h);
+**********************************************************
 
 ******************CO2 EMISSIONS CONSTRAINT******************
 calcco2ems(egu,h)..   vCO2ems(egu,h) =e= vGen(egu,h)*pHr(egu)*pCO2emrate(egu);

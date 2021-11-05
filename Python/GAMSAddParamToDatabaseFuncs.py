@@ -11,41 +11,46 @@ from WriteTimeDependentConstraints import createInitSOCName
 ##################### CE & UC PARAMETERS #######################################
 ################################################################################
 ##### ADD HOURLY DEMAND PARAMETERS (GWh)
-def addDemandParam(db,demandCE,hourSet,hourSymbols,demandShifter,demandShiftingBlock,mwToGW):
-    demandDict = getParamIndexedByHourDict(demandCE,hourSymbols,1/mwToGW)
-    add1dParam(db,demandDict,hourSet,hourSymbols,'pDemand')
-    add0dParam(db,'pDemandShifter',demandShifter)
-    add0dParam(db, 'pDemandShiftingBlock', demandShiftingBlock)
+def addDemandParam(db,demand,hourSet,zoneSet,demandShifter,demandShiftingBlock,mwToGW):
+    add2dParam(db,convert2DTimeseriesDfToDict(demand,1/mwToGW),zoneSet,hourSet,'pDemand')
+    add0dParam(db,'pDemandShifter', demandShifter)
+    add0dParam(db,'pDemandShiftingBlock', demandShiftingBlock)
 
 ##### ADD EXISTING OR NEW GENERATOR PARAMETERS (scalars account for unit conversions)
-def addGenParams(db,df,genSet,mwToGW,lbToShortTon,newTechs=False):
+def addGenParams(db,df,genSet,mwToGW,lbToShortTon,zoneOrder,newTechs=False):
     techLbl = 'tech' if newTechs else ''
     #Heat rate (MMBtu/GWh)
-    add1dParam(db,getParamDict(df,'Heat Rate (Btu/kWh)'),genSet,df['GAMS Symbol'],'pHr' + techLbl)
+    add1dParam(db,getGenParamDict(df,'Heat Rate (Btu/kWh)'),genSet,df['GAMS Symbol'],'pHr' + techLbl)
     #Emissions rate (short ton/MMBtu)
-    add1dParam(db,getParamDict(df,'CO2EmRate(lb/MMBtu)',1/lbToShortTon),genSet,df['GAMS Symbol'],'pCO2emrate' + techLbl)
+    add1dParam(db,getGenParamDict(df,'CO2EmRate(lb/MMBtu)',1/lbToShortTon),genSet,df['GAMS Symbol'],'pCO2emrate' + techLbl)
     #Ramp rate (GW/hr)
-    add1dParam(db,getParamDict(df,'RampRate(MW/hr)',1/mwToGW),genSet,df['GAMS Symbol'],'pRamprate' + techLbl)
+    add1dParam(db,getGenParamDict(df,'RampRate(MW/hr)',1/mwToGW),genSet,df['GAMS Symbol'],'pRamprate' + techLbl)
     #Op cost (thousand$/GWh)
-    add1dParam(db,getParamDict(df,'OpCost($/MWh)'),genSet,df['GAMS Symbol'],'pOpcost' + techLbl)
+    add1dParam(db,getGenParamDict(df,'OpCost($/MWh)'),genSet,df['GAMS Symbol'],'pOpcost' + techLbl)
     #Capacity (GW)
-    add1dParam(db,getParamDict(df,'Capacity (MW)',1/mwToGW),genSet,df['GAMS Symbol'],'pCapac' + techLbl)
+    add1dParam(db,getGenParamDict(df,'Capacity (MW)',1/mwToGW),genSet,df['GAMS Symbol'],'pCapac' + techLbl)
+    #Generator zone
+    add1dParam(db,getZonalParamDict(df,zoneOrder),genSet,df['GAMS Symbol'],'pGenzone' + techLbl)
+
+def getZonalParamDict(df,zoneOrder,zonalCol='region'):
+    zoneDict = df[zonalCol].map(zoneOrder).astype(int)
+    zoneDict.index = df['GAMS Symbol']
+    return zoneDict.to_dict()
 
 ##### ADD EXISTING OR NEW STORAGE PARAMETERS (scalars account for unit conversions)
 def addStorageParams(db,df,stoSet,stoSymbols,mwToGW,stoMkts,newTechs=False):
     techLbl = 'tech' if newTechs else ''
     df = df.loc[df['GAMS Symbol'].isin(stoSymbols)]
     #Efficiency (fraction)
-    add1dParam(db,getParamDict(df,'Efficiency'),stoSet,df['GAMS Symbol'],'pEfficiency' + techLbl)
-
+    add1dParam(db,getGenParamDict(df,'Efficiency'),stoSet,df['GAMS Symbol'],'pEfficiency' + techLbl)
     #For existing generators
     if not newTechs:
         #Charge capacity (GW) for existing storage or **TO IMPLEMENT** ratio of discharge to charge (fraction) for new storage
-        add1dParam(db,getParamDict(df,'Maximum Charge Rate (MW)',1/mwToGW),stoSet,df['GAMS Symbol'],'pCapaccharge' + techLbl)
+        add1dParam(db,getGenParamDict(df,'Maximum Charge Rate (MW)',1/mwToGW),stoSet,df['GAMS Symbol'],'pCapaccharge' + techLbl)
         #Max SOC (GWh)
-        add1dParam(db,getParamDict(df,'Nameplate Energy Capacity (MWh)',1/mwToGW),stoSet,df['GAMS Symbol'],'pMaxsoc' + techLbl)
+        add1dParam(db,getGenParamDict(df,'Nameplate Energy Capacity (MWh)',1/mwToGW),stoSet,df['GAMS Symbol'],'pMaxsoc' + techLbl)
         #Min SOC (GWh)
-        add1dParam(db,getParamDict(df,'Minimum Energy Capacity (MWh)'),stoSet,df['GAMS Symbol'],'pMinsoc' + techLbl)
+        add1dParam(db,getGenParamDict(df,'Minimum Energy Capacity (MWh)'),stoSet,df['GAMS Symbol'],'pMinsoc' + techLbl)
     #Whether storage can provide energy in energy market
     if not newTechs: add0dParam(db,'pStoinenergymarket',1 if 'energy' in stoMkts else 0)
 
@@ -53,28 +58,37 @@ def addStorageParams(db,df,stoSet,stoSymbols,mwToGW,stoMkts,newTechs=False):
 def addGenUCParams(db,df,genSet,mwToGW,newTechs=False):
     techLbl = 'tech' if newTechs else ''
     #Min load (GWh)
-    add1dParam(db,getParamDict(df,'MinLoad(MWh)',1/mwToGW),genSet,df['GAMS Symbol'],'pMinload' + techLbl)  
+    add1dParam(db,getGenParamDict(df,'MinLoad(MWh)',1/mwToGW),genSet,df['GAMS Symbol'],'pMinload' + techLbl)  
     #Start up fixed cost (thousand$)
-    add1dParam(db,getParamDict(df,'StartCost($)',1/1000),genSet,df['GAMS Symbol'],'pStartupfixedcost' + techLbl)
+    add1dParam(db,getGenParamDict(df,'StartCost($)',1/1000),genSet,df['GAMS Symbol'],'pStartupfixedcost' + techLbl)
     #Min down time (hours)
-    add1dParam(db,getParamDict(df,'MinDownTime(hrs)'),genSet,df['GAMS Symbol'],'pMindowntime' + techLbl)
+    add1dParam(db,getGenParamDict(df,'MinDownTime(hrs)'),genSet,df['GAMS Symbol'],'pMindowntime' + techLbl)
     #Regulation offer cost (thousand$/GW)
-    add1dParam(db,getParamDict(df,'RegOfferCost($/MW)'),genSet,df['GAMS Symbol'],'pRegoffercost' + techLbl)
+    # add1dParam(db,getGenParamDict(df,'RegOfferCost($/MW)'),genSet,df['GAMS Symbol'],'pRegoffercost' + techLbl)
 
 ##### ADD EXISTING RENEWABLE COMBINED MAXIMUM GENERATION VALUES
 #Converts 1d list of param vals to hour-indexed dicts, then adds dicts to GAMS db
-def addExistingRenewableMaxGenParams(db,hourSet,hourSymbols,hourlySolarGenCE,hourlyWindGenCE,mwToGW):    
-    maxSolarGenDict = getParamIndexedByHourDict(hourlySolarGenCE,hourSymbols,1/mwToGW)
-    add1dParam(db,maxSolarGenDict,hourSet,hourSymbols,'pMaxgensolar')
-    maxWindGenDict = getParamIndexedByHourDict(hourlyWindGenCE,hourSymbols,1/mwToGW)
-    add1dParam(db,maxWindGenDict,hourSet,hourSymbols,'pMaxgenwind')
+def addExistingRenewableMaxGenParams(db,hourSet,zoneSet,solarGen,windGen,mwToGW):    
+    add2dParam(db,convert2DTimeseriesDfToDict(solarGen,1/mwToGW),zoneSet,hourSet,'pMaxgensolar')
+    add2dParam(db,convert2DTimeseriesDfToDict(windGen,1/mwToGW),zoneSet,hourSet,'pMaxgenwind')
 
 ###### ADD RESERVE PROVISION ELIGIBILITY (1 or 0 indicating can or can't provide reserve)
 def addSpinReserveEligibility(db,df,genSet,newTechs=False):
     techLbl = 'tech' if newTechs else ''
-    add1dParam(db,getParamDict(df,'RegOfferElig'),genSet,df['GAMS Symbol'],'pRegeligible' + techLbl)
-    add1dParam(db,getParamDict(df,'FlexOfferElig'),genSet,df['GAMS Symbol'],'pFlexeligible' + techLbl)
-    add1dParam(db,getParamDict(df,'ContOfferElig'),genSet,df['GAMS Symbol'],'pConteligible' + techLbl)
+    add1dParam(db,getGenParamDict(df,'RegOfferElig'),genSet,df['GAMS Symbol'],'pRegeligible' + techLbl)
+    add1dParam(db,getGenParamDict(df,'FlexOfferElig'),genSet,df['GAMS Symbol'],'pFlexeligible' + techLbl)
+    add1dParam(db,getGenParamDict(df,'ContOfferElig'),genSet,df['GAMS Symbol'],'pConteligible' + techLbl)
+
+##### ADD EXISTING LINE PARAMETERS
+def addLineParams(db,lineLimits,lineSet,zoneOrder,mwToGW):
+    #Transmission line limits
+    add1dParam(db,pd.Series(lineLimits['AC'].values.astype(float)/mwToGW,index=lineLimits['GAMS Symbol']).to_dict(),lineSet,lineLimits['GAMS Symbol'],'pLinecapac')
+    #Transmission line sources & sinks
+    addLineSourceSink(db,lineLimits,lineSet,zoneOrder)
+    
+def addLineSourceSink(db,df,lineSet,zoneOrder,techLbl=''):
+    add1dParam(db,getZonalParamDict(df,zoneOrder,'r'),lineSet,df['GAMS Symbol'],'pLinesource'+techLbl)
+    add1dParam(db,getZonalParamDict(df,zoneOrder,'rr'),lineSet,df['GAMS Symbol'],'pLinesink'+techLbl)
 ################################################################################
 ################################################################################
 ################################################################################
@@ -85,23 +99,15 @@ def addSpinReserveEligibility(db,df,genSet,newTechs=False):
 ##### ADD NEW TECH PARAMS FOR CE
 def addTechCostParams(db,df,genSet,stoSet,mwToGW):
     #Fixed O&M (thousand$/GW/yr)
-    add1dParam(db,getParamDict(df,'FOM(2012$/MW/yr)',mwToGW/1000),genSet,df['GAMS Symbol'],'pFom')
+    add1dParam(db,getGenParamDict(df,'FOM(2012$/MW/yr)',mwToGW/1000),genSet,df['GAMS Symbol'],'pFom')
     #Overnight capital cost (thousand$/GW)
-    add1dParam(db,getParamDict(df,'CAPEX(2012$/MW)',mwToGW/1000),genSet,df['GAMS Symbol'],'pOcc')
+    add1dParam(db,getGenParamDict(df,'CAPEX(2012$/MW)',mwToGW/1000),genSet,df['GAMS Symbol'],'pOcc')
     #Lifetime (years)
-    add1dParam(db,getParamDict(df,'Lifetime(years)'),genSet,df['GAMS Symbol'],'pLife')
+    add1dParam(db,getGenParamDict(df,'Lifetime(years)'),genSet,df['GAMS Symbol'],'pLife')
     #Power & energy capital costs for storage (thousand$/GW & thousand$/GWh)
     sto = df.loc[df['ThermalOrRenewableOrStorage']=='storage']
-    add1dParam(db,getParamDict(sto,'CAPEX(2012$/MW)',mwToGW/1000),stoSet,sto['GAMS Symbol'],'pPowOcc')
-    add1dParam(db,getParamDict(sto,'ECAPEX(2012$/MWH)',mwToGW/1000),stoSet,sto['GAMS Symbol'],'pEneOcc')
-    pPowH2Occ_temp = df.loc[df['PlantType'] == "Hydrogen", 'CAPEX(2012$/MW)']
-    pEneH2Occ_temp = df.loc[df['PlantType'] == "Hydrogen", 'ECAPEX(2012$/MWH)']
-    add0dParam(db, 'pPowH2Occ', pPowH2Occ_temp.mean())
-    add0dParam(db, 'pEneH2Occ', pEneH2Occ_temp.mean())
-    pPowBatOcc_temp = df.loc[df['PlantType'] == "Battery", 'CAPEX(2012$/MW)']
-    pEneBatOcc_temp = df.loc[df['PlantType'] == "Battery", 'ECAPEX(2012$/MWH)']
-    add0dParam(db, 'pPowBatOcc', pPowBatOcc_temp.mean())
-    add0dParam(db, 'pEneBatOcc', pEneBatOcc_temp.mean())
+    add1dParam(db,getGenParamDict(sto,'CAPEX(2012$/MW)',mwToGW/1000),stoSet,sto['GAMS Symbol'],'pPowOcc')
+    add1dParam(db,getGenParamDict(sto,'ECAPEX(2012$/MWH)',mwToGW/1000),stoSet,sto['GAMS Symbol'],'pEneOcc')
     
 ##### ADD PLANNING RESERVE MARGIN FRACTION PARAMETER (GW)
 def addPlanningReserveParam(db,planningReserve,mwToGW): 
@@ -115,27 +121,17 @@ def addDiscountRateParam(db,discountRate):
 def addStoInitSOCCE(db,df,stoSet,stoSymbols,mwToGW,blocks,seasSto,initSOCFraction,newTechs=False):
     techLbl = 'tech' if newTechs else ''
     df = df.loc[df['GAMS Symbol'].isin(stoSymbols)]
+    initSOCs = df['PlantType'].map(initSOCFraction)
     if newTechs:
-        # (pd.Series(df[param].values.astype(float)*scalar,index=df['GAMS Symbol']).to_dict())
-        if seasSto:
-            add1dParam(db,pd.Series(initSOCFraction,index=df['GAMS Symbol']).to_dict(),
-                stoSet,df['GAMS Symbol'],createInitSOCName(blocks[0]) + techLbl)  
-        else:
-            [add1dParam(db,pd.Series(initSOCFraction,index=df['GAMS Symbol']).to_dict(),
-                stoSet,df['GAMS Symbol'],createInitSOCName(bl) + techLbl) for bl in blocks]
+        add1dParam(db,pd.Series(initSOCs.values,index=df['GAMS Symbol']).to_dict(),stoSet,df['GAMS Symbol'],'pInitSOC' + techLbl)  
     else:
-        if seasSto:
-            add1dParam(db,getParamDict(df,'Nameplate Energy Capacity (MWh)',1/mwToGW*initSOCFraction),stoSet,df['GAMS Symbol'],createInitSOCName(blocks[0]) + techLbl)  
-        else:
-            [add1dParam(db,getParamDict(df,'Nameplate Energy Capacity (MWh)',1/mwToGW*initSOCFraction),stoSet,df['GAMS Symbol'],createInitSOCName(bl) + techLbl) for bl in blocks]
+        initSOCs *= df['Nameplate Energy Capacity (MWh)']/mwToGW
+        add1dParam(db,pd.Series(initSOCs.values,index=df['GAMS Symbol']).to_dict(),stoSet,df['GAMS Symbol'],'pInitSOC')  
 
 ##### ADD HOURLY CAPACITY FACTORS FOR NEW RENEWABLE TECHS
 #For wind and solar CFs, creates dict of (hour,techSymbol):CF, then adds them to GAMS db
-def addRenewTechCFParams(db,renewTechSet,hourSet,hourSymbols,newCFs):
-    cfDict = dict()
-    for renewTech in newCFs:
-        for idx in range(len(hourSymbols)): cfDict[(renewTech,hourSymbols[idx])] = (newCFs[renewTech].values)[idx]
-    add2dParam(db,cfDict,renewTechSet,hourSet,'pCf','')
+def addRenewTechCFParams(db,renewTechSet,hourSet,newCFs):
+    add2dParam(db,convert2DTimeseriesDfToDict(newCFs),renewTechSet,hourSet,'pCf')
 
 ##### ADD CO2 EMISSIONS CAP (short tons)
 def addCO2Cap(db,co2Cap):
@@ -152,17 +148,10 @@ def addBlockSOCScalars(db,scalars):
 
 ##### ADD LIMIT ON MAX NUMBER OF NEW BUILDS PER TECH (#)
 def addMaxNewBuilds(db,df,thermalSet,stoTechSet,dacsSet,CCSSet,maxCapPerTech,mwToGW):
-
     #Wind & solar
     for pt in ['Wind','Solar']:
         genCaps = df.loc[df['FuelType']==pt.capitalize(),'Capacity (MW)']
         add0dParam(db,'pNMax'+pt.capitalize(),np.ceil(maxCapPerTech[pt]/genCaps.mean()))
-    #Thermal
-    pt = 'thermal'
-    techs = df.loc[df['ThermalOrRenewableOrStorage']==pt]
-    techs.index = techs['GAMS Symbol']
-    maxBuilds = np.ceil(maxCapPerTech[pt.capitalize()]/techs['Capacity (MW)']).to_dict()
-    add1dParam(db,maxBuilds,thermalSet,techs['GAMS Symbol'],'pNMax'+pt.capitalize())
     # Nuclear
     pt = 'Nuclear'
     genCaps = df.loc[df['PlantType']==pt.capitalize(),'Capacity (MW)']
@@ -187,45 +176,37 @@ def addMaxNewBuilds(db,df,thermalSet,stoTechSet,dacsSet,CCSSet,maxCapPerTech,mwT
     add1dParam(db,maxBuilds,dacsSet,techs['GAMS Symbol'],'pNMaxDACS')
     #Storage. Use positive continuous variable for added power & energy separately,
     #so ignore capacity & set upper P & E bounds.
-    # Hydrogen
-    pt = 'Hydrogen'
-    genCaps = df.loc[df['PlantType'] == pt, 'Capacity (MW)']
-    maxPCapH2 = np.ceil(maxCapPerTech[pt] / mwToGW)
-    maxECapH2 = maxPCapH2 * 2880
-    add0dParam(db, 'pPMaxH2Sto', maxPCapH2)
-    add0dParam(db, 'pEMaxH2Sto', maxECapH2)
-
-    # Battery
-    pt = 'Battery'
-    genCaps = df.loc[df['PlantType'] == pt, 'Capacity (MW)']
-    maxPCapBat = np.ceil(maxCapPerTech[pt] / mwToGW)
-    maxECapBat = maxPCapBat * 4
-    add0dParam(db, 'pPMaxBatSto', maxPCapBat)
-    add0dParam(db, 'pEMaxBatSto', maxECapBat)
-
-    maxPCapStorage = pd.Series({'GAMS Symbol': 0, 'Battery Storage': maxPCapBat, 'Hydrogen': maxPCapH2})
-    maxECapStorage = pd.Series({'GAMS Symbol': 0, 'Battery Storage': maxECapBat, 'Hydrogen': maxECapH2})
-    maxPCapStorage.to_csv('maxPCapStorage.txt')
-    #eff_H2 = df.loc[df['PlantType'] == 'Hydrogen', 'Efficiency']
-    #eff_Bat = df.loc[df['PlantType'] == 'Battery Storage', 'Efficiency']
-    #add0dParam(db, 'pEfficiencyH2tech', eff_H2.mean())
-    #add0dParam(db, 'pEfficiencyBattech', eff_Bat.mean())
-
     pt = 'storage'
     techs = df.loc[df['ThermalOrRenewableOrStorage']==pt]
     techs.index = techs['GAMS Symbol']
     maxPCap = pd.Series(maxCapPerTech[pt.capitalize()]/mwToGW,index=techs['GAMS Symbol'])
-    maxPCap.to_csv('maxPCap.txt')
-    #add1dParam(db,maxPCap.to_dict(),stoTechSet,techs['GAMS Symbol'],'pPMaxSto')
+    add1dParam(db,maxPCap.to_dict(),stoTechSet,techs['GAMS Symbol'],'pPMaxSto')  
     maxECap = maxPCap*(techs['Nameplate Energy Capacity (MWh)']/techs['Capacity (MW)'])
-    #add1dParam(db,maxECap,stoTechSet,techs['GAMS Symbol'],'pEMaxSto')
-    add1dParam(db, maxPCapStorage.to_dict(), stoTechSet, techs['GAMS Symbol'], 'pPMaxSto')
-    add1dParam(db, maxECapStorage.to_dict(), stoTechSet, techs['GAMS Symbol'], 'pEMaxSto')
+    add1dParam(db,maxECap,stoTechSet,techs['GAMS Symbol'],'pEMaxSto')
+
+##### ADD NEW LINE PARAMETERS
+def addNewLineParams(db, lineDists, lineCosts, lineSet, zoneOrder, interconn, lineLife=60):
+    #Transmission costs = $/mw-mile * mw (= $/mw = thousand$/gw)
+    if interconn == 'ERCOT':
+        cost = pd.Series(lineCosts['Line Cost ($/mw-mile)'].values.astype(float),index=lineCosts['GAMS Symbol'])
+        dist = pd.Series(lineDists['AC'].values.astype(float),index=lineDists['GAMS Symbol'])
+    elif interconn == 'EI':
+        cost = pd.Series(lineCosts['cost($/mw-mile)'].values.astype(float), index=lineCosts['GAMS Symbol'])
+        dist = pd.Series(lineDists['dist(mile)'].values.astype(float), index=lineDists['GAMS Symbol'])
+    totalCost = cost*dist
+    add1dParam(db,totalCost.to_dict(),lineSet,totalCost.index,'pLinecost')
+    #Maximum transmission expansion (GW)
+    maxCapacs = pd.Series(1e9,index=totalCost.index)
+    add1dParam(db,maxCapacs.to_dict(),lineSet,maxCapacs.index,'pNMaxLine')
+    #Lifetime of new lines
+    add0dParam(db,'pLifeline',lineLife)
 
 ##### ADD INITIAL COMMITMENT STATE FOR EXISTING GENS FOR EACH TIME BLOCK
 def addInitialOnOffForEachBlock(db,onOffInitialEachPeriod,genSet):
+    print('NOT CHECKED addInitialOnOffForEachBlock')
     for block in onOffInitialEachPeriod:
         onOffBlockDict = onOffInitialEachPeriod[block]
+        print(onOffBlockDict)
         add1dParam(db,onOffBlockDict,genSet,[g for g in onOffBlockDict],'pOnoroffinit' + createHourSubsetName(block))
 
 # ##### ADD FIRM FRACTION FOR EXISTING GENERATORS
@@ -263,19 +244,15 @@ def addStorageInitSOC(db,initSOC,stoGenSet,mwToGW):
     add1dParam(db,(initSOC/mwToGW).to_dict(),stoGenSet,initSOC.index,'pInitsoc')
 
 ##### RESERVE PARAMETERS
-def addReserveParameters(db,reserves,rrToRegTime,rrToFlexTime,rrToContTime,hourSet,hourSymbols,mwToGW):
+def addReserveParameters(db,contRes,regUpRes,flexRes,rrToRegTime,rrToFlexTime,rrToContTime,hourSet,zoneSet,mwToGW):
     for p,v in zip(['pRampratetoregreservescalar','pRampratetoflexreservescalar','pRampratetocontreservescalar'],[rrToRegTime,rrToFlexTime,rrToContTime]):
         add0dParam(db,p,v)
-    for p,c in zip(['pRegupreserves','pFlexreserves','pContreserves'],['RegUp','Flex','Cont']):
-        resDict = getParamIndexedByHourDict(reserves[c].values,hourSymbols,1/mwToGW)
-        add1dParam(db,resDict,hourSet,hourSymbols,p,'')
-
-def addResIncParams(db,regUpInc,flexInc,renewTechSet,hourSet,hourSymbols):
+    for p,df in zip(['pRegupreserves','pFlexreserves','pContreserves'],[regUpRes,flexRes,contRes]):
+        add2dParam(db,convert2DTimeseriesDfToDict(df,1/mwToGW),zoneSet,hourSet,p)
+        
+def addResIncParams(db,regUpInc,flexInc,renewTechSet,hourSet):
     for p,df in zip(['pRegUpReqIncRE','pFlexReqIncRE'],[regUpInc,flexInc]):
-        resDict = dict()
-        for renewTech in df:
-            for idx in range(len(hourSymbols)): resDict[(renewTech,hourSymbols[idx])] = (df[renewTech].values)[idx]
-        add2dParam(db,resDict,renewTechSet,hourSet,p,'')
+        add2dParam(db,convert2DTimeseriesDfToDict(df),renewTechSet,hourSet,p)
     
 ##### INITIAL CONDITIONS
 #Always pass in energy values in MWh
@@ -307,25 +284,27 @@ def addCo2Price(db,co2Price):
 def add0dParam(db,paramName,paramValue,paramDescrip=''):
     addedParam = db.add_parameter(paramName,0,paramDescrip)
     addedParam.add_record().value = paramValue
+    if len(addedParam.get_symbol_dvs())>0: print('Domain violations in ' + paramName)
 
 def add1dParam(db,paramDict,idxSet,setSymbols,paramName,paramDescrip=''):
     addedParam = db.add_parameter_dc(paramName,[idxSet],paramDescrip)
-    for idx in setSymbols: addedParam.add_record(idx).value = paramDict[idx]
+    for idx in setSymbols: addedParam.add_record(str(idx)).value = paramDict[idx]
+    if len(addedParam.get_symbol_dvs())>0: print('Domain violations in ' + paramName)
 
-def add2dParam(db,param2dDict,idxSet1,idxSet2,paramName,paramDescrip):
+def add2dParam(db,param2dDict,idxSet1,idxSet2,paramName,paramDescrip=''):
     addedParam = db.add_parameter_dc(paramName,[idxSet1,idxSet2],paramDescrip)
     for k,v in iter(param2dDict.items()): addedParam.add_record(k).value = float(v)
+    if len(addedParam.get_symbol_dvs())>0: print('Domain violations in ' + paramName)
 
-def getParamDict(df,param,scalar=1):
+def getGenParamDict(df,param,scalar=1):
     return (pd.Series(df[param].values.astype(float)*scalar,index=df['GAMS Symbol']).to_dict())
 
-#Stores set of values into dictionary keyed by hour
-#Inputs: set of param values (1d list), hour symbols (1d list), optional scalar
-#Outputs: dictionary of (hour symbol:param val)
-def getParamIndexedByHourDict(paramVals,hourSymbols,*scalar):
-    paramIndexedByHourDict = dict()
-    for idx in range(len(hourSymbols)): paramIndexedByHourDict[hourSymbols[idx]] = paramVals[idx]*scalar[0]
-    return paramIndexedByHourDict
+def convert2DTimeseriesDfToDict(df,scalar=1):
+    d,dTuples = df.to_dict(),dict() #d is {col1:{idx1:val1,idx2:val2,etc.},etc.}
+    for col in d:
+        for hr,val in d[col].items(): 
+            dTuples[(col,str(hr))] = float(val)*scalar
+    return dTuples
 ################################################################################
 ################################################################################
 ################################################################################

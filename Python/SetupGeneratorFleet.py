@@ -3,89 +3,114 @@
 import csv, os, copy, operator, random, pandas as pd, numpy as np
 from AuxFuncs import *
 
-def setupGeneratorFleet(statesForAnalysis,powerSystemsForAnalysis,
-        startYear,fuelPrices,compressFleet,regElig,regCostFrac,stoEff,stoMinSOC):
+def setupGeneratorFleet(interconn,startYear,fuelPrices,stoEff,stoMinSOC,stoFTLabels): #statesForAnalysis
     #Import NEEDS (base fleet) and strip down to 1 fuel
     genFleet = pd.read_excel(os.path.join('Data','needs_v6_06-30-2020.xlsx'),sheet_name='NEEDS v6_active',header=0)
     genFleet['FuelType'] = genFleet['Modeled Fuels'].str.split(',', expand=True)[0]
     #Import and extract data from EIA 860
-    genFleet = addEIA860Data(genFleet,statesForAnalysis,powerSystemsForAnalysis)
+    genFleet = addEIA860Data(genFleet,interconn,stoFTLabels) 
     #Add parameters
-    genFleet.loc[genFleet['FuelType']=='Energy Storage','Efficiency'] = stoEff
-    genFleet.loc[genFleet['FuelType']=='Energy Storage','Minimum Energy Capacity (MWh)'] = stoMinSOC
+    genFleet.loc[genFleet['FuelType'].isin(stoFTLabels),'Efficiency'] = stoEff
+    genFleet.loc[genFleet['FuelType'].isin(stoFTLabels),'Minimum Energy Capacity (MWh)'] = stoMinSOC
     genFleet = addFuelPrices(genFleet,startYear,fuelPrices)
     genFleet = addEmissionsRates(genFleet) 
+    return genFleet
+
+def compressAndAddSizeDependentParams(genFleet,compressFleet,regElig,contFlexInelig,regCostFrac,stoPTLabels):
     if compressFleet == True: genFleet = performFleetCompression(genFleet)
     genFleet = addUnitCommitmentParameters(genFleet,'PhorumUCParameters.csv') 
     genFleet = addUnitCommitmentParameters(genFleet,'StorageUCParameters.csv')
     genFleet = addRandomOpCostAdder(genFleet)
-    genFleet = addVOMandFOM(genFleet) 
+    genFleet = addVOMandFOM(genFleet,stoPTLabels) 
     genFleet = calcOpCost(genFleet)
     genFleet = addRegResCostAndElig(genFleet,regElig,regCostFrac)
-    genFleet = addReserveEligibility(genFleet)
+    genFleet = addReserveEligibility(genFleet,contFlexInelig)
     #Add retirement tracking columns
     for c in ['YearAddedCE','Retired','YearRetiredByCE','YearRetiredByAge']: genFleet[c]=False
     #Add unique code used as GAMS symbol
-    genFleet['GAMS Symbol'] = genFleet['ORIS Plant Code'].astype(str) + "+" + genFleet['Unit ID']
-    # genFleet.to_csv(r'C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\Python\Data\genFleet.txt',header=True, index=False)
+    genFleet['GAMS Symbol'] = genFleet['ORIS Plant Code'].astype(str) + "+" + genFleet['Unit ID'].astype(str)
     return genFleet
 
 ################################################################################
-def addEIA860Data(genFleet,statesForAnalysis,powerSystemsForAnalysis,missingStoDuration=4):
+def addEIA860Data(genFleet,interconn,stoFTLabels,missingStoDuration=4): #statesForAnalysis
     gens,plants,storage = importEIA860()
     genFleet = genFleet.merge(plants[['Plant Code','Latitude','Longitude']],left_on='ORIS Plant Code',right_on='Plant Code',how='left')
-    genFleet = genFleet.merge(storage[['Plant Code','Nameplate Energy Capacity (MWh)','Maximum Charge Rate (MW)','Maximum Discharge Rate (MW)']],left_on='ORIS Plant Code',right_on='Plant Code',how='left')
+    genFleet = fillMissingCoords(genFleet)
+    genFleet = genFleet.merge(storage[['Plant Code','Generator ID','Nameplate Energy Capacity (MWh)','Maximum Charge Rate (MW)','Maximum Discharge Rate (MW)','Technology']],left_on=['ORIS Plant Code','Unit ID'],right_on=['Plant Code','Generator ID'],how='left')
     #Isolate area of interest
-    genFleet = genFleet.loc[genFleet['State Name'].isin(statesForAnalysis)]
-    genFleet = genFleet.loc[genFleet['Region Name'].str.contains('|'.join(powerSystemsForAnalysis))]
+    needsRegions = mapInterconnToNEEDSRegions()[interconn]
+    genFleet = genFleet.loc[genFleet['Region Name'].str.contains('|'.join(needsRegions))]
     genFleet.reset_index(inplace=True,drop=True)
+    #Replace storage plant type from NEEDS w/ technology from 860
+    stoRowsMatched = genFleet.loc[(genFleet['FuelType'].isin(stoFTLabels)) & (genFleet['Nameplate Energy Capacity (MWh)'].isnull() == False)]
+    genFleet.loc[stoRowsMatched.index,'PlantType'] = stoRowsMatched['Technology']
     #Fill in missing storage parameters
-    stoRowsMissingMatch = genFleet.loc[(genFleet['FuelType']=='Energy Storage') & (genFleet['Nameplate Energy Capacity (MWh)'].isnull())]
+    stoRowsMissingMatch = genFleet.loc[(genFleet['FuelType'].isin(stoFTLabels)) & (genFleet['Nameplate Energy Capacity (MWh)'].isnull())]
     genFleet.loc[stoRowsMissingMatch.index,'Nameplate Energy Capacity (MWh)'] = genFleet['Capacity (MW)'] * missingStoDuration
     genFleet.loc[stoRowsMissingMatch.index,'Maximum Charge Rate (MW)'] = genFleet['Capacity (MW)']
     genFleet.loc[stoRowsMissingMatch.index,'Maximum Discharge Rate (MW)'] = genFleet['Capacity (MW)']
     return genFleet
+
+#Fill generators with missing lat/lon (not in EIA 860) w/ coords from other plants in same county or state
+def fillMissingCoords(genFleet):
+    missingCoordRows = genFleet.loc[genFleet['Latitude'].isna()]
+    for idx,row in missingCoordRows.iterrows():
+        county,state = row['County'],row['State Name']
+        otherRows = genFleet.loc[(genFleet['County']==county) & (genFleet['State Name']==state)]
+        otherRowsWithCoords = otherRows.loc[otherRows['Latitude'].isna()==False]
+        if otherRowsWithCoords.shape[0]==0: otherRowsWithCoords = genFleet.loc[genFleet['State Name']==state] 
+        lat,lon = otherRowsWithCoords['Latitude'].median(),otherRowsWithCoords['Longitude'].median()
+        genFleet.loc[idx,'Latitude'],genFleet.loc[idx,'Longitude'] = lat,lon
+    return genFleet
+
+def mapInterconnToNEEDSRegions(): #make sure list is returned in dict
+    return {'ERCOT':['ERC'],'WECC':['WEC'],'EI':['FRCC','MIS','NENG','NY','PJM','SPP','S_C','S_D','S_SOU','S_VACA']}
 
 def importEIA860():
     dir860 = os.path.join('Data','EIA860')
     gens860 = pd.read_excel(os.path.join(dir860,'3_1_Generator_Y2018.xlsx'),sheet_name='Operable',header=1)
     sto860 = pd.read_excel(os.path.join(dir860,'3_4_Energy_Storage_Y2018.xlsx'),sheet_name='Operable',header=1)
     plants860 = pd.read_excel(os.path.join(dir860,'2___Plant_Y2018.xlsx'),sheet_name='Plant',header=1)
-    # genFleet = gens860.merge(plants860[['Plant Code','Latitude','Longitude','Balancing Authority Code']],on='Plant Code',how='left')
-    # genFleet = genFleet.merge(sto860[['Plant Code','Generator ID','Nameplate Energy Capacity (MWh)','Maximum Charge Rate (MW)','Maximum Discharge Rate (MW)']],on=['Plant Code','Generator ID'],how='left')
     return gens860,plants860,sto860
 ################################################################################
 
 ################################################################################
-#COMPRESS FLEET BY COMBINING SMALL UNITS
-def performFleetCompression(genFleet):
+#COMPRESS FLEET BY COMBINING SMALL UNITS BY REGION
+def performFleetCompression(genFleetAll):
     maxSizeToCombine,maxCombinedSize,firstYr,lastYr,stepYr = 75,300,1975,2026,10
+    startRegionCap,startFuelCap = genFleetAll.groupby(['region']).sum()['Capacity (MW)'],genFleetAll.groupby(['FuelType']).sum()['Capacity (MW)']
     rowsToDrop,rowsToAdd = list(),list()
-    for fuel in ['Landfill Gas','Distillate Fuel Oil','MSW','Natural Gas','Biomass','Non-Fossil Waste','Fossil Waste','Residual Fuel Oil']:
-        fuelRows = genFleet.loc[(genFleet['FuelType']==fuel) & (genFleet['Capacity (MW)']<maxSizeToCombine) & (genFleet['PlantType']!='Combined Cycle')]
-        yearIntervals = [yr for yr in range(firstYr,lastYr,stepYr)]
-        for endingYear in yearIntervals:
-            beginningYear = 0 if endingYear == firstYr else endingYear-stepYr
-            fuelRowsYears = fuelRows.loc[(fuelRows['On Line Year']>beginningYear) & (fuelRows['On Line Year']<=endingYear)]
-            if fuelRowsYears.shape[0]>1: 
-                runningCombinedSize,rowsToCombine = 0,list()
-                for index, row in fuelRowsYears.iterrows():
-                    if (runningCombinedSize + row['Capacity (MW)'] > maxCombinedSize):
-                        newRow,idxsToDrop = aggregateRows(genFleet,rowsToCombine)
-                        rowsToAdd.append(newRow),rowsToDrop.extend(idxsToDrop)
-                        runningCombinedSize,rowsToCombine = row['Capacity (MW)'],[row]
-                    else:
-                        runningCombinedSize += row['Capacity (MW)']
-                        rowsToCombine.append(row)
-                if len(rowsToCombine)>1: 
-                    newRow,idxsToDrop = aggregateRows(genFleet,rowsToCombine)
-                    rowsToAdd.append(newRow),rowsToDrop.extend(idxsToDrop)    
-    genFleet.drop(index=rowsToDrop,inplace=True)
-    genFleet = genFleet.append(pd.DataFrame(rowsToAdd))
-    genFleet.reset_index(drop=True,inplace=True)
-    return genFleet
+    for region in genFleetAll['region'].unique():
+        genFleet = genFleetAll.loc[genFleetAll['region']==region]
+        for fuel in ['Landfill Gas','Distillate Fuel Oil','MSW','Natural Gas','Biomass','Non-Fossil Waste','Fossil Waste','Residual Fuel Oil']:
+            fuelRows = genFleet.loc[(genFleet['FuelType']==fuel) & (genFleet['Capacity (MW)']<maxSizeToCombine) & (genFleet['PlantType']!='Combined Cycle')]
+            yearIntervals = [yr for yr in range(firstYr,lastYr,stepYr)]
+            for endingYear in yearIntervals:
+                beginningYear = 0 if endingYear == firstYr else endingYear-stepYr
+                fuelRowsYears = fuelRows.loc[(fuelRows['On Line Year']>beginningYear) & (fuelRows['On Line Year']<=endingYear)]
+                if fuelRowsYears.shape[0]>1: 
+                    runningCombinedSize,rowsToCombine = 0,list()
+                    for index, row in fuelRowsYears.iterrows():
+                        if (runningCombinedSize + row['Capacity (MW)'] > maxCombinedSize):
+                            newRow,idxsToDrop = aggregateRows(rowsToCombine)
+                            rowsToAdd.append(newRow),rowsToDrop.extend(idxsToDrop)
+                            runningCombinedSize,rowsToCombine = row['Capacity (MW)'],[row]
+                        else:
+                            runningCombinedSize += row['Capacity (MW)']
+                            rowsToCombine.append(row)
+                    if len(rowsToCombine)>1: 
+                        newRow,idxsToDrop = aggregateRows(rowsToCombine)
+                        rowsToAdd.append(newRow),rowsToDrop.extend(idxsToDrop)    
+    assert(len(set(rowsToDrop))==len(rowsToDrop))
+    genFleetAll.drop(index=rowsToDrop,inplace=True)
+    genFleetAll = genFleetAll.append(pd.DataFrame(rowsToAdd))
+    genFleetAll.reset_index(drop=True,inplace=True)
+    endRegionCap,endFuelCap = genFleetAll.groupby(['region']).sum()['Capacity (MW)'],genFleetAll.groupby(['FuelType']).sum()['Capacity (MW)']
+    assert(startRegionCap.astype(int).equals(endRegionCap.astype(int)))
+    assert(startFuelCap.astype(int).equals(endFuelCap.astype(int)))
+    return genFleetAll
                 
-def aggregateRows(genFleet,rowsToCombine):
+def aggregateRows(rowsToCombine):
     rowsToCombine = pd.DataFrame(rowsToCombine)
     capacWts = rowsToCombine['Capacity (MW)']/rowsToCombine['Capacity (MW)'].sum()
     newRow = rowsToCombine.iloc[0].copy()
@@ -93,18 +118,20 @@ def aggregateRows(genFleet,rowsToCombine):
     newRow['On Line Year'] = rowsToCombine['On Line Year'].median()
     for p in ['CO2EmRate(lb/MMBtu)','Heat Rate (Btu/kWh)']: #'NOxEmRate(lb/MMBtu)','SO2EmRate(lb/MMBtu)'
         newRow[p] = (rowsToCombine[p]*capacWts).sum()
-    newRow['Unit ID'] = newRow['Unit ID']+'COMBINED'
+    newRow['Unit ID'] = str(newRow['Unit ID'])+'COMBINED'
     return newRow,rowsToCombine.index
 ################################################################################
 
 ################################################################################
 #ADD VARIABLE AND FIXED O&M COSTS
 #Based on plant type
-def addVOMandFOM(genFleet):
+def addVOMandFOM(genFleet,stoPTLabels):
     vomData = pd.read_csv(os.path.join('Data','VOMValues.csv'),index_col=0)
     genFleet = genFleet.merge(vomData[['FOM(2012$/MW/yr)','VOM(2012$/MWh)']],left_on='PlantType',right_index=True,how='left')
     genFleet['VOM(2012$/MWh)'] = convertCostToTgtYr('vom',genFleet['VOM(2012$/MWh)'])
     genFleet['FOM(2012$/MW/yr)'] = convertCostToTgtYr('fom',genFleet['FOM(2012$/MW/yr)'])
+    genFleet.loc[genFleet['PlantType'].isin(stoPTLabels),'VOM(2012$/MWh)'] = 0
+    genFleet.loc[genFleet['PlantType'].isin(stoPTLabels),'FOM(2012$/MW/yr)'] = 0
     return genFleet
 ################################################################################
 
@@ -155,7 +182,8 @@ def mapFuels():
         'Biomass': 'Biomass', 'Solar': 'Solar', 'Non-Fossil Waste': 'Non-Fossil',
         'MSW': 'MSW', 'Pumped Storage': 'Hydro', 'Residual Fuel Oil': 'Oil',
         'Wind': 'Wind', 'Nuclear Fuel': 'Nuclear', 'Coal': 'Coal','Energy Storage':'Storage',
-        'Hydrogen':'Storage','Storage':'Storage'}
+        'Hydrogen':'Storage','Storage':'Storage','Fossil Waste':'Oil','Tires':'Non-Fossil',
+        'Waste Coal':'Coal'}
     #EIA860 fuels
     # fleetFuelToPhorumFuelMap = {'BIT':'Coal','PC':'Pet. Coke','SGC':'Coal',
     #         'SUB':'Coal','LIG':'Coal','RC':'Coal','NG':'NaturalGas','OG':'NaturalGas',
@@ -172,6 +200,7 @@ def mapHeadersToPhorumParamNames():
 ################################################################################
 #ADD FUEL PRICES
 def addFuelPrices(genFleet,currYear,fuelPrices):
+    if currYear > 2050: currYear = 2050
     fuelPrices = fuelPrices.loc[currYear] if currYear in fuelPrices.index else fuelPrices.iloc[-1]
     fuelPrices = convertCostToTgtYr('fuel',fuelPrices)
     prices = fuelPrices.to_dict()
@@ -210,11 +239,10 @@ def addRegResCostAndElig(genFleet,regElig,regCostFrac):
 ################################################################################
 
 ################################################################################
-def addReserveEligibility(genFleet):
-    ineligibleFuelTypes = ['Wind','Solar']
+def addReserveEligibility(genFleet,contFlexInelig):
     genFleet['FlexOfferElig'],genFleet['ContOfferElig'] = 1,1
-    genFleet.loc[genFleet['FuelType'].str.contains('|'.join(ineligibleFuelTypes)),'FlexOfferElig'] = 0
-    genFleet.loc[genFleet['FuelType'].str.contains('|'.join(ineligibleFuelTypes)),'ContOfferElig'] = 0
+    genFleet.loc[genFleet['FuelType'].str.contains('|'.join(contFlexInelig)),'FlexOfferElig'] = 0
+    genFleet.loc[genFleet['FuelType'].str.contains('|'.join(contFlexInelig)),'ContOfferElig'] = 0
     return genFleet
 ################################################################################
     
