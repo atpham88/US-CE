@@ -6,7 +6,7 @@ import numpy as np
 
 
 def results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear,
-                    yearIncDACS, electrifiedDemand, elecDemandScen):
+                    yearIncDACS, electrifiedDemand, elecDemandScen,interconn):
 
     m_dir = "C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\"
 
@@ -19,14 +19,14 @@ def results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFi
     pythonFolder = 'C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\'
 
     if emissionSystem == 'Negative':
-        resultsDir = 'Results_' + emissionSystem + 'NEin' + str(planNESystem) + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
+        resultsDir = 'Results_' + interconn + '_' + emissionSystem + 'NEin' + str(planNESystem) + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
                      + '_' + str(electrifiedDemand) + elecDemandScen + case_name
-        resultsFolder = pythonFolder + 'Results' + emissionSystem + str(int(co2EmsCapInFinalYear/1e6)) + 'DACS' + str(yearIncDACS) \
+        resultsFolder = pythonFolder + 'Results_' + interconn + '_' + emissionSystem + str(int(co2EmsCapInFinalYear/1e6)) + '_' + 'DACS' + str(yearIncDACS) \
                         + 'NEin' + str(planNESystem) + '_' + case_name + '_' + str(electrifiedDemand) + elecDemandScen
     elif emissionSystem == 'NetZero':
-        resultsDir = 'Results_' + emissionSystem + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
+        resultsDir = 'Results_' + interconn + '_' + emissionSystem + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
                      + '_' + str(electrifiedDemand) + elecDemandScen + case_name
-        resultsFolder = pythonFolder + 'Results' + emissionSystem + str(int(co2EmsCapInFinalYear/1e6)) + 'DACS' + str(yearIncDACS) \
+        resultsFolder = pythonFolder + 'Results_' + interconn + '_' + emissionSystem + '_' + 'DACS' + str(yearIncDACS) \
                         + '_' + case_name + '_' + str(electrifiedDemand) + elecDemandScen
 
 

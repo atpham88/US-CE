@@ -8,22 +8,24 @@ from netCDF4 import Dataset
 from GetRenewableCFsMERRA import *
 
 #Output: dfs of wind and solar generation (8760 dt rows, arbitrary cols)
-def getNewRenewableCFs(genFleet,tgtTz,reYear,currYear,reDownFactor,interconn):
+def getNewRenewableCFs(genFleet,tgtTz,reYear,currYear,reDownFactor,pRegionShapes):
     if currYear > 2050: currYear = 2050
     #Import state bounds (array of within state = 1, outside = 0)
-    if interconn == 'ERCOT':
-        stateBounds = pd.read_excel(os.path.join('Data','MERRA','state_MERRA_Format_Bounds.xlsx'),index_col=0)
-    elif interconn == 'EI':
-        stateBounds = pd.read_excel(os.path.join('Data', 'MERRA', 'EI_offshore_MERRA_Format_Bounds.xlsx'), index_col=0)
     #Isolate wind & solar units
     windUnits,solarUnits = getREInFleet('Wind',genFleet),getREInFleet('Solar PV',genFleet)
     #Get list of wind / solar sites in region. 
-    lats,lons,cf = loadMerraData(reYear,interconn)
-    assert(len(lats)==stateBounds.shape[0] and len(lons)==stateBounds.shape[1])
+    lats,lons,cf,latlonRegion = loadMerraData(reYear,pRegionShapes)
     #Match existing gens to CFs
     get_cf_index(windUnits,lats,lons),get_cf_index(solarUnits,lats,lons)
+
     #Calculate new CFs. Use given met year data but set dt index to currYear.
-    cf = enforceStateBounds(cf,stateBounds)
+    stateBounds = latlonRegion.reset_index(drop=True)
+    stateBounds.columns = range(stateBounds.columns.size)
+    cf = enforceStateBounds(cf, stateBounds)
+
+    #np.savetxt('C:\\Users\\atpha\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\'
+    #           'Results Summary\\solar_26-97.5_new.out', cf["solar"][3, 44, :])
+
     windCfs = calcNewCfs(windUnits,lats,lons,cf,'wind',currYear)
     solarCfs = calcNewCfs(solarUnits,lats,lons,cf,'solar',currYear)
     #Downscale if desired
@@ -54,12 +56,12 @@ def calcNewCfs(existingGens,lats,lons,cf,re,currYear):
     return pd.DataFrame(cfs,index=idx)
 
 def enforceStateBounds(cf,stateBounds):
-    for re in cf:
+   for re in cf:
         for row in stateBounds.index:
             for col in stateBounds.columns:
                 cf[re][row,col] *= stateBounds.loc[row,col]
     # plotCFs(cf)
-    return cf
+   return cf
 
 
 

@@ -73,7 +73,7 @@ def setKeyParameters():
     buildLimitsCase = 1                                 # 1 = reference case, 2 = limited nuclear, 3 = limited CCS and nuclear, 4 = limited hydrogen storage
 
     #### PLANNING SYSTEM SCENARIO
-    emissionSystem = 'NetZero'                         # "Net Zero" = net zero, "Negative" = negative emission system
+    emissionSystem = 'NetZero'                          # "NetZero" = net zero, "Negative" = negative emission system
 
     #### NEGATIVE EMISSION SCENARIO
     planNESystem = 2050                                 # Year that negative emission system is planned
@@ -101,9 +101,13 @@ def setKeyParameters():
     numBlocks, daysPerBlock, daysPerPeak = 4, 2, 3                              # num rep time blocks, days per rep block, and days per peak block in CE
     fullYearCE = True if (numBlocks == 1 and daysPerBlock > 300) else False     # whether running full year in CE
     if planNESystem < 2050:
-        startYear, endYear, yearStepCE = 2020, 2051, 30                         # start & end year & time steps between CE runs
+        startYear, endYear, yearStepCE = 2020, 2051, 10                         # start & end year & time steps between CE runs
     elif planNESystem == 2050:
         startYear, endYear, yearStepCE = 2020, 2061, 10
+
+    if emissionSystem == 'NetZero':
+        startYear, endYear, yearStepCE = 2020, 2051, 10
+
     greenField = False                                  # whether to run greenField (set to True) or brownfield (False)
     includeRes = False                                  # whether to include reserves in CE & dispatch models (if False, multiplies reserve timeseries by 0)
     stoInCE, seasStoInCE = True,True                    # whether to allow new storage,new seasonal storage in CE model
@@ -207,9 +211,9 @@ def masterFunction():
     #Create results directory
     buildScen = {1:'reference',2:'lNuclear',3:'lNuclearCCS',4:'lH2'}[buildLimitsCase]
     if emissionSystem == 'Negative':
-        resultsDirAll = 'Results' + emissionSystem+ str(int(co2EmsCapInFinalYear/1e6)) + 'DACS' + str(yearIncDACS) + 'NEin' + str(planNESystem) + '_' + buildScen + '_' + str(electrifiedDemand) + elecDemandScen
+        resultsDirAll = 'Results_' + interconn + '_' + emissionSystem+ str(int(co2EmsCapInFinalYear/1e6)) + '_' + 'DACS' + str(yearIncDACS) + 'NEin' + str(planNESystem) + '_' + buildScen + '_' + str(electrifiedDemand) + elecDemandScen
     elif emissionSystem == 'NetZero':
-        resultsDirAll = 'Results' + emissionSystem + str(int(co2EmsCapInFinalYear / 1e6)) + 'DACS' + str(yearIncDACS) + '_' + buildScen + '_' + str(electrifiedDemand) + elecDemandScen
+        resultsDirAll = 'Results_' + interconn + '_' + emissionSystem + '_' + 'DACS' + str(yearIncDACS) + '_' + buildScen + '_' + str(electrifiedDemand) + elecDemandScen
 
     if not os.path.exists(resultsDirAll): os.makedirs(resultsDirAll)
 
@@ -279,7 +283,7 @@ def masterFunction():
                 regLoadFrac, contLoadFrac, interconn, regErrorPercentile, flexErrorPercentile, includeRes,
                 rrToRegTime, rrToFlexTime, rrToContTime, regCostFrac, ucOrED, initSOCFraction, includeRes)
 
-    results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear, yearIncDACS, electrifiedDemand, elecDemandScen)
+    results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear, yearIncDACS, electrifiedDemand, elecDemandScen,interconn)
 
 # ###############################################################################
 # ###############################################################################
@@ -352,7 +356,8 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear,
 
     # Get renewable CFs from MERRA data by plant and region and calculate net demand by region
     print('Loading RE data')
-    windGen,solarGen,windGenRegion,solarGenRegion = getREGen(genFleet, tzAnalysis, metYear, currYear, interconn)
+    windGen,solarGen,windGenRegion,solarGenRegion,latlonRegion = getREGen(genFleet, tzAnalysis, metYear, currYear, pRegionShapes)
+    #windGen,solarGen,windGenRegion,solarGenRegion =getREGen(genFleet, tzAnalysis, metYear, currYear, interconn, pRegionShapes)
     netDemand = demand - windGenRegion - solarGenRegion
 
     # Get hours included in CE model (representative + special blocks)
@@ -361,7 +366,8 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear,
         daysPerBlock, daysPerPeak, fullYearCE, currYear, resultsDir, numBlocks, metYear, planningReserveMargin)
 
     # Get CFs for new wind and solar sites and add wind & solar sites to newTechs
-    newCfs = getNewRenewableCFs(genFleet, tzAnalysis, metYear, currYear, reDownFactor, interconn)
+    newCfs = getNewRenewableCFs(genFleet, tzAnalysis, metYear, currYear, reDownFactor,pRegionShapes)
+    #newCfs = getNewRenewableCFs(genFleet, tzAnalysis, metYear, currYear, reDownFactor, interconn, pRegionShapes)
     newTechsCE,newCfs = addWSSitesToNewTechs(newCfs, newTechsCE, pRegionShapes)
 
     # Initialize which generators are on or off at start of each block of hours (useful if CE has UC constraints)
