@@ -45,6 +45,7 @@ from WriteBuildVariable import writeBuildVariable
 from CreateEmptyReserveDfs import createEmptyReserveDfs
 from SetupTransmissionAndZones import setupTransmissionAndZones,defineTransmissionRegions
 from resultsanalysis_function_automated import results_summary
+from resultsanalysis_function_automated_mulStep import results_summary_mul
 
 # SET OPTIONS
 warnings.filterwarnings("ignore")
@@ -70,12 +71,12 @@ def setKeyParameters():
     reDownFactor = 80                                 # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
 
     #### BUILD SCENARIO
-    buildLimitsCase = 1                                 # 1 = reference case, 2 = limited nuclear, 3 = limited CCS and nuclear, 4 = limited hydrogen storage, 5 = limited transmission
+    buildLimitsCase = 4                                 # 1 = reference case, 2 = limited nuclear, 3 = limited CCS and nuclear, 4 = limited hydrogen storage, 5 = limited transmission
     #### PLANNING SYSTEM SCENARIO
-    emissionSystem = 'Negative'                          # "NetZero" = net zero, "Negative" = negative emission system
+    emissionSystem = 'NetZero'                          # "NetZero" = net zero, "Negative" = negative emission system
 
     #### NEGATIVE EMISSION SCENARIO
-    planNESystem = 2050                                 # Year that negative emission system is planned
+    planNESystem = 2030                                 # Year that negative emission system is planned
 
     #### RUNNING ON SC OR LOCAL
     runOnSC = False                                     # whether running on supercomputer
@@ -298,7 +299,7 @@ def masterFunction():
                     if currYear == 2040:
                         if currYear == 2040:
                             priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
-    
+
                 elif planNESystem == 2020 or planNESystem == 2050 or emissionSystem == 'NetZero':
                     priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
 
@@ -320,8 +321,10 @@ def masterFunction():
                 currCo2Cap, useCO2Price, tzAnalysis, resultsDir, stoMkts, metYear,
                 regLoadFrac, contLoadFrac, interconn, regErrorPercentile, flexErrorPercentile, includeRes,
                 rrToRegTime, rrToFlexTime, rrToContTime, regCostFrac, ucOrED, initSOCFraction, includeRes)
-
-    results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear, yearIncDACS, electrifiedDemand, elecDemandScen,interconn)
+    if mulStep:
+        results_summary_mul(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear, yearIncDACS, electrifiedDemand, elecDemandScen,interconn)
+    else:
+        results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear, yearIncDACS, electrifiedDemand, elecDemandScen,interconn)
 
 # ###############################################################################
 # ###############################################################################
