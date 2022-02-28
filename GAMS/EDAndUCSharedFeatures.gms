@@ -5,16 +5,16 @@ $onEmpty
 Sets
 *Existing generators
          egu                             existing generators
-		 renewegu(egu)					existing wind and solar generators
-		 windegu(renewegu)				existing wind generators
-		 solaregu(renewegu)				existing solar generators
-		 genegu(egu)                  egus that are not dacs or storage
-		 dacsegu(egu)                 direct air capture units
-		 notdacsegu(egu)              egus that are not dac units
+                 renewegu(egu)                                  existing wind and solar generators
+                 windegu(renewegu)                              existing wind generators
+                 solaregu(renewegu)                             existing solar generators
+                 genegu(egu)                  egus that are not dacs or storage
+                 dacsegu(egu)                 direct air capture units
+                 notdacsegu(egu)              egus that are not dac units
          storageegu(egu)                 storage units
          h                               hours
-		 z 								zones
-		 l 								lines
+                 z                                                              zones
+                 l                                                              lines
          ;
 
 Parameters
@@ -33,18 +33,18 @@ Parameters
 *RENEWABLE GENERATION CAPS
          pMaxgenwind(z,h)                  max hourly generation for existing wind [GWh]
          pMaxgensolar(z,h)                 max hourly generation for existing solar [GWh]
-*STORAGE PARAMETERS	
-		 pStoinenergymarket              whether storage can provide energy (1) or not (0)
+*STORAGE PARAMETERS
+                 pStoinenergymarket              whether storage can provide energy (1) or not (0)
          pEfficiency(storageegu)         round trip storage efficiency
          pCapaccharge(storageegu)        max charging capacity (GW)
          pMaxsoc(storageegu)             max stored energy (GWh)
          pMinsoc(storageegu)             min stored energy (GWh)
 *ZONAL PROPERTIES
-		pGenzone(egu)					zone in which egu is located
-		pDemand(z,h)                      hourly electricity demand [GWh]
-        pLinesource(l)					zone that is the source of line l
-		pLinesink(l)					zone that is the sink of line l
-		pLinecapac(l)					MW capacity of line l
+                pGenzone(egu)                                   zone in which egu is located
+                pDemand(z,h)                      hourly electricity demand [GWh]
+        pLinesource(l)                                  zone that is the source of line l
+                pLinesink(l)                                    zone that is the sink of line l
+                pLinecapac(l)                                   MW capacity of line l
 *HOURLY ELECTRICITY DEMAND [GWh]
          pDemandShifter                  demand shifter (percentage)
          pDemandShiftingBlock
@@ -99,7 +99,7 @@ Variables
 
 Positive variables
 *GENERATION AND RESERVES
-		 vGen(egu,h)                     hourly electricity generation by existing plant [GWh]
+                 vGen(egu,h)                     hourly electricity generation by existing plant [GWh]
          vRegup(egu,h)                   hourly reg up reserves provided by existing plant [GWh]
          vFlex(egu,h)
          vCont(egu,h)
@@ -109,7 +109,7 @@ Positive variables
 *EMISSIONS
          vCO2ems(egu,h)
 *TRANSMISSION LINE FLOWS
-		vLineflow(l,h)
+                vLineflow(l,h)
          ;
 
 Equations
@@ -119,9 +119,9 @@ Equations
          limitallresup(egu,h)            limit total generation plus up reserves of existing plants to capacity
 *Renewable generation
          limitWindGen(z,h)
-		 limitSolarGen(z,h)
+                 limitSolarGen(z,h)
 *Line flows
-*		limitLineFlow(l,h)
+*               limitLineFlow(l,h)
 *Carbon limits
          calcco2ems(egu,h)                    sum annual co2 emissions
          ;

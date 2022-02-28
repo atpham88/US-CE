@@ -185,7 +185,7 @@ def addMaxNewBuilds(db,df,thermalSet,stoTechSet,dacsSet,CCSSet,maxCapPerTech,mwT
     add1dParam(db,maxECap,stoTechSet,techs['GAMS Symbol'],'pEMaxSto')
 
 ##### ADD NEW LINE PARAMETERS
-def addNewLineParams(db, lineDists, lineCosts, lineSet, zoneOrder, interconn, lineLife=60):
+def addNewLineParams(db, lineDists, lineCosts, lineSet, maxCapPerTech, buildLimitsCase, zoneOrder, interconn, lineLife=60):
     #Transmission costs = $/mw-mile * mw (= $/mw = thousand$/gw)
     if interconn == 'ERCOT':
         cost = pd.Series(lineCosts['Line Cost ($/mw-mile)'].values.astype(float),index=lineCosts['GAMS Symbol'])
@@ -197,7 +197,11 @@ def addNewLineParams(db, lineDists, lineCosts, lineSet, zoneOrder, interconn, li
     add1dParam(db,totalCost.to_dict(),lineSet,totalCost.index,'pLinecost')
     #Maximum transmission expansion (GW)
     maxCapacs = pd.Series(1e9,index=totalCost.index)
-    add1dParam(db,maxCapacs.to_dict(),lineSet,maxCapacs.index,'pNMaxLine')
+    if buildLimitsCase <5:
+        add1dParam(db, maxCapacs.to_dict(),lineSet,maxCapacs.index,'pNMaxLine')
+    elif buildLimitsCase == 5:
+        maxCapacs = pd.Series(maxCapPerTech['Transmission'], index=totalCost.index)
+        add1dParam(db, maxCapacs.to_dict(), lineSet, maxCapacs.index, 'pNMaxLine')
     #Lifetime of new lines
     add0dParam(db,'pLifeline',lineLife)
 

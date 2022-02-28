@@ -23,9 +23,6 @@ def getNewRenewableCFs(genFleet,tgtTz,reYear,currYear,reDownFactor,pRegionShapes
     stateBounds.columns = range(stateBounds.columns.size)
     cf = enforceStateBounds(cf, stateBounds)
 
-    #np.savetxt('C:\\Users\\atpha\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\'
-    #           'Results Summary\\solar_26-97.5_new.out', cf["solar"][3, 44, :])
-
     windCfs = calcNewCfs(windUnits,lats,lons,cf,'wind',currYear)
     solarCfs = calcNewCfs(solarUnits,lats,lons,cf,'solar',currYear)
     #Downscale if desired

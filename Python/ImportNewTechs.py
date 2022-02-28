@@ -73,7 +73,7 @@ def addDACS(newTechsCE,fuelPrices,currYear):
     #Add row to new techs df
     newRow = {'PlantType':['DAC'],'DataSource':['handCalc'],'FuelType':['DAC'],'Capacity (MW)':[dacsCap],
         'Heat Rate (Btu/kWh)':[dacsHR],'CAPEX(2012$/MW)':[-capCost],'FOM(2012$/MW/yr)':[0],'VOM(2012$/MWh)':[-totalOpCost],
-        'NSPSCompliant':['Yes'],'CO2EmRate(lb/MMBtu)':[dacsNetEmsRate],'Lifetime(years)':[15],
+        'NSPSCompliant':['Yes'],'CO2EmRate(lb/MMBtu)':[dacsNetEmsRate],'Lifetime(years)':[30],
         'FuelPrice($/MMBtu)':[0],'RampRate(MW/hr)':[abs(dacsCap)],'MinLoad(MWh)':0,'MinDownTime(hrs)':0,'StartCost($)':0}
     newTechsCE = pd.concat([newTechsCE,pd.DataFrame(newRow)])
     newTechsCE.reset_index(drop=True,inplace=True)

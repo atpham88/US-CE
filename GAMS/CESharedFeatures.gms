@@ -10,30 +10,31 @@ Sets
 *CANDIDATE TECHNOLOGIES FOR CONSTRUCTION
          tech                            candidate technologies for new construction
 *Generators
-		gentechs(tech)					generating techs specifically not DACS or storage
+                gentechs(tech)                                  generating techs specifically not DACS or storage
          thermaltech(tech)               thermal plant types for new construction
-		 CCStech(thermaltech)
+                 CCStech(thermaltech)
          nucleartech(thermaltech)
          CCtech(thermaltech)
          renewtech(tech)                 renewable plant types for new construction
-		 windtech(renewtech)
-		 solartech(renewtech)
+                 windtech(renewtech)
+                 solartech(renewtech)
 *Storage
          storagetech(tech)               storage plant types for new construction
-		 nonstoragetech(tech)			 non storage techs
-		 ststoragetech(storagetech)			
-		 ltstoragetech(storagetech)
+                 nonstoragetech(tech)                    non storage techs
+                 ststoragetech(storagetech)
+                 ltstoragetech(storagetech)
 *CO2 removal
-		 dacstech(tech)
-		 notdacstech(tech)
+                 dacstech(tech)
+                 notdacstech(tech)
 *CANDIDATE TRANSMISSION LINES FOR CONSTRUCTION
-*		ltech
+*               ltech
 *HOURS
          peakH(h)                        hour with peak net demand
-         nonInitH(h)	               hours that are not initial horus of a block
+         nonInitH(h)                   hours that are not initial horus of a block
          ;
 
 Alias (h,hh);
+Alias (l,ll);
 
 Parameters
 *MAX NEW UNITS TO BE BUILT
@@ -71,17 +72,17 @@ Parameters
 *FINANCIAL PARAMETERS
          pR                              discount rate
          pLife(tech)                     lifetime of tech [years]
-		 pLifeline
+                 pLifeline
          pCrf(tech)                      capital recovery factor
-		 pCrfline
-*ZONAL PARAMETERS	
-		pGenzonetech(tech)
-*		pLinesourcetech(ltech)
-*		pLinesinktech(ltech)
-*		pLinecapactech(ltech)
-		pLinecost(l)
-     	 pNMaxLine(l) 
-*		pPeakhtozone(peakH)
+                 pCrfline
+*ZONAL PARAMETERS
+                pGenzonetech(tech)
+*               pLinesourcetech(ltech)
+*               pLinesinktech(ltech)
+*               pLinecapactech(ltech)
+                pLinecost(l)
+         pNMaxLine(l)
+*               pPeakhtozone(peakH)
 *HOURLY RESERVE REQUIREMENTS [GW]
          pRegUpReqIncRE(renewtech,h)
                  pFlexReqIncRE(renewtech,h)
@@ -144,12 +145,13 @@ Positive variables
          vConttech(tech,h)
 *Storage
                  vStateofchargetech(storagetech,h)            "energy stored in storage unit at end of hour h (GWh)"
-         vChargetech(storagetech,h)                           "charged energy by storage unit in hour h (GWh)"
+                 vChargetech(storagetech,h)                           "charged energy by storage unit in hour h (GWh)"
                  vPowBuiltSto(storagetech)                      built power capacity for storage
                  vEneBuiltSto(storagetech)                      built energy capacity for storage
 *Line builds and flows
-		vNl(l)
-*		vLinenewflow(ltech,h)
+                vNl(l)
+                vLinecapacnew(l)
+*               vLinenewflow(ltech,h)
                    ;
 
 $include CEBuildVariable.gms
@@ -169,7 +171,9 @@ Equations
          limitshiftingdemandupper(z,h)          limit the amount of demand that can be shifted
          limitshiftingdemandlower(z,h)          limit the amount of demand that can be shifted
          meetshiftingdemand(z,h)
-		limitLineFlows(l,h)
+                limitLineFlows(l,h)
+                linecapacnew(l,ll)
+
 *Maximum build constraints
                  maxSolar(solartech)
                  maxWind(windtech)
@@ -181,7 +185,8 @@ Equations
                  setVNSto(storagetech)
                  maxELTSto(ltstoragetech)
                  maxESTSto(ststoragetech)
-		 		 maxL(l)
+                                 maxL(l)
+*                 biLineLimit(l)
 *Carbon emissions
                 calcco2emstech(tech,h)
          ;
@@ -193,15 +198,15 @@ calcvarcoststech(tech,h).. vVarcosttech(tech,h) =e= vGentech(tech,h)*pOpcosttech
 *Fixed costs = annual fixed O&M + fixed annualized capital costs
 investmentcost..         vFixedcostannual =e= sum(nonstoragetech,vN(nonstoragetech)*pCapactech(nonstoragetech)*(pFom(nonstoragetech)+pOcc(nonstoragetech)*pCrf(nonstoragetech)))
                                                  + sum(storagetech,vPowBuiltSto(storagetech)*pPowOcc(storagetech)*pCrf(storagetech)+vEneBuiltSto(storagetech)*pEneOcc(storagetech)*pCrf(storagetech))
-												 + sum(l,vNl(l)*pLinecost(l)*pCrfline);
+                                                                                                 + sum(l,vNl(l)*pLinecost(l)*pCrfline);
 ***************************************************
 
 ******************SYSTEM-WIDE GENERATION AND RESERVE CONSTRAINTS*******************
 *Demand = generation by new and existing plants
 meetdemand(z,h)..          sum(tech$[pGenzonetech(tech)=ORD(z)],vGentech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vGen(egu,h)) +
-							sum(l$[pLinesink(l)=ORD(z)],vLineflow(l,h)) =g= (pDemand(z,h) + vShiftedDemand(z,h)
+                                                        sum(l$[pLinesink(l)=ORD(z)],vLineflow(l,h)) =g= (pDemand(z,h) + vShiftedDemand(z,h)
                                                         + sum(storageegu$[pGenzone(storageegu)=ORD(z)],vCharge(storageegu,h)) + sum(storagetech$[pGenzonetech(storagetech)=ORD(z)],vChargetech(storagetech,h))
-														+ sum(l$[pLinesource(l)=ORD(z)],vLineflow(l,h)));
+                                                                                                                + sum(l$[pLinesource(l)=ORD(z)],vLineflow(l,h)));
 
 *meetdemand(z,h)..          sum(tech$[pGenzonetech(tech)=ORD(z)],vGentech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vGen(egu,h)) =g= pDemand(z,h);
 
@@ -227,7 +232,11 @@ meetcontreserve(z,h)..     sum(tech$[pGenzonetech(tech)=ORD(z)],vConttech(tech,h
 meetregupreserve(z,h)..    sum(tech$[pGenzonetech(tech)=ORD(z)],vReguptech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vRegup(egu,h)) =g= vRegupreserve(z,h);
 
 *Limit line flows on new lines
-limitLineFlows(l,h)..   pLinecapac(l)+vNl(l) =g= vLineflow(l,h);
+linecapacnew(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vLinecapacnew(l) =e= vNl(l) + vNl(ll);
+*limitLineFlows(l,h).. pLinecapac(l)+vNl(l) =g= vLineflow(l,h);
+limitLineFlows(l,h).. pLinecapac(l)+vLinecapacnew(l) =g= vLineflow(l,h);
+*new lines with same sources and sinks have the same capacity:
+*biLineLimit(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vNl(l) =e= vNl(ll);
 ***********************************************************************************
 
 *************UPPER AND LOWER GENERATION BOUNDS*****
@@ -250,6 +259,7 @@ setVNSto(storagetech) .. vN(storagetech) =e= vPowBuiltSto(storagetech)/pCapactec
 maxELTSto(ltstoragetech) .. vEneBuiltSto(ltstoragetech) =l= pEMaxSto(ltstoragetech);
 maxESTSto(ststoragetech) .. vEneBuiltSto(ststoragetech) =e= pPERatio(ststoragetech)*vPowBuiltSto(ststoragetech);
 maxL(l) .. vNl(l) =l= pNMaxLine(l);
+
 ***************************************************
 
 ******************RESERVE CONSTRAINTS******************

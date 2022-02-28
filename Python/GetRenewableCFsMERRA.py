@@ -38,24 +38,35 @@ def getREInFleet(reType,genFleet):
 # Outputs: numpy arrays of lats and lons, and then a dictionary w/ wind and solar cfs
 # as an np array of axbxc, where a/b/c = # lats/# longs/# hours in year
 def loadMerraData(reYear, pRegionShapes):
-    #File and dir
-    dataDir = 'Data\\MERRA'
-    solarFile, windFile = path.join(dataDir, str(reYear) + '_solar_generation_cf_US.nc'), path.join(dataDir, str(reYear) + '_wind_generation_cf_US.nc')
+    # File and dir
+    dataDir = 'Data\\RE'
+    solarFile, windFile = path.join(dataDir, 'solar_cf_' + str(reYear) + '.csv'), path.join(dataDir, 'wind_cf_' + str(reYear) + '.csv')
     # Error Handling
     if not (path.exists(solarFile) and path.exists(windFile)):
         error_message = 'Renewable Generation files not available:\n\t'+solarFile+'\n\t'+windFile
         raise RuntimeError(error_message)
-    #Load data
-    solarPowGen = Dataset(solarFile)
-    windPowGen = Dataset(windFile) #assume solar and wind cover same geographic region
+    # Load data
+    solarPowGen = pd.read_csv(solarFile)
+    windPowGen = pd.read_csv(windFile) #assume solar and wind cover same geographic region
 
-    #Get lat and lons for both datasets
-    lats,lons = np.array(solarPowGen.variables['lat'][:]), np.array(solarPowGen.variables['lon'][:])
-    latsPd = pd.DataFrame(lats, columns = ['lat'])
-    lonsPd = pd.DataFrame(lons, columns=['lon'])
+    # Get lat and lons for both datasets
+    lats_temp,lons_temp = solarPowGen['lat'],solarPowGen['lon']
+    latsPd = pd.DataFrame(lats_temp, columns = ['lat'])
+    latsPd = latsPd.drop_duplicates()
+    latsPd = latsPd.sort_values(by=['lat'])
+    latsPd = latsPd.reset_index()
+    lats = latsPd['lat'].to_numpy()
+    lats_temp = lats_temp.to_numpy()
 
-    latsAll = pd.Series(lats)
-    lonsAll = pd.Series(lons)
+    lonsPd = pd.DataFrame(lons_temp, columns=['lon'])
+    lonsPd = lonsPd.drop_duplicates()
+    lonsPd = lonsPd.sort_values(by=['lon'])
+    lonsPd = lonsPd.reset_index()
+    lons = lonsPd['lon'].to_numpy()
+    lons_temp = lons_temp.to_numpy()
+
+    latsAll = pd.Series(latsPd['lat'])
+    lonsAll = pd.Series(lonsPd['lon'])
 
     latlonList = [(i, j)
                for i in latsPd.lat
@@ -70,11 +81,22 @@ def loadMerraData(reYear, pRegionShapes):
     latlonRegion = (pd.crosstab(latlonPshapeJoin['lat'],
                                  latlonPshapeJoin['lon']).reindex(index = latsAll,
                                                                     columns = lonsAll,fill_value=0))
-    #Store data
+    # Store data
     cf = dict()
-    cf["solar"] = np.array(solarPowGen.variables['cf'][:])
-    cf["wind"] = np.array(windPowGen.variables['cf'][:])
-    solarPowGen.close(), windPowGen.close()
+    cf["solar"] = np.zeros(shape=(len(latsPd), len(lonsPd), 8760))
+    cf["wind"] = np.zeros(shape=(len(latsPd), len(lonsPd), 8760))
+
+    for i in list(range(len(latsPd))):
+        for j in list(range(len(lonsPd))):
+            if (lats[i] in lats_temp and lons[j] in lons_temp):
+                k_temp = np.where((lats_temp == lats[i]) & (lons_temp == lons[j]))
+                try:
+                    k = k_temp[0][0]
+                    cf["solar"][i][j][:] = solarPowGen.iloc[k, 2:]
+                    cf["wind"][i][j][:] = windPowGen.iloc[k, 2:]
+                except:
+                    cf["solar"][i][j][:] = solarPowGen.iloc[0, 2:]*0
+                    cf["wind"][i][j][:] = windPowGen.iloc[0, 2:]*0
 
     # Error Handling
     if cf['solar'].shape != (lats.size, lons.size, 8760):

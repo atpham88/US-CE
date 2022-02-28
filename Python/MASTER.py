@@ -67,13 +67,12 @@ def setKeyParameters():
     elecDemandScen = 'REFERENCE'                        # 'REFERENCE','HIGH','MEDIUM' (ref is lower than med)
     annualDemandGrowth = 0                              # fraction demand growth per year - ignored if use EFS data (electrifieDemand=True)
     metYear = 2012 if electrifiedDemand else metYear    # EFS data is for 2012; ensure met year is 2012
-    reDownFactor = 4                                    # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
+    reDownFactor = 80                                 # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
 
     #### BUILD SCENARIO
-    buildLimitsCase = 1                                 # 1 = reference case, 2 = limited nuclear, 3 = limited CCS and nuclear, 4 = limited hydrogen storage
-
+    buildLimitsCase = 1                                 # 1 = reference case, 2 = limited nuclear, 3 = limited CCS and nuclear, 4 = limited hydrogen storage, 5 = limited transmission
     #### PLANNING SYSTEM SCENARIO
-    emissionSystem = 'NetZero'                          # "NetZero" = net zero, "Negative" = negative emission system
+    emissionSystem = 'Negative'                          # "NetZero" = net zero, "Negative" = negative emission system
 
     #### NEGATIVE EMISSION SCENARIO
     planNESystem = 2050                                 # Year that negative emission system is planned
@@ -81,13 +80,22 @@ def setKeyParameters():
     #### RUNNING ON SC OR LOCAL
     runOnSC = False                                     # whether running on supercomputer
 
+    #### RUNNING MULTIPLE 10 YEAR STEPS or JUST 1 STEP
+    mulStep = False                                     # True: 10 year steps
+
     #### CO2 EMISSION CAPS AND DACS TREATMENT
-    co2Ems2020 = 130594820                              #TONS. Initial emission for ERCOT: 130594820.
+    if interconn == 'ERCOT':
+        co2Ems2020 = 130594820                          #TONS. Initial emission for ERCOT: 130594820.
+    elif interconn == 'EI':
+        co2Ems2020 =  1274060000
 
     if emissionSystem == 'NetZero':
         co2EmsCapInFinalYear = 0                        # .9*co2Ems2020    # cap on co2 emissions in final year of CE
     elif emissionSystem == 'Negative':
-        co2EmsCapInFinalYear = -33.1574848 * 1e6        # .9*co2Ems2020    # cap on co2 emissions in final year of CE
+        if interconn == 'ERCOT':
+            co2EmsCapInFinalYear = -90 * 1e6
+        elif interconn == 'EI':
+            co2EmsCapInFinalYear = -724.6662647 * 1e6
 
     yearIncDACS = 2020                                  #year to include DACS - set beyond end period if don't want DACS
 
@@ -106,7 +114,7 @@ def setKeyParameters():
         startYear, endYear, yearStepCE = 2020, 2061, 10
 
     if emissionSystem == 'NetZero':
-        startYear, endYear, yearStepCE = 2020, 2051, 10
+        startYear, endYear, yearStepCE = 2020, 2051, 30
 
     greenField = False                                  # whether to run greenField (set to True) or brownfield (False)
     includeRes = False                                  # whether to include reserves in CE & dispatch models (if False, multiplies reserve timeseries by 0)
@@ -137,10 +145,13 @@ def setKeyParameters():
         
     ####LIMITS ON TECHNOLOGY DEPLOYMENT
     maxCapPerTech = {'Wind': 2000 * reDownFactor, 'Solar': 17000 * reDownFactor, 'Thermal': 999999, 'Combined Cycle': 999999,
-                     'Storage': 999999, 'Dac': -9999999, 'CCS': 999999, 'Nuclear': 999999, 'Battery Storage': 999999, 'Hydrogen': 999999} # max added MW per CE run (W&S by cell)
+                     'Storage': 999999, 'Dac': -9999999, 'CCS': 999999, 'Nuclear': 999999, 'Battery Storage': 999999,
+                     'Hydrogen': 999999, 'Transmission': 1000000000} # max added MW per CE run (W&S by cell)
     if buildLimitsCase == 2: maxCapPerTech['Nuclear'] = 9000 
     elif buildLimitsCase == 3: maxCapPerTech['CCS'],maxCapPerTech['Nuclear'] = 1500,9000
-    elif buildLimitsCase == 4: maxCapPerTech['Hydrogen'] = 2657  
+    elif buildLimitsCase == 4: maxCapPerTech['Hydrogen'] = 2657
+    elif buildLimitsCase == 5:
+        maxCapPerTech['Transmission'] = 10
     
     ####WARNINGS OR ERRORS
     if ceOps == 'UC': sys.exit('CEwithUC.gms needs to be updated for DACS operations - add DACS constraints and include gentechs set')
@@ -153,7 +164,7 @@ def setKeyParameters():
         discountRate, annualDemandGrowth, stoMkts, stoFTLabels, stoPTLabels, initSOCFraction, 
         tzAnalysis, maxCapPerTech, runCE, runFirstYear, metYear, ptEligRetCF, incITC, stoMinSOC, reDownFactor,
         demandShifter, demandShiftingBlock, runOnSC, yearIncDACS, electrifiedDemand,
-        elecDemandScen, interconn, balAuths)
+        elecDemandScen, interconn, balAuths, mulStep)
 
 def importFuelPrices(fuelPriceScenario):
     fuelPrices = pd.read_csv(os.path.join('Data', 'Energy_Prices_Electric_Power.csv'), skiprows=4, index_col=0)
@@ -203,13 +214,13 @@ def masterFunction():
         co2Ems2020, planNESystem, emissionSystem, startYear, endYear, yearStepCE, retirementCFCutoff, retireByAge, planningReserveMargin,
         discountRate, annualDemandGrowth, stoMkts, stoFTLabels, stoPTLabels, initSOCFraction, tzAnalysis,
         maxCapPerTech, runCE, runFirstYear, metYear, ptEligRetCF, incITC, stoMinSOC, reDownFactor, demandShifter,
-        demandShiftingBlock, runOnSC, yearIncDACS, electrifiedDemand,elecDemandScen,interconn,balAuths) = setKeyParameters()
+        demandShiftingBlock, runOnSC, yearIncDACS, electrifiedDemand,elecDemandScen,interconn,balAuths,mulStep) = setKeyParameters()
 
     (regLoadFrac, contLoadFrac, regErrorPercentile, flexErrorPercentile, regElig, contFlexInelig, regCostFrac,
         rrToRegTime, rrToFlexTime, rrToContTime) = defineReserveParameters(stoMkts, stoFTLabels)
 
     #Create results directory
-    buildScen = {1:'reference',2:'lNuclear',3:'lNuclearCCS',4:'lH2'}[buildLimitsCase]
+    buildScen = {1:'reference',2:'lNuclear',3:'lNuclearCCS',4:'lH2', 5:'lTrans'}[buildLimitsCase]
     if emissionSystem == 'Negative':
         resultsDirAll = 'Results_' + interconn + '_' + emissionSystem+ str(int(co2EmsCapInFinalYear/1e6)) + '_' + 'DACS' + str(yearIncDACS) + 'NEin' + str(planNESystem) + '_' + buildScen + '_' + str(electrifiedDemand) + elecDemandScen
     elif emissionSystem == 'NetZero':
@@ -248,6 +259,18 @@ def masterFunction():
                 if currYear <= 2050:
                     currCo2Cap = currCo2CapZero
 
+        if not mulStep:
+            if emissionSystem == 'Negative':
+                if planNESystem == 2020 or planNESystem == 2050:
+                    if currYear == 2030 or currYear == 2040:
+                        continue
+                elif planNESystem == 2030:
+                    if currYear == 2040:
+                        continue
+                elif planNESystem == 2040:
+                    if currYear == 2030:
+                        continue
+
         print('Entering year ', currYear, ' with CO2 cap (million tons):', round(currCo2Cap/1e6))
 
         # Create results directory
@@ -262,8 +285,23 @@ def masterFunction():
         if currYear > startYear and runCE:
             print('Starting CE')
             #Initialize results & inputs
-            if currYear == startYear + yearStepCE:  
-                priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None, 
+            if mulStep:
+                if currYear == startYear + yearStepCE:
+                    priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
+            else:
+                if planNESystem == 2030:
+                    if currYear == 2030:
+                        if currYear == 2030:
+                            priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
+
+                if planNESystem == 2040:
+                    if currYear == 2040:
+                        if currYear == 2040:
+                            priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
+    
+                elif planNESystem == 2020 or planNESystem == 2050 or emissionSystem == 'NetZero':
+                    priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
+
             (genFleet, genFleetPriorCE, priorCEModel, priorHoursCE) = runCapacityExpansion(genFleet, 
                 demandProfile, startYear, currYear, planningReserveMargin, discountRate,
                 fuelPrices, currCo2Cap, numBlocks, daysPerBlock, daysPerPeak, fullYearCE, retirementCFCutoff, retireByAge,
@@ -322,7 +360,7 @@ def getInitialFleetDemandTransmission(startYear, fuelPrices, electrifiedDemand, 
 # ###############################################################################
 # ###### RUN CAPACITY EXPANSION #################################################
 # ###############################################################################
-def runCapacityExpansion(genFleet, demand, startYear, currYear, 
+def runCapacityExpansion(genFleet, demand, startYear, currYear,
         planningReserveMargin, discountRate, fuelPrices, currCo2Cap, numBlocks,
         daysPerBlock, daysPerPeak, fullYearCE, retirementCFCutoff, retireByAge, tzAnalysis, resultsDirOrig,
         maxCapPerTech, regLoadFrac,contLoadFrac, regErrorPercentile, flexErrorPercentile, rrToRegTime, 
@@ -403,12 +441,12 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear,
     writeTimeDependentConstraints(blockNamesChronoList, stoInCE, seasStoInCE, gamsFileDir, ceOps, lastRepBlockNames, specialBlocksPrior)
     writeBuildVariable(ceOps, gamsFileDir)
     genSet, hourSet, hourSymbols, zoneOrder, lineSet = edAndUCSharedFeatures(db, genFleetForCE, hoursForCE, demandCE,
-        contCE,regUpCE,flexCE, demandShifter, demandShiftingBlock, rrToRegTime, rrToFlexTime, rrToContTime, 0, 
+        contCE,regUpCE,flexCE, demandShifter, demandShiftingBlock, rrToRegTime, rrToFlexTime, rrToContTime, 0,
         solarGenCE, windGenCE, transRegions, lineLimits)  # 0 is for co2Price
     stoGenSet, stoGenSymbols = storageSetsParamsVariables(db, genFleetForCE, stoMkts)
     stoTechSet, stoTechSymbols = ceSharedFeatures(db, peakDemandHour, genFleetForCE, newTechsCE, planningReserve, discountRate,
             currCo2Cap, hourSet, hourSymbols, newCfsCE, maxCapPerTech, regUpIncCE, flexIncCE, stoMkts,
-            lineDists, lineCosts, lineSet, zoneOrder, ceOps, interconn)
+            lineDists, lineCosts, lineSet, zoneOrder, ceOps, interconn, buildLimitsCase)
     if ceOps == 'UC': ucFeatures(db, genFleetForCE, genSet),
     ceTimeDependentConstraints(db, hoursForCE, blockWeights, socScalars, ceOps, onOffInitialEachPeriod,
             genSet, genFleetForCE, stoGenSet, stoGenSymbols, blockNamesChronoList, seasStoInCE,
@@ -525,7 +563,7 @@ def runDispatch(genFleet, hourlyDemand, currYear, demandShifter, demandShiftingB
 def createGAMSWorkspaceAndDatabase(runOnSC):
     # currDir = os.getcwd()
     if runOnSC:
-        gamsFileDir = '/home/anph/projects/NETs/Model/GAMS'
+        gamsFileDir = '/home/anph/projects/NETs/EI-CE/GAMS'
         gamsSysDir = '/home/anph/gams_35_1'
     else:
         #gamsFileDir = 'C:\\Users\\mtcraig\\Desktop\\Research\\Models\\CEGit\\GAMS'
@@ -590,7 +628,7 @@ def uc(db, stoGenSet, genSet, socInitial, onOffInitial, genAboveMinInitial, mdtC
 
 def ceSharedFeatures(db, peakDemandHour, genFleet, newTechs, planningReserve, discountRate,
         co2Cap, hourSet, hourSymbols, newCfs, maxCapPerTech, regUpInc, flexInc, stoMkts, 
-        lineDists, lineCosts, lineSet, zoneOrder, ceOps, interconn):
+        lineDists, lineCosts, lineSet, zoneOrder, ceOps, interconn, buildLimitsCase):
     # Sets
     addPeakHourSubset(db, peakDemandHour)
     addStorageSubsets(db, genFleet)
@@ -610,7 +648,7 @@ def ceSharedFeatures(db, peakDemandHour, genFleet, newTechs, planningReserve, di
     addResIncParams(db, regUpInc, flexInc, renewTechSet, hourSet)
     addSpinReserveEligibility(db, newTechs, techSet, True)
     addStorageParams(db, newTechs, stoTechSet, stoTechSymbols, mwToGW, stoMkts, True)
-    addNewLineParams(db, lineDists, lineCosts, lineSet, zoneOrder, interconn)
+    addNewLineParams(db, lineDists, lineCosts, lineSet, maxCapPerTech, buildLimitsCase, zoneOrder, interconn)
     return stoTechSet, stoTechSymbols
 
 def ceTimeDependentConstraints(db, hoursForCE, blockWeights, socScalars, ceOps, onOffInitialEachPeriod,

@@ -1,14 +1,14 @@
 
---- Job test.gms Start 06/12/21 08:57:55 30.2.0 r482c588 WEX-WEI x86 64bit/MS Windows
+--- Job test.gms Start 01/29/22 14:55:04 30.2.0 r482c588 WEX-WEI x86 64bit/MS Windows
 --- GAMS Parameters defined
-    Input C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\GAMS\test.gms
+    Input C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\test.gms
     PageWidth 80
     PageSize 0
     PageContr 3
     Action CE
-    ScrDir C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\GAMS\225a\
+    ScrDir C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\225a\
     SysDir C:\GAMS\win64\30.2\
-    WorkDir C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\GAMS\
+    WorkDir C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\
     LogOption 3
     DFormat 0
     TFormat 0
@@ -20,12 +20,12 @@ Licensee: An Pham, Single User License                   G210526|0002AO-GEN
           anph@umich.edu                                                   
 --- Starting compilation
 --- test.gms(13) 3 Mb
---- Starting execution: elapsed 0:00:00.147
+--- Starting execution: elapsed 0:00:00.004
 --- test.gms(11) 4 Mb
 --- Generating LP model m
 --- test.gms(13) 4 Mb
 ---   6 rows  11 columns  15 non-zeroes
---- Executing CPLEX: elapsed 0:00:00.487
+--- Executing CPLEX: elapsed 0:00:00.019
 
 IBM ILOG CPLEX   30.2.0 r482c588 Released Feb 07, 2020 WEI x86 64bit/MS Window
 --- GAMS/Cplex Link licensed for continuous and discrete problems.
@@ -48,7 +48,7 @@ LP Presolve eliminated 6 rows and 11 columns.
 All rows and columns eliminated.
 Presolve time = 0.00 sec. (0.00 ticks)
 LP status(1): optimal
-Cplex Time: 0.03sec (det. 0.00 ticks)
+Cplex Time: 0.00sec (det. 0.00 ticks)
 
 Optimal solution found.
 Objective :           1.000000
@@ -57,4 +57,4 @@ Objective :           1.000000
 --- test.gms(13) 2 Mb
 --- Reading solution for model m
 *** Status: Normal completion
---- Job test.gms Stop 06/12/21 08:57:58 elapsed 0:00:03.206
+--- Job test.gms Stop 01/29/22 14:55:05 elapsed 0:00:00.679

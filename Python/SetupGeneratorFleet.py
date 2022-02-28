@@ -77,37 +77,82 @@ def importEIA860():
 ################################################################################
 #COMPRESS FLEET BY COMBINING SMALL UNITS BY REGION
 def performFleetCompression(genFleetAll):
-    maxSizeToCombine,maxCombinedSize,firstYr,lastYr,stepYr = 75,300,1975,2026,10
-    startRegionCap,startFuelCap = genFleetAll.groupby(['region']).sum()['Capacity (MW)'],genFleetAll.groupby(['FuelType']).sum()['Capacity (MW)']
+    maxSizeToCombine,maxCombinedSize,firstYr,lastYr,stepYr = 10000,50000,1975,2026,10
+    genFleetAll['FuelType2'] = genFleetAll['FuelType']
+    genFleetAll.loc[genFleetAll["PlantType"] == "Combined Cycle", "FuelType2"] = "Combined Cycle"
+    genFleetAll['hrGroup'] = genFleetAll.groupby(['region','FuelType2'])['Heat Rate (Btu/kWh)'].transform(lambda x: pd.qcut(x, 4, duplicates='drop'))
+    # genFleetAll['hrGroup'] = genFleetAll.groupby(['region', 'FuelType'])['Heat Rate (Btu/kWh)'].transform(lambda x: pd.qcut(x.rank(method='first'), 4, duplicates='drop'))
+    startRegionCap,startFuelCap = genFleetAll.groupby(['region']).sum()['Capacity (MW)'],\
+                                              genFleetAll.groupby(['FuelType2']).sum()['Capacity (MW)']
     rowsToDrop,rowsToAdd = list(),list()
     for region in genFleetAll['region'].unique():
         genFleet = genFleetAll.loc[genFleetAll['region']==region]
-        for fuel in ['Landfill Gas','Distillate Fuel Oil','MSW','Natural Gas','Biomass','Non-Fossil Waste','Fossil Waste','Residual Fuel Oil']:
-            fuelRows = genFleet.loc[(genFleet['FuelType']==fuel) & (genFleet['Capacity (MW)']<maxSizeToCombine) & (genFleet['PlantType']!='Combined Cycle')]
-            yearIntervals = [yr for yr in range(firstYr,lastYr,stepYr)]
-            for endingYear in yearIntervals:
-                beginningYear = 0 if endingYear == firstYr else endingYear-stepYr
-                fuelRowsYears = fuelRows.loc[(fuelRows['On Line Year']>beginningYear) & (fuelRows['On Line Year']<=endingYear)]
-                if fuelRowsYears.shape[0]>1: 
-                    runningCombinedSize,rowsToCombine = 0,list()
-                    for index, row in fuelRowsYears.iterrows():
-                        if (runningCombinedSize + row['Capacity (MW)'] > maxCombinedSize):
+        for fuel in ['Distillate Fuel Oil','Natural Gas','Combined Cycle','Residual Fuel Oil','Bituminous','Subbituminous','Lignite']:
+            genFleetFuel = genFleet.loc[genFleet['FuelType2'] == fuel]
+            for hr in genFleetFuel['hrGroup'].unique():
+                startHrCap = genFleetFuel.groupby(['Heat Rate (Btu/kWh)']).sum()['Capacity (MW)']
+                #genFleetFuel['hrGroup'] = pd.cut(genFleetFuel['Heat Rate (Btu/kWh)'], bins=3)
+                #fuelRows = genFleetFuel.loc[(genFleetFuel['FuelType']==fuel) & (genFleetFuel['Capacity (MW)']<maxSizeToCombine) & (genFleetFuel['PlantType']!='Combined Cycle')]
+                #fuelRows = genFleetFuel.loc[(genFleetFuel['hrGroup'] == hr) & (genFleetFuel['FuelType2'] == fuel) & (genFleetFuel['Capacity (MW)'] < maxSizeToCombine) & (genFleetFuel['PlantType'] != 'Combined Cycle')]
+                fuelRows = genFleetFuel.loc[(genFleetFuel['hrGroup'] == hr) & (genFleetFuel['FuelType2'] == fuel) & (genFleetFuel['Capacity (MW)'] < maxSizeToCombine)]
+                yearIntervals = [yr for yr in range(firstYr,lastYr,stepYr)]
+                for endingYear in yearIntervals:
+                    beginningYear = 0 if endingYear == firstYr else endingYear-stepYr
+                    fuelRowsYears = fuelRows.loc[(fuelRows['On Line Year']>beginningYear) & (fuelRows['On Line Year']<=endingYear)]
+                    if fuelRowsYears.shape[0]>1:
+                        runningCombinedSize,rowsToCombine = 0,list()
+                        for index, row in fuelRowsYears.iterrows():
+                            if (runningCombinedSize + row['Capacity (MW)'] > maxCombinedSize):
+                                newRow,idxsToDrop = aggregateRows(rowsToCombine)
+                                rowsToAdd.append(newRow),rowsToDrop.extend(idxsToDrop)
+                                runningCombinedSize,rowsToCombine = row['Capacity (MW)'],[row]
+                            else:
+                                runningCombinedSize += row['Capacity (MW)']
+                                rowsToCombine.append(row)
+                        if len(rowsToCombine)>1:
                             newRow,idxsToDrop = aggregateRows(rowsToCombine)
                             rowsToAdd.append(newRow),rowsToDrop.extend(idxsToDrop)
-                            runningCombinedSize,rowsToCombine = row['Capacity (MW)'],[row]
-                        else:
-                            runningCombinedSize += row['Capacity (MW)']
-                            rowsToCombine.append(row)
-                    if len(rowsToCombine)>1: 
-                        newRow,idxsToDrop = aggregateRows(rowsToCombine)
-                        rowsToAdd.append(newRow),rowsToDrop.extend(idxsToDrop)    
+                endHrCap = genFleetFuel.groupby(['Heat Rate (Btu/kWh)']).sum()['Capacity (MW)']
+                assert (startHrCap.astype(int).equals(endHrCap.astype(int)))
     assert(len(set(rowsToDrop))==len(rowsToDrop))
     genFleetAll.drop(index=rowsToDrop,inplace=True)
     genFleetAll = genFleetAll.append(pd.DataFrame(rowsToAdd))
     genFleetAll.reset_index(drop=True,inplace=True)
-    endRegionCap,endFuelCap = genFleetAll.groupby(['region']).sum()['Capacity (MW)'],genFleetAll.groupby(['FuelType']).sum()['Capacity (MW)']
+    endRegionCap,endFuelCap = genFleetAll.groupby(['region']).sum()['Capacity (MW)'], \
+                                       genFleetAll.groupby(['FuelType2']).sum()['Capacity (MW)']
     assert(startRegionCap.astype(int).equals(endRegionCap.astype(int)))
     assert(startFuelCap.astype(int).equals(endFuelCap.astype(int)))
+
+    # For the units with cost of 0:
+    rowsToDrop2, rowsToAdd2 = list(), list()
+    for region in genFleetAll['region'].unique():
+        genFleet = genFleetAll.loc[genFleetAll['region'] == region]
+        for fuel in ['Landfill Gas','MSW','Biomass','Non-Fossil Waste','Fossil Waste']:
+            fuelRows = genFleet.loc[(genFleet['FuelType'] == fuel) & (genFleet['Capacity (MW)'] < maxSizeToCombine) & (genFleet['PlantType'] != 'Combined Cycle')]
+            yearIntervals = [yr for yr in range(firstYr, lastYr, stepYr)]
+            for endingYear in yearIntervals:
+                beginningYear = 0 if endingYear == firstYr else endingYear - stepYr
+                fuelRowsYears = fuelRows.loc[(fuelRows['On Line Year'] > beginningYear) & (fuelRows['On Line Year'] <= endingYear)]
+                if fuelRowsYears.shape[0] > 1:
+                    runningCombinedSize, rowsToCombine = 0, list()
+                    for index, row in fuelRowsYears.iterrows():
+                        if (runningCombinedSize + row['Capacity (MW)'] > maxCombinedSize):
+                            newRow, idxsToDrop = aggregateRows(rowsToCombine)
+                            rowsToAdd2.append(newRow), rowsToDrop2.extend(idxsToDrop)
+                            runningCombinedSize, rowsToCombine = row['Capacity (MW)'], [row]
+                        else:
+                            runningCombinedSize += row['Capacity (MW)']
+                            rowsToCombine.append(row)
+                    if len(rowsToCombine) > 1:
+                        newRow, idxsToDrop = aggregateRows(rowsToCombine)
+                        rowsToAdd2.append(newRow), rowsToDrop2.extend(idxsToDrop)
+    assert (len(set(rowsToDrop2)) == len(rowsToDrop2))
+    genFleetAll.drop(index=rowsToDrop2, inplace=True)
+    genFleetAll = genFleetAll.append(pd.DataFrame(rowsToAdd2))
+    genFleetAll.reset_index(drop=True, inplace=True)
+    endRegionCap, endFuelCap = genFleetAll.groupby(['region']).sum()['Capacity (MW)'], genFleetAll.groupby(['FuelType2']).sum()['Capacity (MW)']
+    assert (startRegionCap.astype(int).equals(endRegionCap.astype(int)))
+    assert (startFuelCap.astype(int).equals(endFuelCap.astype(int)))
     return genFleetAll
                 
 def aggregateRows(rowsToCombine):
