@@ -176,13 +176,57 @@ def addMaxNewBuilds(db,df,thermalSet,stoTechSet,dacsSet,CCSSet,maxCapPerTech,mwT
     add1dParam(db,maxBuilds,dacsSet,techs['GAMS Symbol'],'pNMaxDACS')
     #Storage. Use positive continuous variable for added power & energy separately,
     #so ignore capacity & set upper P & E bounds.
+
+    # Hydrogen
+    pt = 'Hydrogen'
+    genCaps = df.loc[df['PlantType'] == pt, 'Capacity (MW)']
+    maxPCapH2 = np.ceil(maxCapPerTech[pt] / mwToGW)
+    maxECapH2 = maxPCapH2 * 2880
+    add0dParam(db, 'pPMaxH2Sto', maxPCapH2)
+    add0dParam(db, 'pEMaxH2Sto', maxECapH2)
+
+    # Battery
+    pt = 'Battery Storage'
+    genCaps = df.loc[df['PlantType'] == pt, 'Capacity (MW)']
+    maxPCapBat = np.ceil(maxCapPerTech[pt] / mwToGW)
+    maxECapBat = maxPCapBat * 4
+    add0dParam(db, 'pPMaxBatSto', maxPCapBat)
+    add0dParam(db, 'pEMaxBatSto', maxECapBat)
+
+    #maxPCapStorage = pd.Series({'GAMS Symbol': 0, 'Battery Storage': maxPCapBat, 'Hydrogen': maxPCapH2})
+    #maxECapStorage = pd.Series({'GAMS Symbol': 0, 'Battery Storage': maxECapBat, 'Hydrogen': maxECapH2})
+
+    maxPCapStorage = pd.Series({'GAMS Symbol': 0, 'Battery StorageSERC': maxPCapBat, 'HydrogenSERC': maxPCapH2,
+                                'Battery StorageNY': maxPCapBat, 'HydrogenNY': maxPCapH2,
+                                'Battery StorageNE': maxPCapBat, 'HydrogenNE': maxPCapH2,
+                                'Battery StorageMISO': maxPCapBat, 'HydrogenMISO': maxPCapH2,
+                                'Battery StoragePJM': maxPCapBat, 'HydrogenPJM': maxPCapH2,
+                                'Battery StorageSPP': maxPCapBat, 'HydrogenSPP': maxPCapH2})
+
+    maxECapStorage = pd.Series({'GAMS Symbol': 0, 'Battery StorageSERC': maxECapBat, 'HydrogenSERC': maxECapH2,
+                                'Battery StorageNY': maxECapBat, 'HydrogenNY': maxECapH2,
+                                'Battery StorageNE': maxECapBat, 'HydrogenNE': maxECapH2,
+                                'Battery StorageMISO': maxECapBat, 'HydrogenMISO': maxECapH2,
+                                'Battery StoragePJM': maxECapBat, 'HydrogenPJM': maxECapH2,
+                                'Battery StorageSPP': maxECapBat, 'HydrogenSPP': maxECapH2})
+
     pt = 'storage'
-    techs = df.loc[df['ThermalOrRenewableOrStorage']==pt]
+    techs = df.loc[df['ThermalOrRenewableOrStorage'] == pt]
     techs.index = techs['GAMS Symbol']
-    maxPCap = pd.Series(maxCapPerTech[pt.capitalize()]/mwToGW,index=techs['GAMS Symbol'])
-    add1dParam(db,maxPCap.to_dict(),stoTechSet,techs['GAMS Symbol'],'pPMaxSto')  
-    maxECap = maxPCap*(techs['Nameplate Energy Capacity (MWh)']/techs['Capacity (MW)'])
-    add1dParam(db,maxECap,stoTechSet,techs['GAMS Symbol'],'pEMaxSto')
+    maxPCap = pd.Series(maxCapPerTech[pt.capitalize()] / mwToGW, index=techs['GAMS Symbol'])
+    #add1dParam(db,maxPCap.to_dict(),stoTechSet,techs['GAMS Symbol'],'pPMaxSto')
+    maxECap = maxPCap * (techs['Nameplate Energy Capacity (MWh)'] / techs['Capacity (MW)'])
+    #add1dParam(db,maxECap,stoTechSet, techs['GAMS Symbol'],'pEMaxSto')
+    add1dParam(db, maxPCapStorage.to_dict(), stoTechSet, techs['GAMS Symbol'], 'pPMaxSto')
+    add1dParam(db, maxECapStorage.to_dict(), stoTechSet, techs['GAMS Symbol'], 'pEMaxSto')
+
+    #pt = 'storage'
+    #techs = df.loc[df['ThermalOrRenewableOrStorage']==pt]
+    #techs.index = techs['GAMS Symbol']
+    #maxPCap = pd.Series(maxCapPerTech[pt.capitalize()]/mwToGW,index=techs['GAMS Symbol'])
+    #add1dParam(db,maxPCap.to_dict(),stoTechSet,techs['GAMS Symbol'],'pPMaxSto')
+    #maxECap = maxPCap*(techs['Nameplate Energy Capacity (MWh)']/techs['Capacity (MW)'])
+    #add1dParam(db,maxECap,stoTechSet,techs['GAMS Symbol'],'pEMaxSto')
 
 ##### ADD NEW LINE PARAMETERS
 def addNewLineParams(db, lineDists, lineCosts, lineSet, maxCapPerTech, buildLimitsCase, zoneOrder, interconn, lineLife=60):
