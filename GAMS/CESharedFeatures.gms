@@ -204,7 +204,7 @@ investmentcost..         vFixedcostannual =e= sum(nonstoragetech,vN(nonstoragete
 ******************SYSTEM-WIDE GENERATION AND RESERVE CONSTRAINTS*******************
 *Demand = generation by new and existing plants
 meetdemand(z,h)..          sum(tech$[pGenzonetech(tech)=ORD(z)],vGentech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vGen(egu,h)) +
-                                                        sum(l$[pLinesink(l)=ORD(z)],vLineflow(l,h)) =g= (pDemand(z,h) + vShiftedDemand(z,h)
+                                                        sum(l$[pLinesink(l)=ORD(z)],vLineflow(l,h))*pTransEff =g= (pDemand(z,h) + vShiftedDemand(z,h)
                                                         + sum(storageegu$[pGenzone(storageegu)=ORD(z)],vCharge(storageegu,h)) + sum(storagetech$[pGenzonetech(storagetech)=ORD(z)],vChargetech(storagetech,h))
                                                                                                                 + sum(l$[pLinesource(l)=ORD(z)],vLineflow(l,h)));
 
@@ -233,7 +233,6 @@ meetregupreserve(z,h)..    sum(tech$[pGenzonetech(tech)=ORD(z)],vReguptech(tech,
 
 *Limit line flows on new lines
 linecapacnew(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vLinecapacnew(l) =e= vNl(l) + vNl(ll);
-*limitLineFlows(l,h).. pLinecapac(l)+vNl(l) =g= vLineflow(l,h);
 limitLineFlows(l,h).. pLinecapac(l)+vLinecapacnew(l) =g= vLineflow(l,h);
 *new lines with same sources and sinks have the same capacity:
 *biLineLimit(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vNl(l) =e= vNl(ll);

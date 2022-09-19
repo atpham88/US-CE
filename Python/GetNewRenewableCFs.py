@@ -5,8 +5,7 @@ import pandas as pd
 import datetime as dt
 import numpy as np
 from netCDF4 import Dataset
-from GetRenewableCFsMERRA import *
-from GetRenewableCFsNonMERRA import *
+from GetRenewableCFs import *
 
 #Output: dfs of wind and solar generation (8760 dt rows, arbitrary cols)
 def getNewRenewableCFs(genFleet, tgtTz, reYear, currYear, reDownFactor, pRegionShapes, reSourceMERRA):
@@ -15,10 +14,8 @@ def getNewRenewableCFs(genFleet, tgtTz, reYear, currYear, reDownFactor, pRegionS
     #Isolate wind & solar units
     windUnits, solarUnits = getREInFleet('Wind', genFleet), getREInFleet('Solar PV', genFleet)
     #Get list of wind / solar sites in region.
-    if reSourceMERRA:
-        lats, lons, cf, latlonRegion = loadMerraData(reYear, pRegionShapes)
-    elif not reSourceMERRA:
-        lats, lons, cf, latlonRegion = loadNonMerraData(reYear, pRegionShapes)
+    if reSourceMERRA: lats, lons, cf, latlonRegion = loadMerraData(reYear, pRegionShapes)
+    else: lats, lons, cf, latlonRegion = loadNonMerraData(reYear, pRegionShapes)
     #Match existing gens to CFs
     get_cf_index(windUnits, lats, lons),get_cf_index(solarUnits, lats, lons)
 
@@ -50,7 +47,7 @@ def calcNewCfs(existingGens, lats, lons, cf, re, currYear):
                     cfs[re + 'lat' + str(round(lat, 3)) + 'lon' + str(round(lon, 3))] = coordCfs
                 else:
                     cfs[re + 'lat' + str(round(lat, 3)) + 'lon' + str(round(lon, 3))] = 0
-                    print('**Max RE capacity @ lat/long:', lat, lon, ' (GetNewRenewableCFsMERRA)')
+                    print('RE capacity has maxed out @ lat/long:', lat, lon, ', so CFs for that site are set to 0 to deter further investment.')
     #Add dt and set to Dataframe
     idx = pd.date_range('1/1/' + str(currYear) + ' 0:00','12/31/' + str(currYear) + ' 23:00', freq='H')
     idx = idx.drop(idx[(idx.month == 2) & (idx.day == 29)])

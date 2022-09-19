@@ -1,0 +1,1002 @@
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  *Michael Craig 16 Apr 2020
+   2   
+   3  *$offlisting
+   4  *$offsymxref offsymlist
+   5  Options
+   6           optcr = 1E-2
+   7           reslim = 100000
+   8           threads = 0
+   9           solvelink = 5
+  10           limcol = 0
+  11           limrow = 0
+  12           solprint = silent
+  13           ;
+  14   
+INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CESharedFeatures.gms
+  16  *Michael Craig 16 Apr 2020
+  17   
+INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\EDAndUCSharedFeatures.gms
+  19  *Michael Craig 14 May 2020
+  20   
+  22   
+  23  Sets
+  24  *Existing generators
+  25           egu                             existing generators
+  26                   renewegu(egu)                                  existing wind and solar generators
+  27                   windegu(renewegu)                              existing wind generators
+  28                   solaregu(renewegu)                             existing solar generators
+  29                   hydroegu(renewegu)
+  30                   genegu(egu)                  egus that are not dacs or storage
+  31                   dacsegu(egu)                 direct air capture units
+  32                   notdacsegu(egu)              egus that are not dac units
+  33           storageegu(egu)                 storage units
+  34           h                               hours
+  35                   z                                                              zones
+  36                   l                                                              lines
+  37           ;
+  38   
+  39  Parameters
+  40  *SIZE PARAMETERS [GW]
+  41           pCapac(egu)                     hourly capacity of existing generators accounting for curtailments [GW]
+  42  *HEAT RATES [MMBtu/GWh]
+  43           pHr(egu)                        heat rate of existing generators [MMBtu per GWh]
+  44  *COST PARAMETERS
+  45           pOpcost(egu)                    total operational cost [thousandUSD per GWh] = VOM + FuelCost*HR + EmsCost*EmsRate*HR
+  46  *RAMP RATES [GW/hr]
+  47           pRamprate(egu)                  up and down ramp rate of EGU [GW per hr]
+  48  *EMISSIONS RATES [short ton/MMBtu]
+  49           pCO2emrate(egu)                 CO2 emissions rate of existing generators [short ton per MMBtu]
+  50  *EMISSIONS COST [$/short ton]
+  51           pCO2cost
+  52  *RENEWABLE GENERATION CAPS
+  53           pMaxgenwind(z,h)                  max hourly generation for existing wind [GWh]
+  54           pMaxgensolar(z,h)                 max hourly generation for existing solar [GWh]
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+  55  *STORAGE PARAMETERS
+  56                   pStoinenergymarket              whether storage can provide energy (1) or not (0)
+  57           pEfficiency(storageegu)         round trip storage efficiency
+  58           pCapaccharge(storageegu)        max charging capacity (GW)
+  59           pMaxsoc(storageegu)             max stored energy (GWh)
+  60           pMinsoc(storageegu)             min stored energy (GWh)
+  61  *ZONAL PROPERTIES
+  62                  pGenzone(egu)                                   zone in which egu is located
+  63                  pDemand(z,h)                      hourly electricity demand [GWh]
+  64          pLinesource(l)                                  zone that is the source of line l
+  65                  pLinesink(l)                                    zone that is the sink of line l
+  66                  pLinecapac(l)                                   MW capacity of line l
+  67                  pTransEff
+  68  *HOURLY ELECTRICITY DEMAND [GWh]
+  69           pDemandShifter                  demand shifter (percentage)
+  70           pDemandShiftingBlock
+  71  *COST OF NONSERVED ENERGY [THOUSAND$/GWH]
+  72           pCnse                                   cost of non-served energy [thousandUSD per GWh]
+  73  *HOURLY RESERVE REQUIREMENTS [GW]
+  74           pRegupreserves(z,h)         regulation up reserve [GW]
+  75           pFlexreserves(z,h)
+  76           pContreserves(z,h)
+  77  *RESERVE PROVISION PARAMETERS
+  78  *Convert ramp rate to reserve timeframe
+  79           pRampratetoregreservescalar     converts ramp rate timeframe to reg reserve timeframe
+  80           pRampratetoflexreservescalar    converts ramp rate timeframe to spin reserve timeframe
+  81           pRampratetocontreservescalar    converts ramp rate timeframe to spin reserve timeframe
+  82  *Set whether generator can provide reserve
+  83           pRegeligible(egu)               existing generators eligible to provide reg reserves [0] or not [1]
+  84           pFlexeligible(egu)
+  85           pConteligible(egu)
+  86  *Set max reserve offer based on eligibility and ramp rate
+  87           pMaxflexoffer(egu)
+  88           pMaxcontoffer(egu)
+  89           pMaxregupoffer(egu)
+  90           ;
+  91   
+GDXIN   C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
+--- LOAD  egu = 1:egu
+--- LOAD  renewegu = 2:renewegu
+--- LOAD  windegu = 3:windegu
+--- LOAD  solaregu = 4:solaregu
+--- LOAD  hydroegu = 5:hydroegu
+--- LOAD  h = 7:h
+--- LOAD  z = 8:z
+--- LOAD  l = 9:l
+--- LOAD  dacsegu = 6:dacsegu
+--- LOAD  storageegu = 36:storageegu
+--- LOAD  pCapac = 24:pCapac
+--- LOAD  pHr = 20:pHr
+--- LOAD  pOpcost = 23:pOpcost
+--- LOAD  pRamprate = 22:pRamprate
+--- LOAD  pCO2emrate = 21:pCO2emrate
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+--- LOAD  pCO2cost = 19:pCO2Cost
+--- LOAD  pMaxgensolar = 26:pMaxgensolar
+--- LOAD  pMaxgenwind = 27:pMaxgenwind
+--- LOAD  pStoinenergymarket = 41:pStoinenergymarket
+--- LOAD  pEfficiency = 37:pEfficiency
+--- LOAD  pMaxsoc = 39:pMaxsoc
+--- LOAD  pMinsoc = 40:pMinsoc
+--- LOAD  pCapaccharge = 38:pCapaccharge
+--- LOAD  pGenzone = 25:pGenzone
+--- LOAD  pDemand = 10:pDemand
+--- LOAD  pLinesource = 34:pLinesource
+--- LOAD  pLinesink = 35:pLinesink
+--- LOAD  pLinecapac = 32:pLinecapac
+--- LOAD  pTransEff = 33:pTransEff
+--- LOAD  pDemandShifter = 11:pDemandShifter
+--- LOAD  pDemandShiftingBlock = 12:pDemandShiftingBlock
+--- LOAD  pCnse = 31:pCnse
+--- LOAD  pRegupreserves = 16:pRegupreserves
+--- LOAD  pFlexreserves = 17:pFlexreserves
+--- LOAD  pContreserves = 18:pContreserves
+--- LOAD  pRampratetoregreservescalar = 13:pRampratetoregreservescalar
+--- LOAD  pRampratetoflexreservescalar = 14:pRampratetoflexreservescalar
+--- LOAD  pRampratetocontreservescalar = 15:pRampratetocontreservescalar
+--- LOAD  pFlexeligible = 29:pFlexeligible
+--- LOAD  pConteligible = 30:pConteligible
+--- LOAD  pRegeligible = 28:pRegeligible
+ 103   
+ 104  *DEFINE EGU SUBSETS
+ 105  notdacsegu(egu) = not dacsegu(egu);
+ 106  genegu(egu) = not (dacsegu(egu) + storageegu(egu));
+ 107   
+ 108  *CALCULATE MAX RESERVE OFFERS
+ 109  pMaxflexoffer(egu) = pFlexeligible(egu)*pRamprate(egu)*pRampratetoflexreservescalar;
+ 110  pMaxcontoffer(egu) = pConteligible(egu)*pRamprate(egu)*pRampratetocontreservescalar;
+ 111  pMaxregupoffer(egu) = pRegeligible(egu)*pRamprate(egu)*pRampratetoregreservescalar;
+ 112   
+ 113  Variables
+ 114  *COSTS
+ 115                   vVarcost(egu,h)
+ 116  *DEMAND RESPONSE
+ 117                   vShiftedDemand(z,h)
+ 118                   ;
+ 119   
+ 120  Positive variables
+ 121  *GENERATION AND RESERVES
+ 122                   vGen(egu,h)                     hourly electricity generation by existing plant [GWh]
+ 123           vRegup(egu,h)                   hourly reg up reserves provided by existing plant [GWh]
+ 124           vFlex(egu,h)
+ 125           vCont(egu,h)
+ 126  *STORAGE VARIABLES
+ 127           vStateofcharge(storageegu,h)            "energy stored in storage unit at end of hour h (GWh)"
+ 128           vCharge(storageegu,h)                   "charged energy by storage unit in hour h (GWh)"
+ 129  *EMISSIONS
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 130           vCO2ems(egu,h)
+ 131  *TRANSMISSION LINE FLOWS
+ 132                  vLineflow(l,h)
+ 133           ;
+ 134   
+ 135  Equations
+ 136  *Op costs
+ 137           calcvarcosts(egu,h)
+ 138  *Generation and reserve constraints
+ 139           limitallresup(egu,h)            limit total generation plus up reserves of existing plants to capacity
+ 140  *Renewable generation
+ 141           limitWindGen(z,h)
+ 142                   limitSolarGen(z,h)
+ 143  *Line flows
+ 144  *               limitLineFlow(l,h)
+ 145  *Carbon limits
+ 146           calcco2ems(egu,h)                    sum annual co2 emissions
+ 147           ;
+ 148   
+ 149  ******************VAR COSTS*****************
+ 150  calcvarcosts(egu,h)..  vVarcost(egu,h) =e= vGen(egu,h)*pOpcost(egu) + vCO2ems(egu,h)*pCO2cost;
+ 151  ********************************************
+ 152   
+ 153  ******************GENERATION AND RESERVE CONSTRAINTS******************
+ 154  *Limit spining and regulation reserves each to market participation
+ 155  vFlex.fx(egu,h)$[pMaxflexoffer(egu)=0] = 0;
+ 156  vCont.fx(egu,h)$[pMaxcontoffer(egu)=0] = 0;
+ 157  vRegup.fx(egu,h)$[pMaxregupoffer(egu)=0] = 0;
+ 158   
+ 159  *Limit spinning and regulation up reserves together to spare capacity
+ 160  limitallresup(genegu,h) .. vGen(genegu,h) + vFlex(genegu,h) + vCont(genegu,h) + vRegup(genegu,h) =l= pCapac(genegu);
+ 161   
+ 162  *Set lower bound to zero for generation by storage and generating techs.
+ 163  vGen.lo(notdacsegu,h) = 0;
+ 164  *Set upper bound to zero for DACS. DACS max capacity is negative and has negative vGen values.
+ 165  vGen.up(dacsegu,h) = 0;
+ 166  ********************************************************************
+ 167   
+ 168  ******************STORAGE PARAMETERS*******************
+ 169  *LIMIT GENERATION AND RESERVES
+ 170  *Bound generation to capacity and ability to participate in energy market
+ 171  vGen.up(storageegu,h) = pStoinenergymarket * pCapac(storageegu);
+ 172   
+ 173  *CHARGE CONSTRAINTS
+ 174  *Place upper bound on charging
+ 175  vCharge.up(storageegu,h) = pCapaccharge(storageegu);
+ 176   
+ 177  *STATE OF CHARGE BOUNDS
+ 178  vStateofcharge.lo(storageegu,h) = pMinsoc(storageegu);
+ 179  vStateofcharge.up(storageegu,h) = pMaxsoc(storageegu);
+ 180  *******************************************************
+ 181   
+ 182  ******************RENEWABLE GENERATION*****************
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 183  limitWindGen(z,h)..  pMaxgenwind(z,h) =g= sum(windegu$[pGenzone(windegu)=ORD(z)],vGen(windegu,h));
+ 184  limitSolarGen(z,h).. pMaxgensolar(z,h) =g= sum(solaregu$[pGenzone(solaregu)=ORD(z)],vGen(solaregu,h));
+ 185  *******************************************************
+ 186   
+ 187  ******************TRANSMISSION LINE FLOWS*****************
+ 188  *limitLineFlow(l,h).. pLinecapac(l) =g= vLineflow(l,h);
+ 189  **********************************************************
+ 190   
+ 191  ******************CO2 EMISSIONS CONSTRAINT******************
+ 192  calcco2ems(egu,h)..   vCO2ems(egu,h) =e= vGen(egu,h)*pHr(egu)*pCO2emrate(egu);
+ 193  ************************************************************
+ 194   
+ 195  Sets
+ 196  *EXISTING GENERATORS
+ 197           nonrenewegu(egu)                existing nonrenewable generators
+ 198                   ststorageegu(storageegu)
+ 199                   ltstorageegu(storageegu)
+ 200  *CANDIDATE TECHNOLOGIES FOR CONSTRUCTION
+ 201           tech                            candidate technologies for new construction
+ 202  *Generators
+ 203                  gentechs(tech)                                  generating techs specifically not DACS or storage
+ 204           thermaltech(tech)               thermal plant types for new construction
+ 205                   CCStech(thermaltech)
+ 206           nucleartech(thermaltech)
+ 207           CCtech(thermaltech)
+ 208           renewtech(tech)                 renewable plant types for new construction
+ 209                   windtech(renewtech)
+ 210                   solartech(renewtech)
+ 211  *Storage
+ 212           storagetech(tech)               storage plant types for new construction
+ 213                   nonstoragetech(tech)                    non storage techs
+ 214                   ststoragetech(storagetech)
+ 215                   ltstoragetech(storagetech)
+ 216  *CO2 removal
+ 217                   dacstech(tech)
+ 218                   notdacstech(tech)
+ 219  *CANDIDATE TRANSMISSION LINES FOR CONSTRUCTION
+ 220  *               ltech
+ 221  *HOURS
+ 222           peakH(h)                        hour with peak net demand
+ 223           nonInitH(h)                   hours that are not initial horus of a block
+ 224           ;
+ 225   
+ 226  Alias (h,hh);
+ 227  Alias (l,ll);
+ 228   
+ 229  Parameters
+ 230  *MAX NEW UNITS TO BE BUILT
+ 231           pNMaxWind
+ 232                   pNMaxSolar
+ 233                   pNMaxNuclear
+ 234                   pNMaxCC
+ 235                   pNMaxCCS(CCStech)
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 236                   pNMaxDACS(dacstech)
+ 237                   pPMaxSto(storagetech)
+ 238                   pEMaxSto(storagetech)
+ 239                   pPERatio(ststoragetech)
+ 240  *SIZE PARAMETERS [GW]
+ 241           pCapactech(tech)                nameplate capacity of new builds for cost calculations [GW]
+ 242  *HEAT RATES [MMBtu/GWh]
+ 243           pHrtech(tech)                   heat rate of new builds [MMBtu per GWh]
+ 244  *COST PARAMETERS
+ 245           pOpcosttech(tech)               total operational cost [thousandUSD per GWh] = VOM + FuelCost*HR + EmsCost*EmsRate*HR
+ 246           pFom(tech)                      fixed O&M cost [thousand$ per GW per yr]
+ 247           pOcc(tech)                      overnight capital cost [thousandUSD per GW]
+ 248                   pPowOcc(storagetech)                   occ for power capcity for lt storage
+ 249                   pEneOcc(storagetech)                   occ for energy capacity for lt storage
+ 250  *                pCnse                                                  cost of nonserved energy [thousandUSD per GW]
+ 251  *RAMP RATES [GW/hr]
+ 252           pRampratetech(tech)             up and down ramp rate of EGU assumed to be the same up & down [GW per hr]
+ 253  *STORAGE PARAMETERS
+ 254           pEfficiencytech(storagetech)        round trip storage efficiency
+ 255           pChargeDischargeCapRatio       "ratio of charging to discharging" /1/
+ 256  *EMISSIONS RATES [short ton/MMBtu]
+ 257           pCO2emratetech(tech)            CO2 emissions rate of potential new generators [short ton per MMBtu]
+ 258  *EMISSIONS CAP AND COST
+ 259           pCO2emcap                       CO2 annual emissions cap [short tons]
+ 260  *RENEWABLE GENERATION CAPS
+ 261           pCf(renewtech,h)                hourly capacity factors for potential new renewables
+ 262  *FINANCIAL PARAMETERS
+ 263           pR                              discount rate
+ 264           pLife(tech)                     lifetime of tech [years]
+ 265                   pLifeline
+ 266           pCrf(tech)                      capital recovery factor
+ 267                   pCrfline
+ 268  *ZONAL PARAMETERS
+ 269                  pGenzonetech(tech)
+ 270  *               pLinesourcetech(ltech)
+ 271  *               pLinesinktech(ltech)
+ 272  *               pLinecapactech(ltech)
+ 273                  pLinecost(l)
+ 274           pNMaxLine(l)
+ 275  *               pPeakhtozone(peakH)
+ 276  *HOURLY RESERVE REQUIREMENTS [GW]
+ 277           pRegUpReqIncRE(renewtech,h)
+ 278                   pFlexReqIncRE(renewtech,h)
+ 279  *RESERVE PROVISION PARAMETERS
+ 280           pRegeligibletech(tech)          candidate plant types eligible to provide reg reserves [0] or not [1]
+ 281           pFlexeligibletech(tech)
+ 282           pConteligibletech(tech)
+ 283           pMaxflexoffertech(tech)
+ 284           pMaxcontoffertech(tech)
+ 285           pMaxregupoffertech(tech)
+ 286  *PLANNING RESERVE
+ 287           pPlanningreserve                planning margin reserve capacity [GW]
+ 288           ;
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 289   
+GDXIN   C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
+--- LOAD  ststorageegu = 43:ststorageegu
+--- LOAD  ltstorageegu = 44:ltstorageegu
+--- LOAD  tech = 45:tech
+--- LOAD  dacstech = 56:dacstech
+--- LOAD  thermaltech = 46:thermaltech
+--- LOAD  CCStech = 49:CCStech
+--- LOAD  nucleartech = 47:nucleartech
+--- LOAD  CCtech = 48:CCtech
+--- LOAD  renewtech = 50:renewtech
+--- LOAD  solartech = 52:solartech
+--- LOAD  windtech = 51:windtech
+--- LOAD  storagetech = 53:storagetech
+--- LOAD  ststoragetech = 54:ststoragetech
+--- LOAD  ltstoragetech = 55:ltstoragetech
+--- LOAD  peakH = 42:peakh
+--- LOAD  pNMaxWind = 72:pNMaxWind
+--- LOAD  pNMaxSolar = 73:pNMaxSolar
+--- LOAD  pNMaxNuclear = 74:pNMaxNuclear
+--- LOAD  pNMaxCC = 76:pNMaxCC
+--- LOAD  pNMaxCCS = 75:pNMaxCCS
+--- LOAD  pNMaxDACS = 77:pNMaxDACS
+--- LOAD  pPMaxSto = 78:pPMaxSto
+--- LOAD  pEMaxSto = 79:pEMaxSto
+--- LOAD  pCapactech = 64:pCapactech
+--- LOAD  pHrtech = 60:pHrtech
+--- LOAD  pOpcosttech = 63:pOpcosttech
+--- LOAD  pFom = 66:pFom
+--- LOAD  pOcc = 67:pOcc
+--- LOAD  pPowOcc = 69:pPowOcc
+--- LOAD  pEneOcc = 70:pEneOcc
+--- LOAD  pRampratetech = 62:pRampratetech
+--- LOAD  pCO2emratetech = 61:pCO2emratetech
+--- LOAD  pEfficiencytech = 85:pEfficiencytech
+--- LOAD  pCO2emcap = 59:pCO2emcap
+--- LOAD  pCf = 71:pCf
+--- LOAD  pR = 58:pR
+--- LOAD  pLife = 68:pLife
+--- LOAD  pLifeline = 88:pLifeline
+--- LOAD  pGenzonetech = 65:pGenzonetech
+--- LOAD  pLinecost = 86:pLinecost
+--- LOAD  pNMaxLine = 87:pNMaxLine
+--- LOAD  pRegUpReqIncRE = 80:pRegUpReqIncRE
+--- LOAD  pFlexReqIncRE = 81:pFlexReqIncRE
+--- LOAD  pFlexeligibletech = 83:pFlexeligibletech
+--- LOAD  pConteligibletech = 84:pConteligibletech
+--- LOAD  pRegeligibletech = 82:pRegeligibletech
+--- LOAD  pPlanningreserve = 57:pPlanningreserve
+ 302   
+ 303  *DEFINE SET EXCLUSIONS
+ 304  nonrenewegu(egu) = not renewegu(egu);
+ 305  nonstoragetech(tech) = not storagetech(tech);
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 306  notdacstech(tech) = not dacstech(tech);
+ 307  gentechs(tech) = not (dacstech(tech) + storagetech(tech));
+ 308  *CALCULATE CAPITAL RECOVERY FACTOR
+ 309  pCrf(tech) = pR / (1 - (1 / ( (1 + pR)**pLife(tech))));
+ 310  pCrfline = pR / (1 - (1 / ( (1 + pR)**pLifeline)));
+ 311  *CALCULATE PE RATIO FOR SHORTTERM STORAGE
+ 312  pPERatio(ststoragetech) = pEMaxSto(ststoragetech)/pPMaxSto(ststoragetech);
+ 313  *CALCULATE MAX RESERVE OFFERS
+ 314  pMaxflexoffertech(tech) = pFlexeligibletech(tech)*pRampratetech(tech)*pRampratetoflexreservescalar;
+ 315  pMaxcontoffertech(tech) = pConteligibletech(tech)*pRampratetech(tech)*pRampratetocontreservescalar;
+ 316  pMaxregupoffertech(tech) = pRegeligibletech(tech)*pRampratetech(tech)*pRampratetoregreservescalar;
+ 317   
+ 318  Variable
+ 319                   vVarcosttech(tech,h)
+ 320           vVarcostannual                             total variable costs for new and existing plants = variable O&M + fuel + emission costs [thousandUSD per yr]
+ 321                   vFixedcostannual                             total investment costs for new plants = fixed O&M + overnight capital costs [thousandUSD per yr]
+ 322           vGentech(tech,h)                hourly electricity generation by new plants [GWh]
+ 323  *Emission variables
+ 324                   vCO2emstech(tech,h)
+ 325           vCO2emsannual                   co2 emissions in entire year from new and existing plants [short ton]
+ 326           ;
+ 327   
+ 328  Positive variables
+ 329  *Reserve requirements
+ 330           vRegupreserve(z,h)                amount of reg up reserves [GW]
+ 331           vFlexreserve(z,h)
+ 332  *Generation and reserve variables
+ 333           vReguptech(tech,h)              hourly reg up reserves provided by new plants [GWh]
+ 334           vFlextech(tech,h)
+ 335           vConttech(tech,h)
+ 336  *Storage
+ 337                   vStateofchargetech(storagetech,h)            "energy stored in storage unit at end of hour h (GWh)"
+ 338                   vChargetech(storagetech,h)                           "charged energy by storage unit in hour h (GWh)"
+ 339                   vPowBuiltSto(storagetech)                      built power capacity for storage
+ 340                   vEneBuiltSto(storagetech)                      built energy capacity for storage
+ 341  *Line builds and flows
+ 342                  vNl(l)
+ 343                  vLinecapacnew(l)
+ 344  *               vLinenewflow(ltech,h)
+ 345                     ;
+ 346   
+INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CEBuildVariable.gms
+ 348  Positive Variable
+ 349          vN(tech)
+ 350          ;
+ 351   
+ 352  Equations
+ 353  *Costs
+ 354                  calcvarcoststech(tech,h)
+ 355                  investmentcost
+ 356  *Meet demand and reserves
+ 357           meetdemand(z,h)                   meet supply with demand
+ 358           meetreservemargin               meet planning reserve requirement with installed capacity
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 359           setflexreserve(z,h)               determine quantity of required spin reserves
+ 360           setregupreserve(z,h)              determine quantity of required reg up reserves
+ 361           meetflexreserve(z,h)              meet spin reserve requirement
+ 362           meetcontreserve(z,h)              meet contingency reserve requirement
+ 363           meetregupreserve(z,h)             meet reg up reserve requirement
+ 364           limitshiftingdemandupper(z,h)          limit the amount of demand that can be shifted
+ 365           limitshiftingdemandlower(z,h)          limit the amount of demand that can be shifted
+ 366           meetshiftingdemand(z,h)
+ 367                  limitLineFlows(l,h)
+ 368                  linecapacnew(l,ll)
+ 369   
+ 370  *Maximum build constraints
+ 371                   maxSolar(solartech)
+ 372                   maxWind(windtech)
+ 373                   maxNuclear(nucleartech)
+ 374                   maxCCS(CCStech)
+ 375                   maxCC(CCtech)
+ 376                   maxDAC(dacstech)
+ 377                   maxPSto(storagetech)
+ 378                   setVNSto(storagetech)
+ 379                   maxELTSto(ltstoragetech)
+ 380                   maxESTSto(ststoragetech)
+ 381                                   maxL(l)
+ 382  *                 biLineLimit(l)
+ 383  *Carbon emissions
+ 384                  calcco2emstech(tech,h)
+ 385           ;
+ 386   
+ 387  *****************CALCULATE COSTS*******************
+ 388  *Variable costs for new techs
+ 389  calcvarcoststech(tech,h).. vVarcosttech(tech,h) =e= vGentech(tech,h)*pOpcosttech(tech);
+ 390   
+ 391  *Fixed costs = annual fixed O&M + fixed annualized capital costs
+ 392  investmentcost..         vFixedcostannual =e= sum(nonstoragetech,vN(nonstoragetech)*pCapactech(nonstoragetech)*(pFom(nonstoragetech)+pOcc(nonstoragetech)*pCrf(nonstoragetech)))
+ 393                                                   + sum(storagetech,vPowBuiltSto(storagetech)*pPowOcc(storagetech)*pCrf(storagetech)+vEneBuiltSto(storagetech)*pEneOcc(storagetech)*pCrf(storagetech))
+ 394                                                                                                   + sum(l,vNl(l)*pLinecost(l)*pCrfline);
+ 395  ***************************************************
+ 396   
+ 397  ******************SYSTEM-WIDE GENERATION AND RESERVE CONSTRAINTS*******************
+ 398  *Demand = generation by new and existing plants
+ 399  meetdemand(z,h)..          sum(tech$[pGenzonetech(tech)=ORD(z)],vGentech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vGen(egu,h)) +
+ 400                                                          sum(l$[pLinesink(l)=ORD(z)],vLineflow(l,h))*pTransEff =g= (pDemand(z,h) + vShiftedDemand(z,h)
+ 401                                                          + sum(storageegu$[pGenzone(storageegu)=ORD(z)],vCharge(storageegu,h)) + sum(storagetech$[pGenzonetech(storagetech)=ORD(z)],vChargetech(storagetech,h))
+ 402                                                                                                                  + sum(l$[pLinesource(l)=ORD(z)],vLineflow(l,h)));
+ 403   
+ 404  *meetdemand(z,h)..          sum(tech$[pGenzonetech(tech)=ORD(z)],vGentech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vGen(egu,h)) =g= pDemand(z,h);
+ 405   
+ 406  *Demand response
+ 407  limitshiftingdemandupper(z,h)..       vShiftedDemand(z,h) =l= pDemand(z,h)*pDemandShifter;
+ 408  limitshiftingdemandlower(z,h)..       vShiftedDemand(z,h) =g= -1*pDemand(z,h)*pDemandShifter;
+ 409  meetshiftingdemand(z,h)$(mod(ord(h),pDemandShiftingBlock)=1).. sum(hh$((ord(hh)>=ord(h) and (ord(hh)<=ord(h)+pDemandShiftingBlock-1))), vShiftedDemand(z,h))=e= 0;
+ 410   
+ 411  *Meet planning reserve margin
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 10
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 412  meetreservemargin..       sum(thermaltech,pCapactech(thermaltech)*vN(thermaltech))
+ 413                             + sum(storagetech,vPowBuiltSto(storagetech))
+ 414                             + sum((renewtech,peakH),pCapactech(renewtech)*vN(renewtech)*pCf(renewtech,peakH))
+ 415                             + sum(nonrenewegu,pCapac(nonrenewegu))
+ 416                             + sum((z,peakH),pMaxgenwind(z,peakH) + pMaxgensolar(z,peakH)) =g= pPlanningreserve;
+ 417   
+ 418  *Define spinning and reg reserve requirement based on new builds
+ 419  setflexreserve(z,h)..      sum(renewtech$[pGenzonetech(renewtech)=ORD(z)],vN(renewtech)*pCapactech(renewtech)*pFlexReqIncRE(renewtech,h)) + pFlexreserves(z,h) =e= vFlexreserve(z,h);
+ 420  setregupreserve(z,h)..     sum(renewtech$[pGenzonetech(renewtech)=ORD(z)],vN(renewtech)*pCapactech(renewtech)*pRegUpReqIncRE(renewtech,h)) + pRegupreserves(z,h) =e= vRegupreserve(z,h);
+ 421   
+ 422  *Meet spinning and regulation reserve requirements
+ 423  meetflexreserve(z,h)..     sum(tech$[pGenzonetech(tech)=ORD(z)],vFlextech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vFlex(egu,h)) =g= vFlexreserve(z,h);
+ 424  meetcontreserve(z,h)..     sum(tech$[pGenzonetech(tech)=ORD(z)],vConttech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vCont(egu,h)) =g= pContreserves(z,h);
+ 425  meetregupreserve(z,h)..    sum(tech$[pGenzonetech(tech)=ORD(z)],vReguptech(tech,h)) + sum(egu$[pGenzone(egu)=ORD(z)],vRegup(egu,h)) =g= vRegupreserve(z,h);
+ 426   
+ 427  *Limit line flows on new lines
+ 428  linecapacnew(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vLinecapacnew(l) =e= vNl(l) + vNl(ll);
+ 429  limitLineFlows(l,h).. pLinecapac(l)+vLinecapacnew(l) =g= vLineflow(l,h);
+ 430  *new lines with same sources and sinks have the same capacity:
+ 431  *biLineLimit(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vNl(l) =e= vNl(ll);
+ 432  ***********************************************************************************
+ 433   
+ 434  *************UPPER AND LOWER GENERATION BOUNDS*****
+ 435  *Set lower bound to zero for generation by storage and generating techs.
+ 436  vGentech.lo(notdacstech,h) = 0;
+ 437  *Set upper bound to zero for DACS techs. DACS max capacity is negative and has negative vGen values.
+ 438  vGentech.up(dacstech,h) = 0;
+ 439  ***************************************************
+ 440   
+ 441  ******************BUILD DECISIONS******************
+ 442  *Limit number builds to input value.
+ 443  maxWind(windtech) .. vN(windtech) =l= pNMaxWind;
+ 444  maxSolar(solartech) .. vN(solartech) =l= pNMaxSolar;
+ 445  maxNuclear(nucleartech) .. vN(nucleartech) =l= pNMaxNuclear;
+ 446  maxCCS(CCStech) .. vN(CCStech) =l= pNMaxCCS(CCStech);
+ 447  maxCC(CCtech) .. vN(CCtech) =l= pNMaxCC;
+ 448  maxDAC(dacstech) .. vN(dacstech) =l= pNMaxDACS(dacstech);
+ 449  maxPSto(storagetech) .. vPowBuiltSto(storagetech) =l= pPMaxSto(storagetech);
+ 450  setVNSto(storagetech) .. vN(storagetech) =e= vPowBuiltSto(storagetech)/pCapactech(storagetech);
+ 451  maxELTSto(ltstoragetech) .. vEneBuiltSto(ltstoragetech) =l= pEMaxSto(ltstoragetech);
+ 452  maxESTSto(ststoragetech) .. vEneBuiltSto(ststoragetech) =e= pPERatio(ststoragetech)*vPowBuiltSto(ststoragetech);
+ 453  maxL(l) .. vNl(l) =l= pNMaxLine(l);
+ 454   
+ 455  ***************************************************
+ 456   
+ 457  ******************RESERVE CONSTRAINTS******************
+ 458  vFlextech.fx(tech,h)$[pMaxflexoffertech(tech)=0] = 0;
+ 459  vConttech.fx(tech,h)$[pMaxcontoffertech(tech)=0] = 0;
+ 460  vReguptech.fx(tech,h)$[pMaxregupoffertech(tech)=0] = 0;
+ 461  *******************************************************
+ 462   
+ 463  ********CALCULATE CO2 EMISSIONS*************
+ 464  calcco2emstech(tech,h) .. vCO2emstech(tech,h) =e= vGentech(tech,h)*pHrtech(tech)*pCO2emratetech(tech);
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 11
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 465  ********************************************
+ 466   
+INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\StorageEDModule.gms
+ 468  *Michael Craig 14 May 2020
+ 469   
+ 470  Equations
+ 471  *Limit storage generation plus up reserves
+ 472                   limitstorageresup(storageegu,h)
+ 473                  ;
+ 474   
+ 475  ******************STORAGE CONSTRAINTS*********************************
+ 476  *Limit up reserves to spare capacity while discharging & to charge amount while charging
+ 477  limitstorageresup(storageegu,h) .. vRegup(storageegu,h) + vFlex(storageegu,h) + vCont(storageegu,h) =l= (pCapac(storageegu) - vGen(storageegu,h)) + vCharge(storageegu,h);
+ 478  **********************************************************************
+INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\EDVarsAndConstraints.gms
+ 480  *Michael Craig 14 May 2020
+ 481   
+ 482  Equations
+ 483  *Generation and reserve constraints
+ 484           limitflexres(egu,h)             limit spin reserves by existing plants by ramp rate
+ 485           limitcontres(egu,h)             limit cont reserves by existing plants by ramp rate
+ 486           limitregupres(egu,h)            limit reg reserves by existing plants by ramp rate
+ 487           ;
+ 488   
+ 489  ******************GENERATION AND RESERVE CONSTRAINTS******************
+ 490  *Limit spining and regulation reserves each to ramp capability and time of reserve
+ 491  limitflexres(egu,h)$[pMaxflexoffer(egu)>0] .. vFlex(egu,h) =l= pMaxflexoffer(egu);
+ 492  limitcontres(egu,h)$[pMaxcontoffer(egu)>0] .. vCont(egu,h) =l= pMaxcontoffer(egu);
+ 493  limitregupres(egu,h)$[pMaxregupoffer(egu)>0] .. vRegup(egu,h) =l= pMaxregupoffer(egu);
+ 494  **********************************************************************
+INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CETimeDependentConstraints.gms
+ 496  Sets
+ 497          block0h(h)
+ 498          block1h(h)
+ 499          blockpeaktotal2h(h)
+ 500          blockpeaknet3h(h)
+ 501          block4h(h)
+ 502          blockpeaknetramp5h(h)
+ 503          block6h(h)
+ 504          ;
+ 505   
+ 506  Parameters
+ 507          pWeightblock0h
+ 508          pWeightblock1h
+ 509          pWeightblockpeaktotal2h
+ 510          pWeightblockpeaknet3h
+ 511          pWeightblock4h
+ 512          pWeightblockpeaknetramp5h
+ 513          pWeightblock6h
+ 514          pInitSOC(storageegu)
+ 515          pInitSOCtech(storagetech)
+ 516          pHourInitblock0h
+ 517          pHourFinalblock0h
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 12
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 518          pHourInitblock1h
+ 519          pHourFinalblock1h
+ 520          pHourInitblockpeaktotal2h
+ 521          pHourFinalblockpeaktotal2h
+ 522          pHourInitblockpeaknet3h
+ 523          pHourFinalblockpeaknet3h
+ 524          pHourInitblock4h
+ 525          pHourFinalblock4h
+ 526          pHourInitblockpeaknetramp5h
+ 527          pHourFinalblockpeaknetramp5h
+ 528          pHourInitblock6h
+ 529          pHourFinalblock6h
+ 530          pMaxgenhydroblock0h(z)
+ 531          pMaxgenhydroblock1h(z)
+ 532          pMaxgenhydroblockpeaktotal2h(z)
+ 533          pMaxgenhydroblockpeaknet3h(z)
+ 534          pMaxgenhydroblock4h(z)
+ 535          pMaxgenhydroblockpeaknetramp5h(z)
+ 536          pMaxgenhydroblock6h(z)
+ 537          ;
+ 538   
+GDXIN   C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
+--- LOAD  block0h = 89:block0h
+--- LOAD  block1h = 90:block1h
+--- LOAD  blockpeaktotal2h = 91:blockpeaktotal2h
+--- LOAD  blockpeaknet3h = 92:blockpeaknet3h
+--- LOAD  block4h = 93:block4h
+--- LOAD  blockpeaknetramp5h = 94:blockpeaknetramp5h
+--- LOAD  block6h = 95:block6h
+--- LOAD  pWeightblock0h = 96:pWeightblock0h
+--- LOAD  pWeightblock1h = 97:pWeightblock1h
+--- LOAD  pWeightblockpeaktotal2h = 98:pWeightblockpeaktotal2h
+--- LOAD  pWeightblockpeaknet3h = 99:pWeightblockpeaknet3h
+--- LOAD  pWeightblock4h = 100:pWeightblock4h
+--- LOAD  pWeightblockpeaknetramp5h = 101:pWeightblockpeaknetramp5h
+--- LOAD  pWeightblock6h = 102:pWeightblock6h
+--- LOAD  pInitSOC = 109:pInitSOC
+--- LOAD  pInitSOCtech = 110:pInitSOCtech
+--- LOAD  pMaxgenhydroblock0h = 111:pMaxgenhydroblock0h
+--- LOAD  pMaxgenhydroblock1h = 112:pMaxgenhydroblock1h
+--- LOAD  pMaxgenhydroblockpeaktotal2h = 117:pMaxgenhydroblockpeaktotal2h
+--- LOAD  pMaxgenhydroblockpeaknet3h = 115:pMaxgenhydroblockpeaknet3h
+--- LOAD  pMaxgenhydroblock4h = 113:pMaxgenhydroblock4h
+--- LOAD  pMaxgenhydroblockpeaknetramp5h = 116:pMaxgenhydroblockpeaknetramp5h
+--- LOAD  pMaxgenhydroblock6h = 114:pMaxgenhydroblock6h
+ 546   
+ 547  pHourInitblock0h = smin(h$block0h(h),ord(h));
+ 548  pHourFinalblock0h = smax(h$block0h(h),ord(h));
+ 549  pHourInitblock1h = smin(h$block1h(h),ord(h));
+ 550  pHourFinalblock1h = smax(h$block1h(h),ord(h));
+ 551  pHourInitblockpeaktotal2h = smin(h$blockpeaktotal2h(h),ord(h));
+ 552  pHourFinalblockpeaktotal2h = smax(h$blockpeaktotal2h(h),ord(h));
+ 553  pHourInitblockpeaknet3h = smin(h$blockpeaknet3h(h),ord(h));
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 13
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 554  pHourFinalblockpeaknet3h = smax(h$blockpeaknet3h(h),ord(h));
+ 555  pHourInitblock4h = smin(h$block4h(h),ord(h));
+ 556  pHourFinalblock4h = smax(h$block4h(h),ord(h));
+ 557  pHourInitblockpeaknetramp5h = smin(h$blockpeaknetramp5h(h),ord(h));
+ 558  pHourFinalblockpeaknetramp5h = smax(h$blockpeaknetramp5h(h),ord(h));
+ 559  pHourInitblock6h = smin(h$block6h(h),ord(h));
+ 560  pHourFinalblock6h = smax(h$block6h(h),ord(h));
+ 561   
+ 562  nonInitH(h)= yes;
+ 563  nonInitH(h)$[ord(h)=pHourInitblock0h] = no;
+ 564  nonInitH(h)$[ord(h)=pHourInitblock1h] = no;
+ 565  nonInitH(h)$[ord(h)=pHourInitblockpeaktotal2h] = no;
+ 566  nonInitH(h)$[ord(h)=pHourInitblockpeaknet3h] = no;
+ 567  nonInitH(h)$[ord(h)=pHourInitblock4h] = no;
+ 568  nonInitH(h)$[ord(h)=pHourInitblockpeaknetramp5h] = no;
+ 569  nonInitH(h)$[ord(h)=pHourInitblock6h] = no;
+ 570   
+ 571  Variables
+ 572          vInitSOCblock1h(storageegu)
+ 573          vInitSOCblockpeaktotal2h(storageegu)
+ 574          vInitSOCblockpeaknet3h(storageegu)
+ 575          vInitSOCblock4h(storageegu)
+ 576          vInitSOCblockpeaknetramp5h(storageegu)
+ 577          vInitSOCblock6h(storageegu)
+ 578          vInitSOCblock1htech(storagetech)
+ 579          vInitSOCblockpeaktotal2htech(storagetech)
+ 580          vInitSOCblockpeaknet3htech(storagetech)
+ 581          vInitSOCblock4htech(storagetech)
+ 582          vInitSOCblockpeaknetramp5htech(storagetech)
+ 583          vInitSOCblock6htech(storagetech)
+ 584          ;
+ 585   
+ 586  Equations
+ 587          varCost
+ 588          co2Ems
+ 589          defSOC(storageegu,h)
+ 590          genPlusUpResToSOC(storageegu,h)
+ 591          setInitSOCblock1hststorageegu(ststorageegu)
+ 592          setInitSOCblockpeaktotal2hststorageegu(ststorageegu)
+ 593          setInitSOCblockpeaknet3hststorageegu(ststorageegu)
+ 594          setInitSOCblock4hststorageegu(ststorageegu)
+ 595          setInitSOCblockpeaknetramp5hststorageegu(ststorageegu)
+ 596          setInitSOCblock6hststorageegu(ststorageegu)
+ 597          defSOCtech(storagetech,h)
+ 598          genPlusUpResToSOCtech(storagetech,h)
+ 599          setInitSOCblock1hststoragetech(ststoragetech)
+ 600          setInitSOCblockpeaktotal2hststoragetech(ststoragetech)
+ 601          setInitSOCblockpeaknet3hststoragetech(ststoragetech)
+ 602          setInitSOCblock4hststoragetech(ststoragetech)
+ 603          setInitSOCblockpeaknetramp5hststoragetech(ststoragetech)
+ 604          setInitSOCblock6hststoragetech(ststoragetech)
+ 605          rampUpblock0h(egu,block0h)
+ 606          rampUpblock1h(egu,block1h)
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 14
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 607          rampUpblockpeaktotal2h(egu,blockpeaktotal2h)
+ 608          rampUpblockpeaknet3h(egu,blockpeaknet3h)
+ 609          rampUpblock4h(egu,block4h)
+ 610          rampUpblockpeaknetramp5h(egu,blockpeaknetramp5h)
+ 611          rampUpblock6h(egu,block6h)
+ 612          rampUpblock0htech(tech,block0h)
+ 613          rampUpblock1htech(tech,block1h)
+ 614          rampUpblockpeaktotal2htech(tech,blockpeaktotal2h)
+ 615          rampUpblockpeaknet3htech(tech,blockpeaknet3h)
+ 616          rampUpblock4htech(tech,block4h)
+ 617          rampUpblockpeaknetramp5htech(tech,blockpeaknetramp5h)
+ 618          rampUpblock6htech(tech,block6h)
+ 619          limitHydroGenblock0h(z)
+ 620          limitHydroGenblock1h(z)
+ 621          limitHydroGenblockpeaktotal2h(z)
+ 622          limitHydroGenblockpeaknet3h(z)
+ 623          limitHydroGenblock4h(z)
+ 624          limitHydroGenblockpeaknetramp5h(z)
+ 625          limitHydroGenblock6h(z)
+ 626          ;
+ 627   
+ 628  defSOC(storageegu,h).. vStateofcharge(storageegu,h) =e= pInitSOC(storageegu)$[ord(h)=pHourInitblock0h] + vInitSOCblock1h(storageegu)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2h(storageegu)$[ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockp
+      eaknet3h(storageegu)$[ord(h)=pHourInitblockpeaknet3h] + vInitSOCblock4h(storageegu)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5h(storageegu)$[ord(h)=pHourInitblockpeaknetramp5h] + vInitSOCblock6h(storageegu)$[ord(h)=pHourInitblock6h] +
+ 629          vStateofcharge(storageegu, h-1)$nonInitH(h) -
+ 630                 1/sqrt(pEfficiency(storageegu)) * vGen(storageegu,h) +
+ 631                 sqrt(pEfficiency(storageegu)) * vCharge(storageegu,h);
+ 632  genPlusUpResToSOC(storageegu,h).. vGen(storageegu,h)+vRegup(storageegu,h)+vFlex(storageegu,h)+vCont(storageegu,h) =l= vStateofcharge(storageegu, h-1)$nonInitH(h)
+ 633                       + pInitSOC(storageegu)$[ord(h)=pHourInitblock0h] + vInitSOCblock1h(storageegu)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2h(storageegu)$[ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockpeaknet3h(storageegu)$[ord(h)=pHou
+      rInitblockpeaknet3h] + vInitSOCblock4h(storageegu)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5h(storageegu)$[ord(h)=pHourInitblockpeaknetramp5h] + vInitSOCblock6h(storageegu)$[ord(h)=pHourInitblock6h];
+ 634  setInitSOCblock1hststorageegu(ststorageegu).. vInitSOCblock1h(ststorageegu) =e=
+ 635                                      pInitSOC(ststorageegu);
+ 636  setInitSOCblockpeaktotal2hststorageegu(ststorageegu).. vInitSOCblockpeaktotal2h(ststorageegu) =e=
+ 637                                      pInitSOC(ststorageegu);
+ 638  setInitSOCblockpeaknet3hststorageegu(ststorageegu).. vInitSOCblockpeaknet3h(ststorageegu) =e=
+ 639                                      pInitSOC(ststorageegu);
+ 640  setInitSOCblock4hststorageegu(ststorageegu).. vInitSOCblock4h(ststorageegu) =e=
+ 641                                      pInitSOC(ststorageegu);
+ 642  setInitSOCblockpeaknetramp5hststorageegu(ststorageegu).. vInitSOCblockpeaknetramp5h(ststorageegu) =e=
+ 643                                      pInitSOC(ststorageegu);
+ 644  setInitSOCblock6hststorageegu(ststorageegu).. vInitSOCblock6h(ststorageegu) =e=
+ 645                                      pInitSOC(ststorageegu);
+ 646   
+ 647  defSOCtech(storagetech,h).. vStateofchargetech(storagetech,h) =e= pInitSOCtech(storagetech)$[ord(h)=pHourInitblock0h]*vEneBuiltSto(storagetech) + vInitSOCblock1htech(storagetech)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2htech(storagetech)$
+      [ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockpeaknet3htech(storagetech)$[ord(h)=pHourInitblockpeaknet3h] + vInitSOCblock4htech(storagetech)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5htech(storagetech)$[ord(h)=pHourInitblockpeaknetram
+      p5h] + vInitSOCblock6htech(storagetech)$[ord(h)=pHourInitblock6h] +
+ 648          vStateofchargetech(storagetech, h-1)$nonInitH(h) -
+ 649                 1/sqrt(pEfficiencytech(storagetech)) * vGentech(storagetech,h) +
+ 650                 sqrt(pEfficiencytech(storagetech)) * vChargetech(storagetech,h);
+ 651  genPlusUpResToSOCtech(storagetech,h).. vGentech(storagetech,h)+vReguptech(storagetech,h)+vFlextech(storagetech,h)+vConttech(storagetech,h) =l= vStateofchargetech(storagetech, h-1)$nonInitH(h)
+ 652                       + pInitSOCtech(storagetech)$[ord(h)=pHourInitblock0h]*vEneBuiltSto(storagetech) + vInitSOCblock1htech(storagetech)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2htech(storagetech)$[ord(h)=pHourInitblockpeaktotal2h] + vInitS
+      OCblockpeaknet3htech(storagetech)$[ord(h)=pHourInitblockpeaknet3h] + vInitSOCblock4htech(storagetech)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5htech(storagetech)$[ord(h)=pHourInitblockpeaknetramp5h] + vInitSOCblock6htech(storagetech)$[or
+      d(h)=pHourInitblock6h];
+ 653  setInitSOCblock1hststoragetech(ststoragetech).. vInitSOCblock1htech(ststoragetech) =e=
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 15
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 654                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 655  setInitSOCblockpeaktotal2hststoragetech(ststoragetech).. vInitSOCblockpeaktotal2htech(ststoragetech) =e=
+ 656                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 657  setInitSOCblockpeaknet3hststoragetech(ststoragetech).. vInitSOCblockpeaknet3htech(ststoragetech) =e=
+ 658                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 659  setInitSOCblock4hststoragetech(ststoragetech).. vInitSOCblock4htech(ststoragetech) =e=
+ 660                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 661  setInitSOCblockpeaknetramp5hststoragetech(ststoragetech).. vInitSOCblockpeaknetramp5htech(ststoragetech) =e=
+ 662                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 663  setInitSOCblock6hststoragetech(ststoragetech).. vInitSOCblock6htech(ststoragetech) =e=
+ 664                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 665   
+ 666  varCost.. vVarcostannual =e= pWeightblock0h*(sum((egu,block0h),vVarcost(egu,block0h))+sum((tech,block0h),vVarcosttech(tech,block0h)))
+ 667          + pWeightblock1h*(sum((egu,block1h),vVarcost(egu,block1h))+sum((tech,block1h),vVarcosttech(tech,block1h)))
+ 668          + pWeightblockpeaktotal2h*(sum((egu,blockpeaktotal2h),vVarcost(egu,blockpeaktotal2h))+sum((tech,blockpeaktotal2h),vVarcosttech(tech,blockpeaktotal2h)))
+ 669          + pWeightblockpeaknet3h*(sum((egu,blockpeaknet3h),vVarcost(egu,blockpeaknet3h))+sum((tech,blockpeaknet3h),vVarcosttech(tech,blockpeaknet3h)))
+ 670          + pWeightblock4h*(sum((egu,block4h),vVarcost(egu,block4h))+sum((tech,block4h),vVarcosttech(tech,block4h)))
+ 671          + pWeightblockpeaknetramp5h*(sum((egu,blockpeaknetramp5h),vVarcost(egu,blockpeaknetramp5h))+sum((tech,blockpeaknetramp5h),vVarcosttech(tech,blockpeaknetramp5h)))
+ 672          + pWeightblock6h*(sum((egu,block6h),vVarcost(egu,block6h))+sum((tech,block6h),vVarcosttech(tech,block6h)));
+ 673  co2Ems.. vCO2emsannual =e= pWeightblock0h*(sum((egu,block0h),vCO2ems(egu,block0h))+sum((tech,block0h),vCO2emstech(tech,block0h)))
+ 674          + pWeightblock1h*(sum((egu,block1h),vCO2ems(egu,block1h))+sum((tech,block1h),vCO2emstech(tech,block1h)))
+ 675          + pWeightblockpeaktotal2h*(sum((egu,blockpeaktotal2h),vCO2ems(egu,blockpeaktotal2h))+sum((tech,blockpeaktotal2h),vCO2emstech(tech,blockpeaktotal2h)))
+ 676          + pWeightblockpeaknet3h*(sum((egu,blockpeaknet3h),vCO2ems(egu,blockpeaknet3h))+sum((tech,blockpeaknet3h),vCO2emstech(tech,blockpeaknet3h)))
+ 677          + pWeightblock4h*(sum((egu,block4h),vCO2ems(egu,block4h))+sum((tech,block4h),vCO2emstech(tech,block4h)))
+ 678          + pWeightblockpeaknetramp5h*(sum((egu,blockpeaknetramp5h),vCO2ems(egu,blockpeaknetramp5h))+sum((tech,blockpeaknetramp5h),vCO2emstech(tech,blockpeaknetramp5h)))
+ 679          + pWeightblock6h*(sum((egu,block6h),vCO2ems(egu,block6h))+sum((tech,block6h),vCO2emstech(tech,block6h)));
+ 680   
+ 681  limitHydroGenblock0h(z)..sum((hydroegu,block0h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block0h)) =l= pMaxgenhydroblock0h(z);
+ 682  limitHydroGenblock1h(z)..sum((hydroegu,block1h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block1h)) =l= pMaxgenhydroblock1h(z);
+ 683  limitHydroGenblockpeaktotal2h(z)..sum((hydroegu,blockpeaktotal2h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaktotal2h)) =l= pMaxgenhydroblockpeaktotal2h(z);
+ 684  limitHydroGenblockpeaknet3h(z)..sum((hydroegu,blockpeaknet3h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaknet3h)) =l= pMaxgenhydroblockpeaknet3h(z);
+ 685  limitHydroGenblock4h(z)..sum((hydroegu,block4h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block4h)) =l= pMaxgenhydroblock4h(z);
+ 686  limitHydroGenblockpeaknetramp5h(z)..sum((hydroegu,blockpeaknetramp5h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaknetramp5h)) =l= pMaxgenhydroblockpeaknetramp5h(z);
+ 687  limitHydroGenblock6h(z)..sum((hydroegu,block6h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block6h)) =l= pMaxgenhydroblock6h(z);
+ 688   
+ 689  rampUpblock0h(egu,block0h)$[ORD(block0h)>1].. vGen(egu,block0h)+vRegup(egu,block0h)+vFlex(egu,block0h)+vCont(egu,block0h) - vGen(egu,block0h-1) =l=
+ 690                    pRamprate(egu);
+ 691  rampUpblock0htech(tech,block0h)$[ORD(block0h)>1].. vGentech(tech,block0h)+vReguptech(tech,block0h)+vFlextech(tech,block0h)+vConttech(tech,block0h) - vGentech(tech,block0h-1) =l=
+ 692                    pRampratetech(tech)*vN(tech);
+ 693  rampUpblock1h(egu,block1h)$[ORD(block1h)>1].. vGen(egu,block1h)+vRegup(egu,block1h)+vFlex(egu,block1h)+vCont(egu,block1h) - vGen(egu,block1h-1) =l=
+ 694                    pRamprate(egu);
+ 695  rampUpblock1htech(tech,block1h)$[ORD(block1h)>1].. vGentech(tech,block1h)+vReguptech(tech,block1h)+vFlextech(tech,block1h)+vConttech(tech,block1h) - vGentech(tech,block1h-1) =l=
+ 696                    pRampratetech(tech)*vN(tech);
+ 697  rampUpblockpeaktotal2h(egu,blockpeaktotal2h)$[ORD(blockpeaktotal2h)>1].. vGen(egu,blockpeaktotal2h)+vRegup(egu,blockpeaktotal2h)+vFlex(egu,blockpeaktotal2h)+vCont(egu,blockpeaktotal2h) - vGen(egu,blockpeaktotal2h-1) =l=
+ 698                    pRamprate(egu);
+ 699  rampUpblockpeaktotal2htech(tech,blockpeaktotal2h)$[ORD(blockpeaktotal2h)>1].. vGentech(tech,blockpeaktotal2h)+vReguptech(tech,blockpeaktotal2h)+vFlextech(tech,blockpeaktotal2h)+vConttech(tech,blockpeaktotal2h) - vGentech(tech,blockpeaktotal2h-1) =l=
+ 700                    pRampratetech(tech)*vN(tech);
+ 701  rampUpblockpeaknet3h(egu,blockpeaknet3h)$[ORD(blockpeaknet3h)>1].. vGen(egu,blockpeaknet3h)+vRegup(egu,blockpeaknet3h)+vFlex(egu,blockpeaknet3h)+vCont(egu,blockpeaknet3h) - vGen(egu,blockpeaknet3h-1) =l=
+ 702                    pRamprate(egu);
+ 703  rampUpblockpeaknet3htech(tech,blockpeaknet3h)$[ORD(blockpeaknet3h)>1].. vGentech(tech,blockpeaknet3h)+vReguptech(tech,blockpeaknet3h)+vFlextech(tech,blockpeaknet3h)+vConttech(tech,blockpeaknet3h) - vGentech(tech,blockpeaknet3h-1) =l=
+ 704                    pRampratetech(tech)*vN(tech);
+ 705  rampUpblock4h(egu,block4h)$[ORD(block4h)>1].. vGen(egu,block4h)+vRegup(egu,block4h)+vFlex(egu,block4h)+vCont(egu,block4h) - vGen(egu,block4h-1) =l=
+ 706                    pRamprate(egu);
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 16
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 707  rampUpblock4htech(tech,block4h)$[ORD(block4h)>1].. vGentech(tech,block4h)+vReguptech(tech,block4h)+vFlextech(tech,block4h)+vConttech(tech,block4h) - vGentech(tech,block4h-1) =l=
+ 708                    pRampratetech(tech)*vN(tech);
+ 709  rampUpblockpeaknetramp5h(egu,blockpeaknetramp5h)$[ORD(blockpeaknetramp5h)>1].. vGen(egu,blockpeaknetramp5h)+vRegup(egu,blockpeaknetramp5h)+vFlex(egu,blockpeaknetramp5h)+vCont(egu,blockpeaknetramp5h) - vGen(egu,blockpeaknetramp5h-1) =l=
+ 710                    pRamprate(egu);
+ 711  rampUpblockpeaknetramp5htech(tech,blockpeaknetramp5h)$[ORD(blockpeaknetramp5h)>1].. vGentech(tech,blockpeaknetramp5h)+vReguptech(tech,blockpeaknetramp5h)+vFlextech(tech,blockpeaknetramp5h)+vConttech(tech,blockpeaknetramp5h) - vGentech(tech,blockpeak
+      netramp5h-1) =l=
+ 712                    pRampratetech(tech)*vN(tech);
+ 713  rampUpblock6h(egu,block6h)$[ORD(block6h)>1].. vGen(egu,block6h)+vRegup(egu,block6h)+vFlex(egu,block6h)+vCont(egu,block6h) - vGen(egu,block6h-1) =l=
+ 714                    pRamprate(egu);
+ 715  rampUpblock6htech(tech,block6h)$[ORD(block6h)>1].. vGentech(tech,block6h)+vReguptech(tech,block6h)+vFlextech(tech,block6h)+vConttech(tech,block6h) - vGentech(tech,block6h-1) =l=
+ 716                    pRampratetech(tech)*vN(tech);
+ 717   
+ 718  Parameters
+ 719  *DIAGNOSTIC PARAMETERS
+ 720           pModelstat
+ 721           pSolvestat
+ 722                  ;
+ 723   
+ 724  Variables
+ 725  *Total cost variables
+ 726           vZannual                              obj func [thousandUSD per yr]
+ 727                  ;
+ 728   
+ 729  Equations
+ 730  *Cost equations
+ 731           objfunc                         objective function = sum investment and variable costs
+ 732           investmentcost                  calculate investment costs = fixed O&M + annualized capital costs
+ 733  *Generation and reserve constraints
+ 734           limitflexrestech(tech,h)        limit spin reserves by new plants by ramp rate
+ 735           limitcontrestech(tech,h)        limit cont reserves by new plants by ramp rate
+ 736           limitreguprestech(tech,h)       limit reg reserves by new plants by ramp rate
+ 737           limitallresuptech(tech,h)       limit total generation plus reserves of new plants to capacity
+ 738                   limitdacsgen(dacstech,h)
+ 739  *Renewable generation
+ 740           setrenewgentech(renewtech,h)    set electricity generation by new renewable generators
+ 741  *Storage constraints
+ 742                  limitStoTechGen(storagetech,h)
+ 743                  limitStoTechCharge(storagetech,h)
+ 744                  stoTechSOCLimit(storagetech,h)
+ 745          limitstorageresuptech(storagetech,h)
+ 746  *CO2 emissions cap
+ 747           enforceco2emissionscap          restrict total co2 emissions to cap
+ 748                   ;
+ 749   
+ 750  ******************CALCULATE COSTS (OBJ FUNC)**********
+ 751  *Objective: minimize fixed + variable costs
+ 752  objfunc..                vZannual =e= vFixedcostannual + vVarcostannual;
+ 753  **************************************************
+ 754   
+ 755  ******************GENERATION AND RESERVE CONSTRAINTS******************
+ 756  *Limit spinning and regulation reserves each to ramp capability and time of reserve
+ 757  limitflexrestech(tech,h)$[pMaxflexoffertech(tech)>0].. vFlextech(tech,h) =l= pMaxflexoffertech(tech)*vN(tech);
+ 758  limitcontrestech(tech,h)$[pMaxcontoffertech(tech)>0].. vConttech(tech,h) =l= pMaxcontoffertech(tech)*vN(tech);
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 17
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 759  limitreguprestech(tech,h)$[pMaxregupoffertech(tech)>0].. vReguptech(tech,h) =l= pMaxregupoffertech(tech)*vN(tech);
+ 760   
+ 761  *Limit up reserves plus generation to spare capacity for generating technologies
+ 762  limitallresuptech(gentechs,h).. vGentech(gentechs,h) + vFlextech(gentechs,h) + vConttech(gentechs,h) + vReguptech(gentechs,h) =l= pCapactech(gentechs) * vN(gentechs);
+ 763   
+ 764  *Limit DACS generation and reserves
+ 765  limitdacsgen(dacstech,h).. vGentech(dacstech,h) =g= pCapactech(dacstech)*vN(dacstech);
+ 766   
+ 767  *Limit new wind and solar generation
+ 768  setrenewgentech(renewtech,h)..   vGentech(renewtech,h) =l= pCapactech(renewtech)*pCf(renewtech,h)*vN(renewtech);
+ 769  ********************************************************************
+ 770   
+ 771  ******************STORAGE CONSTRAINTS******************
+ 772  *Bound generation (based on market participation) charging and SOC
+ 773  limitStoTechGen(storagetech,h) .. vGentech(storagetech,h) =l= pStoinenergymarket*vPowBuiltSto(storagetech);
+ 774  limitStoTechCharge(storagetech,h) .. vChargetech(storagetech,h) =l= vPowBuiltSto(storagetech)*pChargeDischargeCapRatio;
+ 775  stoTechSOCLimit(storagetech,h) .. vStateofchargetech(storagetech,h) =l= vEneBuiltSto(storagetech);
+ 776   
+ 777  *Limit up reserves to spare capacity plus charging
+ 778  limitstorageresuptech(storagetech,h) .. vReguptech(storagetech,h) + vFlextech(storagetech,h) + vConttech(storagetech,h) =l= (vPowBuiltSto(storagetech) - vGentech(storagetech,h)) + vChargetech(storagetech,h);
+ 779  *******************************************************
+ 780   
+ 781  ******************CO2 EMISSIONS CONSTRAINT******************
+ 782  *Meet emissions cap
+ 783  enforceco2emissionscap.. vCO2emsannual =l= pCO2emcap;
+ 784  ************************************************************
+ 785   
+ 786  Model ceWithED includes all equations /all/;
+ 787  solve ceWithED using lp minimizing vZannual;
+ 788   
+ 789  pModelstat = ceWithED.Modelstat;
+ 790  pSolvestat = ceWithED.solvestat;
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 18
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CEWithED.gms
+     2       15 INCLUDE        1      15  .C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CESharedFeatures.gms
+     3       18 INCLUDE        2       3  ..C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\EDAndUCSharedFeatures.gms
+     4       93 GDXIN          3      75  ..C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
+     5      291 GDXIN          2     101  .C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
+     6      347 INCLUDE        2     157  ..C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CEBuildVariable.gms
+     7      467 INCLUDE        1      16  .C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\StorageEDModule.gms
+     8      479 INCLUDE        1      17  .C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\EDVarsAndConstraints.gms
+     9      495 INCLUDE        1      18  .C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CETimeDependentConstraints.gms
+    10      540 GDXIN          9      45  .C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
+
+
+COMPILATION TIME     =        0.078 SECONDS      7 MB  31.1.1 r4b06116 WEX-WEI
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 19
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+EXECUTION TIME       =      513.312 SECONDS    703 MB  31.1.1 r4b06116 WEX-WEI
+
+
+USER: Michael Craig, Single User License University oG190927/0001AO-GEN
+      Ann Arbor, School for Environment and Sustainability      DC15152
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CEWithED.gms
+Output     C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gjo0.lst

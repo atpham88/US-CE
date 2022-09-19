@@ -8,6 +8,7 @@ Sets
                  renewegu(egu)                                  existing wind and solar generators
                  windegu(renewegu)                              existing wind generators
                  solaregu(renewegu)                             existing solar generators
+                 hydroegu(renewegu)
                  genegu(egu)                  egus that are not dacs or storage
                  dacsegu(egu)                 direct air capture units
                  notdacsegu(egu)              egus that are not dac units
@@ -45,6 +46,7 @@ Parameters
         pLinesource(l)                                  zone that is the source of line l
                 pLinesink(l)                                    zone that is the sink of line l
                 pLinecapac(l)                                   MW capacity of line l
+                pTransEff
 *HOURLY ELECTRICITY DEMAND [GWh]
          pDemandShifter                  demand shifter (percentage)
          pDemandShiftingBlock
@@ -71,11 +73,11 @@ Parameters
 
 $if not set gdxincname $abort 'no include file name for data file provided'
 $gdxin %gdxincname%
-$load egu, renewegu, windegu, solaregu, h, z, l, dacsegu, storageegu
+$load egu, renewegu, windegu, solaregu, hydroegu, h, z, l, dacsegu, storageegu
 $load pCapac, pHr, pOpcost, pRamprate, pCO2emrate, pCO2cost
 $load pMaxgensolar, pMaxgenwind
 $load pStoinenergymarket,pEfficiency,pMaxsoc,pMinsoc,pCapaccharge
-$load pGenzone, pDemand, pLinesource, pLinesink, pLinecapac
+$load pGenzone, pDemand, pLinesource, pLinesink, pLinecapac, pTransEff
 $load pDemandShifter, pDemandShiftingBlock, pCnse, pRegupreserves, pFlexreserves, pContreserves
 $load pRampratetoregreservescalar, pRampratetoflexreservescalar, pRampratetocontreservescalar
 $load pFlexeligible, pConteligible, pRegeligible
