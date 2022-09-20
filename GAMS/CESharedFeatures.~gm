@@ -235,7 +235,7 @@ meetregupreserve(z,h)..    sum(tech$[pGenzonetech(tech)=ORD(z)],vReguptech(tech,
 linecapacnew(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vLinecapacnew(l) =e= vNl(l) + vNl(ll);
 *limitLineFlows(l,h).. pLinecapac(l)+vNl(l) =g= vLineflow(l,h);
 limitLineFlows(l,h).. pLinecapac(l)+vLinecapacnew(l) =g= vLineflow(l,h);
-* new lines with same sources and sinks have the same capacity:
+*new lines with same sources and sinks have the same capacity:
 *biLineLimit(l,ll)$(pLinesource(l)=pLinesink(ll) and pLinesource(ll)=pLinesink(l)).. vNl(l) =e= vNl(ll);
 ***********************************************************************************
 

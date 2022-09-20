@@ -16,7 +16,7 @@ Sets
          nucleartech(thermaltech)
          CCtech(thermaltech)
          renewtech(tech)                 renewable plant types for new construction
-                 windtech(renewtech)
+                 windtech(renewtech)                       transInvestments
                  solartech(renewtech)
 *Storage
          storagetech(tech)               storage plant types for new construction
