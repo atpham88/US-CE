@@ -58,7 +58,7 @@ lbToShortTon = 2000
 def setKeyParameters():
     #### STUDY AREA AND METEOROLOGICAL-DEPENDENT DATA
     metYear = 2012 #year of meteorological data used for demand and renewables
-    interconn = 'EI'                                    # which interconnection to run - ERCOT, WECC, EI
+    interconn = 'ERCOT'                                 # which interconnection to run - ERCOT, WECC, EI
     balAuths = 'full'                                   # full: run for all BAs in interconn. TODO: add selection of a subset of BAs.
     electrifiedDemand = True                            # whether to import electrified demand futures from NREL's EFS
     elecDemandScen = 'REFERENCE'                        # 'REFERENCE','HIGH','MEDIUM' (ref is lower than med)
@@ -66,42 +66,45 @@ def setKeyParameters():
 
     annualDemandGrowth = 0                              # fraction demand growth per year - ignored if use EFS data (electrifieDemand=True)
     metYear = 2012 if electrifiedDemand else metYear    # EFS data is for 2012; ensure met year is 2012
-    reDownFactor = 10                                  # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
+    reDownFactor = 10                                   # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
 
     # ### BUILD SCENARIO
-    buildLimitsCase = 1                               # 1 = reference case,
-                                                        # 2 = limited nuclear,
-                                                        # 3 = limited CCS and nuclear,
-                                                        # 4 = limited hydrogen storage,
-                                                        # 5 = limited transmission
+    buildLimitsCase = 1                                                 # 1 = reference case,
+                                                                        # 2 = limited nuclear,
+                                                                        # 3 = limited CCS and nuclear,
+                                                                        # 4 = limited hydrogen storage,
+                                                                        # 5 = limited transmission
 
     # ### PLANNING SYSTEM SCENARIO
-    emissionSystem = 'NetZero'                          # "NetZero" = net zero,
-                                                        # "Negative" = negative emission system
+    emissionSystem = 'NetZero'                                          # "NetZero" = net zero,
+                                                                        # "Negative" = negative emission system
 
     # ### NEGATIVE EMISSION SCENARIO
-    planNESystem = 2050                                 # Year that negative emission system is planned
+    planNESystem = 2050                                                 # Year that negative emission system is planned
 
     # ### RUNNING ON SC OR LOCAL
-    runOnSC = False                                     # whether running on supercomputer
+    runOnSC = False                                                     # whether running on supercomputer
 
     # ### CO2 EMISSION CAPS AND DACS TREATMENT [https://www.eia.gov/environment/emissions/state/, table 3]
     if interconn == 'ERCOT':
-        co2Ems2020 =  130594820                          #METRIC TONS. Initial emission for ERCOT: 130594820.
+        co2Ems2020 =  130594820                                         # METRIC TONS. Initial emission for ERCOT: 130594820.
     elif interconn == 'EI':
         co2Ems2020 =  1274060000
     elif interconn == 'WECC':
-        co2Ems2020 =  248800000                        #2019. METRIC TONS. wa,or,ca,nm,az,nv,ut,co,wy,id,mt
+        co2Ems2020 =  248800000                                         #2019. METRIC TONS. wa,or,ca,nm,az,nv,ut,co,wy,id,mt
 
     if emissionSystem == 'NetZero':
-        co2EmsCapInFinalYear = 0                        # .9*co2Ems2020    # cap on co2 emissions in final year of CE
+        co2EmsCapInFinalYear = 0                                        # .9*co2Ems2020    # cap on co2 emissions in final year of CE
     elif emissionSystem == 'Negative':
         if interconn == 'ERCOT':
             co2EmsCapInFinalYear = -90 * 1e6
         elif interconn == 'EI':
             co2EmsCapInFinalYear = -724.6662647 * 1e6
+        elif interconn == 'WECC':
+            co2EmsCapInFinalYear = -724.6662647 * 1e6                   # Need to change this for WECC
 
-    yearIncDACS = 2050                                  #year to include DACS - set beyond end period if don't want DACS
+
+    yearIncDACS = 2050                                                  # year to include DACS - set beyond end period if don't want DACS
 
     # ### CE AND UCED/ED OPTIONS
     compressFleet = True                                                # whether to compress fleet
@@ -110,22 +113,21 @@ def setKeyParameters():
     transmissionEff = 0.95                                              # efficiency of transmission between zones (https://ars.els-cdn.com/content/image/1-s2.0-S2542435120305572-mmc1.pdf)
 
     # ### CE OPTIONS
-    runCE, ceOps = True, 'ED'                           # ops are 'ED' or 'UC' (econ disp or unit comm constraints)
-    # numBlocks, daysPerBlock, daysPerPeak = 1, 360, 1                              # num rep time blocks, days per rep block, and days per peak block in CE
-    numBlocks, daysPerBlock, daysPerPeak = 4, 4, 1                              # num rep time blocks, days per rep block, and days per peak block in CE
+    runCE, ceOps = True, 'ED'                                                   # 'ED' or 'UC' (econ disp or unit comm constraints)
+    numBlocks, daysPerBlock, daysPerPeak = 4, 2, 3                              # num rep time blocks, days per rep block, and days per peak block in CE
     fullYearCE = True if (numBlocks == 1 and daysPerBlock > 300) else False     # whether running full year in CE
-    startYear, endYear, yearStepCE = 2020, 2041, 2
+    startYear, endYear, yearStepCE = 2020, 2041, 5
     mulStep = (yearStepCE*2 < (endYear - startYear))                       
-    removeHydro = False                                  #whether to remove hydropower from fleet & subtract generation from demand, or to include hydro as dispatchable in CE w/ gen limit
+    removeHydro = False                                 #whether to remove hydropower from fleet & subtract generation from demand, or to include hydro as dispatchable in CE w/ gen limit
     greenField = False                                  # whether to run greenField (set to True) or brownfield (False)
     includeRes = False                                  # whether to include reserves in CE & dispatch models (if False, multiplies reserve timeseries by 0)
-    stoInCE, seasStoInCE = True,False                    # whether to allow new storage,new seasonal storage in CE model
+    stoInCE, seasStoInCE = True,False                   # whether to allow new storage,new seasonal storage in CE model
     retireByAge = True                                  # whether to retire by age or not
     planningReserveMargin = 0.1375                      # fraction of peak demand; ERCOT targeted planning margin
     retirementCFCutoff = .3                             # retire units w/ CF lower than given value
     discountRate = 0.07 #fraction    
     ptEligRetCF = ['Coal Steam']                        # which plant types retire based on capacity factor (economics)
-    incITC,incNuc = False,False                          # include Investment Tax Credit or not; include nuclear as new investment option or not
+    incITC,incNuc = False,False                         # include Investment Tax Credit or not; include nuclear as new investment option or not
 
     # ### ED/UCED OPTIONS
     runFirstYear = False                                # whether to run first year of dispatch
@@ -133,12 +135,12 @@ def setKeyParameters():
     useCO2Price = False                                 # whether to calc & inc CO2 price in operations run
 
     # ### STORAGE OPTIONS
-    stoMkts = 'energy'                            # energy,res,energyAndRes - whether storage participates in energy, reserve, or energy and reserve markets
+    stoMkts = 'energy'                                  # energy,res,energyAndRes - whether storage participates in energy, reserve, or energy and reserve markets
     stoFTLabels = ['Energy Storage','Pumped Storage']
     stoDuration = {'Energy Storage':'st','Hydrogen':'lt','Battery Storage':'st','Flywheels':'st','Batteries':'st','Pumped Storage':'st'} # mapping plant types to short-term (st) or long-term (lt) storage
     stoPTLabels = [pt for pt in stoDuration ]
     initSOCFraction = {pt:{'st':.1,'lt':.05}[dur] for pt,dur in stoDuration.items()} # get initial SOC fraction per st or lt storage
-    stoMinSOC = 0     # min SOC
+    stoMinSOC = 0                                       # min SOC
 
     # ### GENERIC DEMAND FLEXIBILITY PARAMETERS
     demandShifter = 0                                   # Percentage of hourly demand that can be shifted
@@ -239,39 +241,7 @@ def masterFunction():
     # Run CE and/or ED/UCED
     for currYear in range(startYear, endYear, yearStepCE):
         # Set CO2 cap and demand for year
-        if currYear <=2050:
-            currCo2Cap = co2Ems2020 + (co2EmsCapInFinalYear - co2Ems2020)/((endYear-1) - startYear) * (currYear - startYear)
-            currCo2CapZero = co2Ems2020 + (0 - co2Ems2020) / (2050 - startYear) * (currYear - startYear)
-        elif currYear > 2050:
-            currCo2Cap = co2Ems2020 + (co2EmsCapInFinalYear - co2Ems2020) / (2050 - startYear) * (2050 - startYear)
-
-        Co2CapZero2030 = co2Ems2020 + (0 - co2Ems2020)/(((endYear - 1) - 1) - startYear) * (2030 - startYear)
-        Co2Cap2040planNE2030 = Co2CapZero2030 - (Co2CapZero2030 - co2EmsCapInFinalYear) / 2
-
-        if emissionSystem == 'Negative':
-            if planNESystem == 2030:
-                if currYear < 2040:
-                    currCo2Cap = currCo2CapZero
-                elif currYear == 2040:
-                    currCo2Cap = Co2Cap2040planNE2030
-            elif planNESystem == 2040:
-                if currYear < 2050:
-                    currCo2Cap = currCo2CapZero
-            elif planNESystem == 2050:
-                if currYear <= 2050:
-                    currCo2Cap = currCo2CapZero
-
-        if not mulStep:
-            if emissionSystem == 'Negative':
-                if planNESystem == 2020 or planNESystem == 2050:
-                    if currYear == 2030 or currYear == 2040:
-                        continue
-                elif planNESystem == 2030:
-                    if currYear == 2040:
-                        continue
-                elif planNESystem == 2040:
-                    if currYear == 2030:
-                        continue
+        currCo2Cap = co2Ems2020 + (co2EmsCapInFinalYear - co2Ems2020) / (endYear - startYear) * (currYear - startYear)
 
         print('Entering year ', currYear, ' with CO2 cap (million tons):', round(currCo2Cap/1e6))
 
@@ -317,7 +287,7 @@ def masterFunction():
             runDispatch(genFleet, demandProfile, currYear, demandShifter, demandShiftingBlock, fuelPrices, currCo2Cap, useCO2Price,
                         tzAnalysis, resultsDir, stoMkts, metYear, regLoadFrac, contLoadFrac, interconn, regErrorPercentile, reSourceMERRA,
                         flexErrorPercentile, includeRes, rrToRegTime, rrToFlexTime, rrToContTime, regCostFrac,
-                        ucOrED, initSOCFraction, includeRes)
+                        ucOrED, initSOCFraction, includeRes, pRegionShapes)
 
     # if mulStep:
     #     results_summary_mul(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear,
@@ -491,13 +461,13 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear, planningReserveM
 def createGAMSWorkspaceAndDatabase(runOnSC):
     # currDir = os.getcwd()
     if runOnSC:
-        gamsFileDir = '/home/anph/projects/NETs/EI-CE/GAMS'
+        gamsFileDir = '/home/anph/projects/NETs/MacroCEM/GAMS'
         gamsSysDir = '/home/anph/gams_35_1'
     else:
-        gamsFileDir = 'C:\\Users\\mtcraig\\Desktop\\Research\\Models\\MacroCEM\\GAMS'
-        gamsSysDir = 'C:\\GAMS\\win64\\31.1'
-        # gamsFileDir = r"C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS"
-        # gamsSysDir = r"C:\GAMS\win64\30.2"
+        # gamsFileDir = 'C:\\Users\\mtcraig\\Desktop\\Research\\Models\\MacroCEM\\GAMS'
+        # gamsSysDir = 'C:\\GAMS\\win64\\31.1'
+        gamsFileDir = r"C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS"
+        gamsSysDir = r"C:\GAMS\win64\30.2"
     ws = GamsWorkspace(working_directory=gamsFileDir, system_directory=gamsSysDir)
     db = ws.add_database()
     return ws, db, gamsFileDir
@@ -600,7 +570,7 @@ def ceTimeDependentConstraints(db, hoursForCE, blockWeights, socScalars, ceOps, 
 def runDispatch(genFleet, hourlyDemand, currYear, demandShifter, demandShiftingBlock, runOnSC, fuelPrices, currCo2Cap, useCO2Price,
                 tzAnalysis, resultsDir, stoMkts, metYear, regLoadFrac, contLoadFrac, interconn, regErrorPercentile, reSourceMERRA,
                 flexErrorPercentile, rrToRegTime, rrToFlexTime, rrToContTime, regCostFrac, ucOrED, initSOCFraction, includeRes,
-                firstDay=0, lastDay=364, daysOpt=364, daysLA=1):
+                pRegionShapes, firstDay=0, lastDay=364, daysOpt=364, daysLA=1):
     resultsDir = os.path.join(resultsDir, 'Dispatch')
     if not os.path.exists(resultsDir): os.makedirs(resultsDir)
     print('Entering dispatch for year ' + str(currYear))
