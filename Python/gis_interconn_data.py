@@ -54,7 +54,6 @@ us_dem_data.to_file(r"C:\Users\atpha\Documents\Postdocs\Projects\NETs\GIS\GIS_po
 
 # Spatial join US demographic data and interconnection data:
 us_IC_demographic = gpd.sjoin(us_dem_data, us_ic_data, how="inner", op='intersects')
-
 us_IC_demographic.to_csv(r"C:\Users\atpha\Documents\Postdocs\Projects\NETs\GIS\us_IC_demographic.csv")
 
 fig, ax = plt.subplots()

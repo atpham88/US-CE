@@ -6,7 +6,7 @@ import xlsxwriter as xw
 
 from AuxFuncs import *
 
-atbScenario = 'Moderate'            # Conservative, Moderate, Advanced
+atbScenario = 'Advanced'            # Conservative, Moderate, Advanced
 convert2019to2012Dollars = 0.8958
 crpYearsSO = 20                     # CRP years for solar PV (20 or 30)
 crpYearsWI = 30                     # CRP years for wind (20 or 30)

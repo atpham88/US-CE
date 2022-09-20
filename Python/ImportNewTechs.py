@@ -8,6 +8,7 @@ from SetupGeneratorFleet import *
 
 def getNewTechs(regElig,regCostFrac,currYear,incITC,stoInCE,seasStoInCE,fuelPrices,yearIncDACS,
                 incNuc,transRegions,contFlexInelig,onlyNSPSUnits=True,allowCoalWithoutCCS=False,firstYearForCCS=2030):
+    currYear2 = currYear
     if currYear > 2050: currYear = 2050
     #Read in new techs and add parameters
     newTechsCE = pd.read_excel(os.path.join('Data','NewPlantData','NewTechFramework.xlsx'))
@@ -15,7 +16,7 @@ def getNewTechs(regElig,regCostFrac,currYear,incITC,stoInCE,seasStoInCE,fuelPric
     newTechsCE = addUnitCommitmentParameters(newTechsCE,'PhorumUCParameters.csv') 
     newTechsCE = addUnitCommitmentParameters(newTechsCE,'StorageUCParameters.csv')
     newTechsCE = addFuelPrices(newTechsCE,currYear,fuelPrices)
-    if currYear >= yearIncDACS: newTechsCE = addDACS(newTechsCE,fuelPrices,currYear)
+    if currYear2 >= yearIncDACS: newTechsCE = addDACS(newTechsCE,fuelPrices,currYear)
     newTechsCE = addRandomOpCostAdder(newTechsCE)
     newTechsCE = calcOpCost(newTechsCE)
     newTechsCE = addRegResCostAndElig(newTechsCE,regElig,regCostFrac)
