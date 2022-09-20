@@ -5,13 +5,14 @@
 import os
 from GAMSAddSetToDatabaseFuncs import createHourSubsetName
 
-def writeTimeDependentConstraints(blockNamesChronoList,stoInCE,seasSto,gamsFileDir,ceOps,lastRepBlockNames,specialBlocksPrior):
+def writeTimeDependentConstraints(blockNamesChronoList,stoInCE,seasSto,gamsFileDir,ceOps,
+                                 lastRepBlockNames,specialBlocksPrior,removeHydro):
    setText,setDefns = writeSets(blockNamesChronoList,stoInCE)
-   paramText,paramDefns = writeParameters(blockNamesChronoList,stoInCE,seasSto,ceOps)
-   importText = writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps) 
-   varText = writeVariables(blockNamesChronoList) if seasSto else ''
-   eqnText = writeEquationsNames(blockNamesChronoList,stoInCE,seasSto,ceOps)
-   eqnText += writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,specialBlocksPrior)
+   paramText,paramDefns = writeParameters(blockNamesChronoList,stoInCE,seasSto,ceOps,removeHydro)
+   importText = writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps,removeHydro) 
+   varText = writeVariables(blockNamesChronoList,seasSto)
+   eqnText = writeEquationsNames(blockNamesChronoList,stoInCE,seasSto,ceOps,removeHydro)
+   eqnText += writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,specialBlocksPrior,removeHydro)
    allText = setText + paramText + importText + paramDefns + setDefns + varText + eqnText
    g = open(os.path.join(gamsFileDir,'CETimeDependentConstraints.gms'),'w')
    g.write(allText)
@@ -29,11 +30,11 @@ def writeSets(blockNamesChronoList,stoInCE):
          setDefns += nonInit + '$[ord(h)=' + createInitHourName(nB) + '] = no;\n'
    return setText + '\t;\n',setDefns
 
-def writeParameters(blockNamesChronoList,stoInCE,seasSto,ceOps):
+def writeParameters(blockNamesChronoList,stoInCE,seasSto,ceOps,removeHydro):
    paramText,paramDefns = 'Parameters\n','\n'
    #Weights to scale up costs and emissions
    for nB in blockNamesChronoList: paramText += '\tpWeight' + createHourSubsetName(nB) + '\n'
-   #Init SOC parameters, initial hour, and final hour parameters
+   #Init SOC parameters, initial hour, final hour parameters
    if stoInCE:
       for et in ['storageegu','storagetech']: paramText += createNameWithSets('pInitSOC',et) + '\n'
       for nB in blockNamesChronoList: 
@@ -45,6 +46,9 @@ def writeParameters(blockNamesChronoList,stoInCE,seasSto,ceOps):
          paramDefns += nBInitHour + ' = smin(h$' + createHourSubsetName(nB) + '(h),ord(h));\n'
          paramDefns += nBFinalHour + ' = smax(h$' + createHourSubsetName(nB) + '(h),ord(h));\n'
          if ceOps == 'UC': paramText += 'pOnoroffinit' + createHourSubsetName(nB) + '(egu)\n'
+   #Max hydro generation parameters
+   if not removeHydro: 
+      for nB in blockNamesChronoList: paramText += '\tpMaxgenhydro{0}(z)\n'.format(createHourSubsetName(nB))
    return '\n' + paramText + '\t;\n',paramDefns
 
 def createInitSOCName(nB):
@@ -57,7 +61,7 @@ def createInitHourName(nB):
    return 'pHourInit' + createHourSubsetName(nB)# + createSetsText(['h'])
 
 #Write $load block text for importing parameters defined above
-def writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps):
+def writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps,removeHydro):
    importText = """\n$if not set gdxincname $abort 'no include file name for data file provided'\n"""
    importText += '$gdxin %gdxincname%\n'
    blocks = ','.join([createHourSubsetName(nB) for nB in blockNamesChronoList])
@@ -68,49 +72,58 @@ def writeImport(blockNamesChronoList,stoInCE,seasSto,ceOps):
       ets,initSOCs = ['storageegu','storagetech'],''
       initSOCs += ','.join(['pInitSOC' + techLbl(et) for et in ets]) + ','
    if ceOps == 'UC': onOffInits = ','.join(['pOnoroffinit' + createHourSubsetName(nB) for nB in blockNamesChronoList])
+   if not removeHydro: hydroGen = ','.join(['pMaxgenhydro' + createHourSubsetName(nB) for nB in blockNamesChronoList])
    #Combine all text
    if stoInCE and seasSto: allText = [blocks,weights,scalars,initSOCs.rstrip(',')]
    elif stoInCE: allText = [blocks,weights,initSOCs.rstrip(',')]
    else: allText = [blocks,weights]
    if ceOps == 'UC': allText += [onOffInits]
+   if not removeHydro: allText += [hydroGen]
    importText += '\n'.join(['$load ' + l for l in allText])
    return importText + '\n$gdxin\n'
 
 #Write variables
-def writeVariables(blockNamesChronoList):
+def writeVariables(blockNamesChronoList,seasSto):
    varText = '\nVariables\n'
    for v in ['vInitSOC']:
       for et in ['storageegu','storagetech']: 
          for nB in blockNamesChronoList[1:]:
             varText += ('\t' + v + createHourSubsetName(nB) + techLbl(et) + '(' + et + ')' + '\n')
-   for v in ['vFinalSOC','vChangeSOC']:
-      for et in ['storageegu','storagetech']: 
-         for nB in blockNamesChronoList:
-            varText += ('\t' + v + createHourSubsetName(nB) + techLbl(et) + '(' + et + ')' + '\n')
+   if seasSto:
+      for v in ['vFinalSOC','vChangeSOC']:
+         for et in ['storageegu','storagetech']: 
+            for nB in blockNamesChronoList:
+               varText += ('\t' + v + createHourSubsetName(nB) + techLbl(et) + '(' + et + ')' + '\n')
    return varText + '\t;\n'
 
 #Write equation names
-def writeEquationsNames(blockNamesChronoList,stoInCE,seasSto,ceOps):
+def writeEquationsNames(blockNamesChronoList,stoInCE,seasSto,ceOps,removeHydro):
    eqnText = '\nEquations\n'
    gens,stos = ['egu','tech'],['storageegu','storagetech']
+   #Variable cost and CO2 emission totals per block constraints
    for eqn in ['varCost','co2Ems']: eqnText += '\t' + eqn + '\n'
+   #Storage constraints per block
    if stoInCE:
       for et in stos:
          for eqn in ['defSOC','genPlusUpResToSOC']:
             eqnText += createNameWithSets(eqn,et,'h') + '\n'
          if seasSto:
             for nB in blockNamesChronoList[1:]:
-               eqnText += 'setInitSOC{b}{e}({e})'.format(b=createHourSubsetName(nB),e='lt'+et) + '\n'
+               eqnText += '\tsetInitSOC{b}{e}({e})'.format(b=createHourSubsetName(nB),e='lt'+et) + '\n'
                # createNameWithSets('setInitSOC'+createHourSubsetName(nB)+'lt','lt' + et) + '\n'
             for nB in blockNamesChronoList:
                eqnText += createNameWithSets('defFinalSOC'+createHourSubsetName(nB),et,'h') + '\n'
                eqnText += createNameWithSets('defChangeSOC'+createHourSubsetName(nB),et) + '\n'
          for nB in blockNamesChronoList[1:]:
-               eqnText += 'setInitSOC{b}{e}({e})'.format(b=createHourSubsetName(nB),e='st'+et) + '\n'
+               eqnText += '\tsetInitSOC{b}{e}({e})'.format(b=createHourSubsetName(nB),e='st'+et) + '\n'
+   #Ramp and commitment constraints per block
    for g in gens:
       for nB in blockNamesChronoList:
          eqnText += createNameWithSets('rampUp'+createHourSubsetName(nB),g,createHourSubsetName(nB)) + '\n'
          if ceOps == 'UC': eqnText += createNameWithSets('commitment'+createHourSubsetName(nB),g,createHourSubsetName(nB)) + '\n'
+   #Max hydropower generation constraints per block
+   if not removeHydro:
+      for nB in blockNamesChronoList: eqnText += '\tlimitHydroGen{b}(z)'.format(b=createHourSubsetName(nB)) + '\n'
    return eqnText + '\t;\n'
 
 def createNameWithSets(eqn,*argv):
@@ -132,7 +145,7 @@ def getGenAboveMinPlusReserves(et,setsText):
    return 'vGenabovemin{0}{1}+vRegup{0}{1}+vFlex{0}{1}+vCont{0}{1}'.format(techLbl(et),setsText)   
 
 #Write equations
-def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,specialBlocksPrior):
+def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,specialBlocksPrior,removeHydro):
    eqns = ''
    #Storage equations
    if stoInCE:
@@ -184,7 +197,7 @@ def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,
          #set initial SOC for short-term (st) storage as fixed initial SOC fraction
          for bNum in range(1,len(blockNamesChronoList)):
             blockName = createHourSubsetName(blockNamesChronoList[bNum])
-            setInitSocSTSto = '''setInitSOC{b}{e}({e}).. vInitSOC{b}{t}({e}) =l= 
+            setInitSocSTSto = '''setInitSOC{b}{e}({e}).. vInitSOC{b}{t}({e}) =e= 
                                     pInitSOC{t}({e})'''.format(b=blockName,t=techLbl(et),e='st'+et)
             setInitSocSTSto = setInitSocSTSto + ('*vEneBuiltSto({e})'.format(e='st'+et) if 'tech' in et else '') + ';\n'                   
             eqns += setInitSocSTSto
@@ -206,6 +219,13 @@ def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,
          blockText += '))' #close pWeight parens
          blockText = blockText[:-1] #drop trailing +
       eqns += '{0}.. {1}annual =e= {2};\n'.format(eqn,v,blockText)
+   
+   #Max hydropower generation equations
+   if not removeHydro:
+      eqns += '\n'
+      for nB in blockNamesChronoList:
+        eqns += 'limitHydroGen{b}(z)..sum((hydroegu,{b})$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,{b})) =l= pMaxgenhydro{b}(z);'.format(b=createHourSubsetName(nB)) + '\n'
+
    #Ramp ups
    eqns += '\n'
    for nB in blockNamesChronoList:
@@ -224,6 +244,7 @@ def writeEquations(blockNamesChronoList,stoInCE,seasSto,ceOps,lastRepBlockNames,
          eqns += '''rampUp{b}{t}{s}$[ORD({b})>1].. {gr} - {g}{t}({e},{b}-1) =l= 
                   {r};\n'''.format(b=createHourSubsetName(nB),t=techLbl(et),
                   s=setsText,gr=genPlusRes,e=et,r=rhs,g=genName)
+   
    #Commitments
    if ceOps == 'UC':
       eqns += '\n'

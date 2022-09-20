@@ -8,26 +8,21 @@ import numpy as np
 def results_summary_mul(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear,
                     yearIncDACS, electrifiedDemand, elecDemandScen,interconn):
 
-    m_dir = "C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\"
-
-
     if buildLimitsCase == 1: case_name = "reference"
     elif buildLimitsCase == 2: case_name = "lNuclear"
     elif buildLimitsCase == 3: case_name = "lNuclearCCS"
     elif buildLimitsCase == 4: case_name = "lH2"
     elif buildLimitsCase == 5: case_name = "lTrans"
 
-    pythonFolder = 'C:\\Users\\atpha\\Documents\\Postdocs\\Projects\\NETs\\Model\\EI-CE\\Python\\'
-
     if emissionSystem == 'Negative':
         resultsDir = 'Results_' + interconn + '_' + emissionSystem + 'NEin' + str(planNESystem) + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
                      + '_' + str(electrifiedDemand) + elecDemandScen + case_name
-        resultsFolder = pythonFolder + 'Results_' + interconn + '_' + emissionSystem + str(int(co2EmsCapInFinalYear/1e6)) + '_' + 'DACS' + str(yearIncDACS) \
+        resultsFolder = 'Results_' + interconn + '_' + emissionSystem + str(int(co2EmsCapInFinalYear/1e6)) + '_' + 'DACS' + str(yearIncDACS) \
                         + 'NEin' + str(planNESystem) + '_' + case_name + '_' + str(electrifiedDemand) + elecDemandScen
     elif emissionSystem == 'NetZero':
         resultsDir = 'Results_' + interconn + '_' + emissionSystem + '_' + str(int(co2EmsCapInFinalYear/1e6)) \
                      + '_' + str(electrifiedDemand) + elecDemandScen + case_name
-        resultsFolder = pythonFolder + 'Results_' + interconn + '_' + emissionSystem + '_' + 'DACS' + str(yearIncDACS) \
+        resultsFolder = 'Results_' + interconn + '_' + emissionSystem + '_' + 'DACS' + str(yearIncDACS) \
                         + '_' + case_name + '_' + str(electrifiedDemand) + elecDemandScen
 
 
@@ -36,7 +31,7 @@ def results_summary_mul(buildLimitsCase, emissionSystem, planNESystem, co2EmsCap
     resultsFolder2050 = '\\2050' + 'CO2Cap' + str(int(co2EmsCapInFinalYear / 1e6)) + '\\CE\\'
 
     # Set up the excel file
-    results_book = xw.Workbook(pythonFolder + 'Results Summary\\' + resultsDir + '.xlsx')
+    results_book = xw.Workbook('Results Summary\\' + resultsDir + '.xlsx')
     result_sheet_cost = results_book.add_worksheet('Costs')
     result_sheet_CE = results_book.add_worksheet('CE')
     result_sheet_Generation = results_book.add_worksheet('Generation')
