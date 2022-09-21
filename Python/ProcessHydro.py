@@ -11,11 +11,11 @@ from CombinePlants import combinePlantsByRegion
 def processHydro(genFleet, demand, netDemand, metYear, removeHydro):
     if 'Hydro' in genFleet['FuelType'].unique():
         #Get EIA data
-        netGenCols = ['Netgen_'+calendar.month_name[i][:3] for i in range(1,13)]
+        netGenCols = ['Netgen_' + calendar.month_name[i][:3] for i in range(1, 13)]
         yrGen = import923(metYear,netGenCols)
 
         #Convert EIA data to hourly
-        hourGenAll = convert923ToHourlyGen(yrGen,genFleet,netDemand,netGenCols)
+        hourGenAll = convert923ToHourlyGen(yrGen, genFleet, netDemand, netGenCols)
 
         #If removing hydro gen from demand, remove hydro from fleet; otherwise
         #aggregate hydro by zone

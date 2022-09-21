@@ -66,7 +66,7 @@ def setKeyParameters():
 
     annualDemandGrowth = 0                              # fraction demand growth per year - ignored if use EFS data (electrifieDemand=True)
     metYear = 2012 if electrifiedDemand else metYear    # EFS data is for 2012; ensure met year is 2012
-    reDownFactor = 10                                   # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
+    reDownFactor = 4                                   # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
 
     # ### BUILD SCENARIO
     buildLimitsCase = 1                                                 # 1 = reference case,
@@ -103,8 +103,7 @@ def setKeyParameters():
         elif interconn == 'WECC':
             co2EmsCapInFinalYear = -724.6662647 * 1e6                   # Need to change this for WECC
 
-
-    yearIncDACS = 2050                                                  # year to include DACS - set beyond end period if don't want DACS
+    yearIncDACS = 2060                                                  # year to include DACS - set beyond end period if don't want DACS
 
     # ### CE AND UCED/ED OPTIONS
     compressFleet = True                                                # whether to compress fleet
@@ -116,7 +115,7 @@ def setKeyParameters():
     runCE, ceOps = True, 'ED'                                                   # 'ED' or 'UC' (econ disp or unit comm constraints)
     numBlocks, daysPerBlock, daysPerPeak = 4, 2, 3                              # num rep time blocks, days per rep block, and days per peak block in CE
     fullYearCE = True if (numBlocks == 1 and daysPerBlock > 300) else False     # whether running full year in CE
-    startYear, endYear, yearStepCE = 2020, 2041, 5
+    startYear, endYear, yearStepCE = 2020, 2026, 5
     mulStep = (yearStepCE*2 < (endYear - startYear))                       
     removeHydro = False                                 #whether to remove hydropower from fleet & subtract generation from demand, or to include hydro as dispatchable in CE w/ gen limit
     greenField = False                                  # whether to run greenField (set to True) or brownfield (False)
@@ -580,7 +579,7 @@ def runDispatch(genFleet, hourlyDemand, currYear, demandShifter, demandShiftingB
     genFleet.to_csv(os.path.join(resultsDir, 'genFleetForDispatch' + str(currYear) + '.csv'))
 
     # Get renewable generation
-    windGen, solarGen, windGenRegion, solarGenRegion, latlonRegion = getREGen(genFleet, tzAnalysis, metYear, currYear, pRegionShapes,reSourceMERRA)
+    hourlyWindGen, hourlySolarGen, windGenRegion, solarGenRegion, latlonRegion = getREGen(genFleet, tzAnalysis, metYear, currYear, pRegionShapes,reSourceMERRA)
     hourlyWindGen.to_csv(path.join(resultsDir, 'windGenDispatch'+str(currYear)+'.csv'))
     hourlySolarGen.to_csv(path.join(resultsDir, 'solarGenDispatch'+str(currYear)+'.csv'))
     write2dListToCSV([hourlyDemand], os.path.join(resultsDir, 'demandDispatch' + str(currYear) + '.csv'))
