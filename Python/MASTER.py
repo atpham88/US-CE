@@ -77,7 +77,7 @@ def setKeyParameters():
 
     # ### PLANNING SYSTEM SCENARIO
     emissionSystem = 'NetZero'                                          # "NetZero" = net zero,
-                                                                        # "Negative" = negative emission system
+                                                                         # "Negative" = negative emission system
 
     # ### NEGATIVE EMISSION SCENARIO
     planNESystem = 2050                                                 # Year that negative emission system is planned
@@ -117,16 +117,17 @@ def setKeyParameters():
     fullYearCE = True if (numBlocks == 1 and daysPerBlock > 300) else False     # whether running full year in CE
     startYear, endYear, yearStepCE = 2020, 2026, 5
     mulStep = (yearStepCE*2 < (endYear - startYear))                       
+
     removeHydro = False                                 #whether to remove hydropower from fleet & subtract generation from demand, or to include hydro as dispatchable in CE w/ gen limit
     greenField = False                                  # whether to run greenField (set to True) or brownfield (False)
     includeRes = False                                  # whether to include reserves in CE & dispatch models (if False, multiplies reserve timeseries by 0)
-    stoInCE, seasStoInCE = True,False                   # whether to allow new storage,new seasonal storage in CE model
+    stoInCE, seasStoInCE = True,True                   # whether to allow new storage,new seasonal storage in CE model
     retireByAge = True                                  # whether to retire by age or not
     planningReserveMargin = 0.1375                      # fraction of peak demand; ERCOT targeted planning margin
     retirementCFCutoff = .3                             # retire units w/ CF lower than given value
     discountRate = 0.07 #fraction    
     ptEligRetCF = ['Coal Steam']                        # which plant types retire based on capacity factor (economics)
-    incITC,incNuc = False,False                         # include Investment Tax Credit or not; include nuclear as new investment option or not
+    incITC,incNuc = False, True                         # include Investment Tax Credit or not; include nuclear as new investment option or not
 
     # ### ED/UCED OPTIONS
     runFirstYear = False                                # whether to run first year of dispatch

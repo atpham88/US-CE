@@ -1,4 +1,4 @@
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 1
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 1
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -56,7 +56,7 @@ INCLUDE    C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\EDAn
   52  *RENEWABLE GENERATION CAPS
   53           pMaxgenwind(z,h)                  max hourly generation for existing wind [GWh]
   54           pMaxgensolar(z,h)                 max hourly generation for existing solar [GWh]
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 2
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 2
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -114,7 +114,7 @@ GDXIN   C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_p
 --- LOAD  pOpcost = 23:pOpcost
 --- LOAD  pRamprate = 22:pRamprate
 --- LOAD  pCO2emrate = 21:pCO2emrate
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 3
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 3
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -172,7 +172,7 @@ C o m p i l a t i o n
  127           vStateofcharge(storageegu,h)            "energy stored in storage unit at end of hour h (GWh)"
  128           vCharge(storageegu,h)                   "charged energy by storage unit in hour h (GWh)"
  129  *EMISSIONS
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 4
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 4
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -230,7 +230,7 @@ C o m p i l a t i o n
  180  *******************************************************
  181   
  182  ******************RENEWABLE GENERATION*****************
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 5
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 5
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -288,7 +288,7 @@ C o m p i l a t i o n
  233                   pNMaxNuclear
  234                   pNMaxCC
  235                   pNMaxCCS(CCStech)
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 6
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 6
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -346,7 +346,7 @@ C o m p i l a t i o n
  286  *PLANNING RESERVE
  287           pPlanningreserve                planning margin reserve capacity [GW]
  288           ;
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 7
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 7
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -404,7 +404,7 @@ GDXIN   C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_p
  303  *DEFINE SET EXCLUSIONS
  304  nonrenewegu(egu) = not renewegu(egu);
  305  nonstoragetech(tech) = not storagetech(tech);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 8
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 8
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -462,7 +462,7 @@ INCLUDE    C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\CEBu
  356  *Meet demand and reserves
  357           meetdemand(z,h)                   meet supply with demand
  358           meetreservemargin               meet planning reserve requirement with installed capacity
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 00:24:00 Page 9
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 02:36:28 Page 9
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -520,7 +520,7 @@ C o m p i l a t i o n
  409  meetshiftingdemand(z,h)$(mod(ord(h),pDemandShiftingBlock)=1).. sum(hh$((ord(hh)>=ord(h) and (ord(hh)<=ord(h)+pDemandShiftingBlock-1))), vShiftedDemand(z,h))=e= 0;
  410   
  411  *Meet planning reserve margin
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 10
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 10
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -578,7 +578,7 @@ C o m p i l a t i o n
  462   
  463  ********CALCULATE CO2 EMISSIONS*************
  464  calcco2emstech(tech,h) .. vCO2emstech(tech,h) =e= vGentech(tech,h)*pHrtech(tech)*pCO2emratetech(tech);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 11
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 11
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -636,32 +636,38 @@ INCLUDE    C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\CETi
  515          pInitSOCtech(storagetech)
  516          pHourInitblock0h
  517          pHourFinalblock0h
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 12
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 12
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
  518          pHourInitblock1h
  519          pHourFinalblock1h
- 520          pHourInitblockpeaktotal2h
- 521          pHourFinalblockpeaktotal2h
- 522          pHourInitblockpeaknet3h
- 523          pHourFinalblockpeaknet3h
- 524          pHourInitblock4h
- 525          pHourFinalblock4h
- 526          pHourInitblockpeaknetramp5h
- 527          pHourFinalblockpeaknetramp5h
- 528          pHourInitblock6h
- 529          pHourFinalblock6h
- 530          pMaxgenhydroblock0h(z)
- 531          pMaxgenhydroblock1h(z)
- 532          pMaxgenhydroblockpeaktotal2h(z)
- 533          pMaxgenhydroblockpeaknet3h(z)
- 534          pMaxgenhydroblock4h(z)
- 535          pMaxgenhydroblockpeaknetramp5h(z)
- 536          pMaxgenhydroblock6h(z)
- 537          ;
- 538   
+ 520          pSOCScalarblock1h
+ 521          pHourInitblockpeaktotal2h
+ 522          pHourFinalblockpeaktotal2h
+ 523          pSOCScalarblockpeaktotal2h
+ 524          pHourInitblockpeaknet3h
+ 525          pHourFinalblockpeaknet3h
+ 526          pSOCScalarblockpeaknet3h
+ 527          pHourInitblock4h
+ 528          pHourFinalblock4h
+ 529          pSOCScalarblock4h
+ 530          pHourInitblockpeaknetramp5h
+ 531          pHourFinalblockpeaknetramp5h
+ 532          pSOCScalarblockpeaknetramp5h
+ 533          pHourInitblock6h
+ 534          pHourFinalblock6h
+ 535          pSOCScalarblock6h
+ 536          pMaxgenhydroblock0h(z)
+ 537          pMaxgenhydroblock1h(z)
+ 538          pMaxgenhydroblockpeaktotal2h(z)
+ 539          pMaxgenhydroblockpeaknet3h(z)
+ 540          pMaxgenhydroblock4h(z)
+ 541          pMaxgenhydroblockpeaknetramp5h(z)
+ 542          pMaxgenhydroblock6h(z)
+ 543          ;
+ 544   
 GDXIN   C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_py_gdb0.gdx
 --- LOAD  block0h = 89:block0h
 --- LOAD  block1h = 90:block1h
@@ -677,293 +683,463 @@ GDXIN   C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_p
 --- LOAD  pWeightblock4h = 100:pWeightblock4h
 --- LOAD  pWeightblockpeaknetramp5h = 101:pWeightblockpeaknetramp5h
 --- LOAD  pWeightblock6h = 102:pWeightblock6h
+--- LOAD  pSOCScalarblock1h = 103:pSOCScalarblock1h
+--- LOAD  pSOCScalarblockpeaktotal2h = 104:pSOCScalarblockpeaktotal2h
+--- LOAD  pSOCScalarblockpeaknet3h = 105:pSOCScalarblockpeaknet3h
+--- LOAD  pSOCScalarblock4h = 106:pSOCScalarblock4h
+--- LOAD  pSOCScalarblockpeaknetramp5h = 107:pSOCScalarblockpeaknetramp5h
+--- LOAD  pSOCScalarblock6h = 108:pSOCScalarblock6h
 --- LOAD  pInitSOC = 109:pInitSOC
 --- LOAD  pInitSOCtech = 110:pInitSOCtech
 --- LOAD  pMaxgenhydroblock0h = 111:pMaxgenhydroblock0h
 --- LOAD  pMaxgenhydroblock1h = 112:pMaxgenhydroblock1h
 --- LOAD  pMaxgenhydroblockpeaktotal2h = 117:pMaxgenhydroblockpeaktotal2h
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 13
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
 --- LOAD  pMaxgenhydroblockpeaknet3h = 115:pMaxgenhydroblockpeaknet3h
 --- LOAD  pMaxgenhydroblock4h = 113:pMaxgenhydroblock4h
 --- LOAD  pMaxgenhydroblockpeaknetramp5h = 116:pMaxgenhydroblockpeaknetramp5h
 --- LOAD  pMaxgenhydroblock6h = 114:pMaxgenhydroblock6h
- 546   
- 547  pHourInitblock0h = smin(h$block0h(h),ord(h));
- 548  pHourFinalblock0h = smax(h$block0h(h),ord(h));
- 549  pHourInitblock1h = smin(h$block1h(h),ord(h));
- 550  pHourFinalblock1h = smax(h$block1h(h),ord(h));
- 551  pHourInitblockpeaktotal2h = smin(h$blockpeaktotal2h(h),ord(h));
- 552  pHourFinalblockpeaktotal2h = smax(h$blockpeaktotal2h(h),ord(h));
- 553  pHourInitblockpeaknet3h = smin(h$blockpeaknet3h(h),ord(h));
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 13
+ 553   
+ 554  pHourInitblock0h = smin(h$block0h(h),ord(h));
+ 555  pHourFinalblock0h = smax(h$block0h(h),ord(h));
+ 556  pHourInitblock1h = smin(h$block1h(h),ord(h));
+ 557  pHourFinalblock1h = smax(h$block1h(h),ord(h));
+ 558  pHourInitblockpeaktotal2h = smin(h$blockpeaktotal2h(h),ord(h));
+ 559  pHourFinalblockpeaktotal2h = smax(h$blockpeaktotal2h(h),ord(h));
+ 560  pHourInitblockpeaknet3h = smin(h$blockpeaknet3h(h),ord(h));
+ 561  pHourFinalblockpeaknet3h = smax(h$blockpeaknet3h(h),ord(h));
+ 562  pHourInitblock4h = smin(h$block4h(h),ord(h));
+ 563  pHourFinalblock4h = smax(h$block4h(h),ord(h));
+ 564  pHourInitblockpeaknetramp5h = smin(h$blockpeaknetramp5h(h),ord(h));
+ 565  pHourFinalblockpeaknetramp5h = smax(h$blockpeaknetramp5h(h),ord(h));
+ 566  pHourInitblock6h = smin(h$block6h(h),ord(h));
+ 567  pHourFinalblock6h = smax(h$block6h(h),ord(h));
+ 568   
+ 569  nonInitH(h)= yes;
+ 570  nonInitH(h)$[ord(h)=pHourInitblock0h] = no;
+ 571  nonInitH(h)$[ord(h)=pHourInitblock1h] = no;
+ 572  nonInitH(h)$[ord(h)=pHourInitblockpeaktotal2h] = no;
+ 573  nonInitH(h)$[ord(h)=pHourInitblockpeaknet3h] = no;
+ 574  nonInitH(h)$[ord(h)=pHourInitblock4h] = no;
+ 575  nonInitH(h)$[ord(h)=pHourInitblockpeaknetramp5h] = no;
+ 576  nonInitH(h)$[ord(h)=pHourInitblock6h] = no;
+ 577   
+ 578  Variables
+ 579          vInitSOCblock1h(storageegu)
+ 580          vInitSOCblockpeaktotal2h(storageegu)
+ 581          vInitSOCblockpeaknet3h(storageegu)
+ 582          vInitSOCblock4h(storageegu)
+ 583          vInitSOCblockpeaknetramp5h(storageegu)
+ 584          vInitSOCblock6h(storageegu)
+ 585          vInitSOCblock1htech(storagetech)
+ 586          vInitSOCblockpeaktotal2htech(storagetech)
+ 587          vInitSOCblockpeaknet3htech(storagetech)
+ 588          vInitSOCblock4htech(storagetech)
+ 589          vInitSOCblockpeaknetramp5htech(storagetech)
+ 590          vInitSOCblock6htech(storagetech)
+ 591          vFinalSOCblock0h(storageegu)
+ 592          vFinalSOCblock1h(storageegu)
+ 593          vFinalSOCblockpeaktotal2h(storageegu)
+ 594          vFinalSOCblockpeaknet3h(storageegu)
+ 595          vFinalSOCblock4h(storageegu)
+ 596          vFinalSOCblockpeaknetramp5h(storageegu)
+ 597          vFinalSOCblock6h(storageegu)
+ 598          vFinalSOCblock0htech(storagetech)
+ 599          vFinalSOCblock1htech(storagetech)
+ 600          vFinalSOCblockpeaktotal2htech(storagetech)
+ 601          vFinalSOCblockpeaknet3htech(storagetech)
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 14
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
- 554  pHourFinalblockpeaknet3h = smax(h$blockpeaknet3h(h),ord(h));
- 555  pHourInitblock4h = smin(h$block4h(h),ord(h));
- 556  pHourFinalblock4h = smax(h$block4h(h),ord(h));
- 557  pHourInitblockpeaknetramp5h = smin(h$blockpeaknetramp5h(h),ord(h));
- 558  pHourFinalblockpeaknetramp5h = smax(h$blockpeaknetramp5h(h),ord(h));
- 559  pHourInitblock6h = smin(h$block6h(h),ord(h));
- 560  pHourFinalblock6h = smax(h$block6h(h),ord(h));
- 561   
- 562  nonInitH(h)= yes;
- 563  nonInitH(h)$[ord(h)=pHourInitblock0h] = no;
- 564  nonInitH(h)$[ord(h)=pHourInitblock1h] = no;
- 565  nonInitH(h)$[ord(h)=pHourInitblockpeaktotal2h] = no;
- 566  nonInitH(h)$[ord(h)=pHourInitblockpeaknet3h] = no;
- 567  nonInitH(h)$[ord(h)=pHourInitblock4h] = no;
- 568  nonInitH(h)$[ord(h)=pHourInitblockpeaknetramp5h] = no;
- 569  nonInitH(h)$[ord(h)=pHourInitblock6h] = no;
- 570   
- 571  Variables
- 572          vInitSOCblock1h(storageegu)
- 573          vInitSOCblockpeaktotal2h(storageegu)
- 574          vInitSOCblockpeaknet3h(storageegu)
- 575          vInitSOCblock4h(storageegu)
- 576          vInitSOCblockpeaknetramp5h(storageegu)
- 577          vInitSOCblock6h(storageegu)
- 578          vInitSOCblock1htech(storagetech)
- 579          vInitSOCblockpeaktotal2htech(storagetech)
- 580          vInitSOCblockpeaknet3htech(storagetech)
- 581          vInitSOCblock4htech(storagetech)
- 582          vInitSOCblockpeaknetramp5htech(storagetech)
- 583          vInitSOCblock6htech(storagetech)
- 584          ;
- 585   
- 586  Equations
- 587          varCost
- 588          co2Ems
- 589          defSOC(storageegu,h)
- 590          genPlusUpResToSOC(storageegu,h)
- 591          setInitSOCblock1hststorageegu(ststorageegu)
- 592          setInitSOCblockpeaktotal2hststorageegu(ststorageegu)
- 593          setInitSOCblockpeaknet3hststorageegu(ststorageegu)
- 594          setInitSOCblock4hststorageegu(ststorageegu)
- 595          setInitSOCblockpeaknetramp5hststorageegu(ststorageegu)
- 596          setInitSOCblock6hststorageegu(ststorageegu)
- 597          defSOCtech(storagetech,h)
- 598          genPlusUpResToSOCtech(storagetech,h)
- 599          setInitSOCblock1hststoragetech(ststoragetech)
- 600          setInitSOCblockpeaktotal2hststoragetech(ststoragetech)
- 601          setInitSOCblockpeaknet3hststoragetech(ststoragetech)
- 602          setInitSOCblock4hststoragetech(ststoragetech)
- 603          setInitSOCblockpeaknetramp5hststoragetech(ststoragetech)
- 604          setInitSOCblock6hststoragetech(ststoragetech)
- 605          rampUpblock0h(egu,block0h)
- 606          rampUpblock1h(egu,block1h)
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 14
+ 602          vFinalSOCblock4htech(storagetech)
+ 603          vFinalSOCblockpeaknetramp5htech(storagetech)
+ 604          vFinalSOCblock6htech(storagetech)
+ 605          vChangeSOCblock0h(storageegu)
+ 606          vChangeSOCblock1h(storageegu)
+ 607          vChangeSOCblockpeaktotal2h(storageegu)
+ 608          vChangeSOCblockpeaknet3h(storageegu)
+ 609          vChangeSOCblock4h(storageegu)
+ 610          vChangeSOCblockpeaknetramp5h(storageegu)
+ 611          vChangeSOCblock6h(storageegu)
+ 612          vChangeSOCblock0htech(storagetech)
+ 613          vChangeSOCblock1htech(storagetech)
+ 614          vChangeSOCblockpeaktotal2htech(storagetech)
+ 615          vChangeSOCblockpeaknet3htech(storagetech)
+ 616          vChangeSOCblock4htech(storagetech)
+ 617          vChangeSOCblockpeaknetramp5htech(storagetech)
+ 618          vChangeSOCblock6htech(storagetech)
+ 619          ;
+ 620   
+ 621  Equations
+ 622          varCost
+ 623          co2Ems
+ 624          defSOC(storageegu,h)
+ 625          genPlusUpResToSOC(storageegu,h)
+ 626          setInitSOCblock1hltstorageegu(ltstorageegu)
+ 627          setInitSOCblockpeaktotal2hltstorageegu(ltstorageegu)
+ 628          setInitSOCblockpeaknet3hltstorageegu(ltstorageegu)
+ 629          setInitSOCblock4hltstorageegu(ltstorageegu)
+ 630          setInitSOCblockpeaknetramp5hltstorageegu(ltstorageegu)
+ 631          setInitSOCblock6hltstorageegu(ltstorageegu)
+ 632          defFinalSOCblock0h(storageegu,h)
+ 633          defChangeSOCblock0h(storageegu)
+ 634          defFinalSOCblock1h(storageegu,h)
+ 635          defChangeSOCblock1h(storageegu)
+ 636          defFinalSOCblockpeaktotal2h(storageegu,h)
+ 637          defChangeSOCblockpeaktotal2h(storageegu)
+ 638          defFinalSOCblockpeaknet3h(storageegu,h)
+ 639          defChangeSOCblockpeaknet3h(storageegu)
+ 640          defFinalSOCblock4h(storageegu,h)
+ 641          defChangeSOCblock4h(storageegu)
+ 642          defFinalSOCblockpeaknetramp5h(storageegu,h)
+ 643          defChangeSOCblockpeaknetramp5h(storageegu)
+ 644          defFinalSOCblock6h(storageegu,h)
+ 645          defChangeSOCblock6h(storageegu)
+ 646          setInitSOCblock1hststorageegu(ststorageegu)
+ 647          setInitSOCblockpeaktotal2hststorageegu(ststorageegu)
+ 648          setInitSOCblockpeaknet3hststorageegu(ststorageegu)
+ 649          setInitSOCblock4hststorageegu(ststorageegu)
+ 650          setInitSOCblockpeaknetramp5hststorageegu(ststorageegu)
+ 651          setInitSOCblock6hststorageegu(ststorageegu)
+ 652          defSOCtech(storagetech,h)
+ 653          genPlusUpResToSOCtech(storagetech,h)
+ 654          setInitSOCblock1hltstoragetech(ltstoragetech)
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 15
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
- 607          rampUpblockpeaktotal2h(egu,blockpeaktotal2h)
- 608          rampUpblockpeaknet3h(egu,blockpeaknet3h)
- 609          rampUpblock4h(egu,block4h)
- 610          rampUpblockpeaknetramp5h(egu,blockpeaknetramp5h)
- 611          rampUpblock6h(egu,block6h)
- 612          rampUpblock0htech(tech,block0h)
- 613          rampUpblock1htech(tech,block1h)
- 614          rampUpblockpeaktotal2htech(tech,blockpeaktotal2h)
- 615          rampUpblockpeaknet3htech(tech,blockpeaknet3h)
- 616          rampUpblock4htech(tech,block4h)
- 617          rampUpblockpeaknetramp5htech(tech,blockpeaknetramp5h)
- 618          rampUpblock6htech(tech,block6h)
- 619          limitHydroGenblock0h(z)
- 620          limitHydroGenblock1h(z)
- 621          limitHydroGenblockpeaktotal2h(z)
- 622          limitHydroGenblockpeaknet3h(z)
- 623          limitHydroGenblock4h(z)
- 624          limitHydroGenblockpeaknetramp5h(z)
- 625          limitHydroGenblock6h(z)
- 626          ;
- 627   
- 628  defSOC(storageegu,h).. vStateofcharge(storageegu,h) =e= pInitSOC(storageegu)$[ord(h)=pHourInitblock0h] + vInitSOCblock1h(storageegu)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2h(storageegu)$[ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockp
+ 655          setInitSOCblockpeaktotal2hltstoragetech(ltstoragetech)
+ 656          setInitSOCblockpeaknet3hltstoragetech(ltstoragetech)
+ 657          setInitSOCblock4hltstoragetech(ltstoragetech)
+ 658          setInitSOCblockpeaknetramp5hltstoragetech(ltstoragetech)
+ 659          setInitSOCblock6hltstoragetech(ltstoragetech)
+ 660          defFinalSOCblock0htech(storagetech,h)
+ 661          defChangeSOCblock0htech(storagetech)
+ 662          defFinalSOCblock1htech(storagetech,h)
+ 663          defChangeSOCblock1htech(storagetech)
+ 664          defFinalSOCblockpeaktotal2htech(storagetech,h)
+ 665          defChangeSOCblockpeaktotal2htech(storagetech)
+ 666          defFinalSOCblockpeaknet3htech(storagetech,h)
+ 667          defChangeSOCblockpeaknet3htech(storagetech)
+ 668          defFinalSOCblock4htech(storagetech,h)
+ 669          defChangeSOCblock4htech(storagetech)
+ 670          defFinalSOCblockpeaknetramp5htech(storagetech,h)
+ 671          defChangeSOCblockpeaknetramp5htech(storagetech)
+ 672          defFinalSOCblock6htech(storagetech,h)
+ 673          defChangeSOCblock6htech(storagetech)
+ 674          setInitSOCblock1hststoragetech(ststoragetech)
+ 675          setInitSOCblockpeaktotal2hststoragetech(ststoragetech)
+ 676          setInitSOCblockpeaknet3hststoragetech(ststoragetech)
+ 677          setInitSOCblock4hststoragetech(ststoragetech)
+ 678          setInitSOCblockpeaknetramp5hststoragetech(ststoragetech)
+ 679          setInitSOCblock6hststoragetech(ststoragetech)
+ 680          rampUpblock0h(egu,block0h)
+ 681          rampUpblock1h(egu,block1h)
+ 682          rampUpblockpeaktotal2h(egu,blockpeaktotal2h)
+ 683          rampUpblockpeaknet3h(egu,blockpeaknet3h)
+ 684          rampUpblock4h(egu,block4h)
+ 685          rampUpblockpeaknetramp5h(egu,blockpeaknetramp5h)
+ 686          rampUpblock6h(egu,block6h)
+ 687          rampUpblock0htech(tech,block0h)
+ 688          rampUpblock1htech(tech,block1h)
+ 689          rampUpblockpeaktotal2htech(tech,blockpeaktotal2h)
+ 690          rampUpblockpeaknet3htech(tech,blockpeaknet3h)
+ 691          rampUpblock4htech(tech,block4h)
+ 692          rampUpblockpeaknetramp5htech(tech,blockpeaknetramp5h)
+ 693          rampUpblock6htech(tech,block6h)
+ 694          limitHydroGenblock0h(z)
+ 695          limitHydroGenblock1h(z)
+ 696          limitHydroGenblockpeaktotal2h(z)
+ 697          limitHydroGenblockpeaknet3h(z)
+ 698          limitHydroGenblock4h(z)
+ 699          limitHydroGenblockpeaknetramp5h(z)
+ 700          limitHydroGenblock6h(z)
+ 701          ;
+ 702   
+ 703  defSOC(storageegu,h).. vStateofcharge(storageegu,h) =e= pInitSOC(storageegu)$[ord(h)=pHourInitblock0h] + vInitSOCblock1h(storageegu)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2h(storageegu)$[ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockp
       eaknet3h(storageegu)$[ord(h)=pHourInitblockpeaknet3h] + vInitSOCblock4h(storageegu)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5h(storageegu)$[ord(h)=pHourInitblockpeaknetramp5h] + vInitSOCblock6h(storageegu)$[ord(h)=pHourInitblock6h] +
- 629          vStateofcharge(storageegu, h-1)$nonInitH(h) -
- 630                 1/sqrt(pEfficiency(storageegu)) * vGen(storageegu,h) +
- 631                 sqrt(pEfficiency(storageegu)) * vCharge(storageegu,h);
- 632  genPlusUpResToSOC(storageegu,h).. vGen(storageegu,h)+vRegup(storageegu,h)+vFlex(storageegu,h)+vCont(storageegu,h) =l= vStateofcharge(storageegu, h-1)$nonInitH(h)
- 633                       + pInitSOC(storageegu)$[ord(h)=pHourInitblock0h] + vInitSOCblock1h(storageegu)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2h(storageegu)$[ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockpeaknet3h(storageegu)$[ord(h)=pHou
+ 704          vStateofcharge(storageegu, h-1)$nonInitH(h) -
+ 705                 1/sqrt(pEfficiency(storageegu)) * vGen(storageegu,h) +
+ 706                 sqrt(pEfficiency(storageegu)) * vCharge(storageegu,h);
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 16
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 707  genPlusUpResToSOC(storageegu,h).. vGen(storageegu,h)+vRegup(storageegu,h)+vFlex(storageegu,h)+vCont(storageegu,h) =l= vStateofcharge(storageegu, h-1)$nonInitH(h)
+ 708                       + pInitSOC(storageegu)$[ord(h)=pHourInitblock0h] + vInitSOCblock1h(storageegu)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2h(storageegu)$[ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockpeaknet3h(storageegu)$[ord(h)=pHou
       rInitblockpeaknet3h] + vInitSOCblock4h(storageegu)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5h(storageegu)$[ord(h)=pHourInitblockpeaknetramp5h] + vInitSOCblock6h(storageegu)$[ord(h)=pHourInitblock6h];
- 634  setInitSOCblock1hststorageegu(ststorageegu).. vInitSOCblock1h(ststorageegu) =e=
- 635                                      pInitSOC(ststorageegu);
- 636  setInitSOCblockpeaktotal2hststorageegu(ststorageegu).. vInitSOCblockpeaktotal2h(ststorageegu) =e=
- 637                                      pInitSOC(ststorageegu);
- 638  setInitSOCblockpeaknet3hststorageegu(ststorageegu).. vInitSOCblockpeaknet3h(ststorageegu) =e=
- 639                                      pInitSOC(ststorageegu);
- 640  setInitSOCblock4hststorageegu(ststorageegu).. vInitSOCblock4h(ststorageegu) =e=
- 641                                      pInitSOC(ststorageegu);
- 642  setInitSOCblockpeaknetramp5hststorageegu(ststorageegu).. vInitSOCblockpeaknetramp5h(ststorageegu) =e=
- 643                                      pInitSOC(ststorageegu);
- 644  setInitSOCblock6hststorageegu(ststorageegu).. vInitSOCblock6h(ststorageegu) =e=
- 645                                      pInitSOC(ststorageegu);
- 646   
- 647  defSOCtech(storagetech,h).. vStateofchargetech(storagetech,h) =e= pInitSOCtech(storagetech)$[ord(h)=pHourInitblock0h]*vEneBuiltSto(storagetech) + vInitSOCblock1htech(storagetech)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2htech(storagetech)$
+ 709  setInitSOCblock1hltstorageegu(ltstorageegu).. vInitSOCblock1h(ltstorageegu) =e= vFinalSOCblock0h(ltstorageegu) + vChangeSOCblock0h(ltstorageegu)*pSOCScalarblock1h
+ 710                          ;
+ 711  setInitSOCblockpeaktotal2hltstorageegu(ltstorageegu).. vInitSOCblockpeaktotal2h(ltstorageegu) =e= vFinalSOCblock1h(ltstorageegu) + vChangeSOCblock1h(ltstorageegu)*pSOCScalarblockpeaktotal2h
+ 712                          ;
+ 713  setInitSOCblockpeaknet3hltstorageegu(ltstorageegu).. vInitSOCblockpeaknet3h(ltstorageegu) =e= vFinalSOCblock1h(ltstorageegu) + vChangeSOCblock1h(ltstorageegu)*pSOCScalarblockpeaknet3h + vChangeSOCblockpeaktotal2h(ltstorageegu)
+ 714                          ;
+ 715  setInitSOCblock4hltstorageegu(ltstorageegu).. vInitSOCblock4h(ltstorageegu) =e= vFinalSOCblock1h(ltstorageegu) + vChangeSOCblock1h(ltstorageegu)*pSOCScalarblock4h + vChangeSOCblockpeaktotal2h(ltstorageegu)+ vChangeSOCblockpeaknet3h(ltstorageegu)
+ 716                          ;
+ 717  setInitSOCblockpeaknetramp5hltstorageegu(ltstorageegu).. vInitSOCblockpeaknetramp5h(ltstorageegu) =e= vFinalSOCblock4h(ltstorageegu) + vChangeSOCblock4h(ltstorageegu)*pSOCScalarblockpeaknetramp5h
+ 718                          ;
+ 719  setInitSOCblock6hltstorageegu(ltstorageegu).. vInitSOCblock6h(ltstorageegu) =e= vFinalSOCblock4h(ltstorageegu) + vChangeSOCblock4h(ltstorageegu)*pSOCScalarblock6h + vChangeSOCblockpeaknetramp5h(ltstorageegu)
+ 720                          ;
+ 721  defFinalSOCblock0h(ltstorageegu,h)$[ord(h)=pHourFinalblock0h].. vFinalSOCblock0h(ltstorageegu) =e=
+ 722                             vStateofcharge(ltstorageegu,h);
+ 723  defChangeSOCblock0h(ltstorageegu).. vChangeSOCblock0h(ltstorageegu) =e= vFinalSOCblock0h(ltstorageegu)
+ 724                                - pInitSOC(ltstorageegu);
+ 725  defFinalSOCblock1h(ltstorageegu,h)$[ord(h)=pHourFinalblock1h].. vFinalSOCblock1h(ltstorageegu) =e=
+ 726                             vStateofcharge(ltstorageegu,h);
+ 727  defChangeSOCblock1h(ltstorageegu).. vChangeSOCblock1h(ltstorageegu) =e= vFinalSOCblock1h(ltstorageegu)
+ 728                                - vInitSOCblock1h(ltstorageegu);
+ 729  defFinalSOCblockpeaktotal2h(ltstorageegu,h)$[ord(h)=pHourFinalblockpeaktotal2h].. vFinalSOCblockpeaktotal2h(ltstorageegu) =e=
+ 730                             vStateofcharge(ltstorageegu,h);
+ 731  defChangeSOCblockpeaktotal2h(ltstorageegu).. vChangeSOCblockpeaktotal2h(ltstorageegu) =e= vFinalSOCblockpeaktotal2h(ltstorageegu)
+ 732                                - vInitSOCblockpeaktotal2h(ltstorageegu);
+ 733  defFinalSOCblockpeaknet3h(ltstorageegu,h)$[ord(h)=pHourFinalblockpeaknet3h].. vFinalSOCblockpeaknet3h(ltstorageegu) =e=
+ 734                             vStateofcharge(ltstorageegu,h);
+ 735  defChangeSOCblockpeaknet3h(ltstorageegu).. vChangeSOCblockpeaknet3h(ltstorageegu) =e= vFinalSOCblockpeaknet3h(ltstorageegu)
+ 736                                - vInitSOCblockpeaknet3h(ltstorageegu);
+ 737  defFinalSOCblock4h(ltstorageegu,h)$[ord(h)=pHourFinalblock4h].. vFinalSOCblock4h(ltstorageegu) =e=
+ 738                             vStateofcharge(ltstorageegu,h);
+ 739  defChangeSOCblock4h(ltstorageegu).. vChangeSOCblock4h(ltstorageegu) =e= vFinalSOCblock4h(ltstorageegu)
+ 740                                - vInitSOCblock4h(ltstorageegu);
+ 741  defFinalSOCblockpeaknetramp5h(ltstorageegu,h)$[ord(h)=pHourFinalblockpeaknetramp5h].. vFinalSOCblockpeaknetramp5h(ltstorageegu) =e=
+ 742                             vStateofcharge(ltstorageegu,h);
+ 743  defChangeSOCblockpeaknetramp5h(ltstorageegu).. vChangeSOCblockpeaknetramp5h(ltstorageegu) =e= vFinalSOCblockpeaknetramp5h(ltstorageegu)
+ 744                                - vInitSOCblockpeaknetramp5h(ltstorageegu);
+ 745  defFinalSOCblock6h(ltstorageegu,h)$[ord(h)=pHourFinalblock6h].. vFinalSOCblock6h(ltstorageegu) =e=
+ 746                             vStateofcharge(ltstorageegu,h);
+ 747  defChangeSOCblock6h(ltstorageegu).. vChangeSOCblock6h(ltstorageegu) =e= vFinalSOCblock6h(ltstorageegu)
+ 748                                - vInitSOCblock6h(ltstorageegu);
+ 749  setInitSOCblock1hststorageegu(ststorageegu).. vInitSOCblock1h(ststorageegu) =e=
+ 750                                      pInitSOC(ststorageegu);
+ 751  setInitSOCblockpeaktotal2hststorageegu(ststorageegu).. vInitSOCblockpeaktotal2h(ststorageegu) =e=
+ 752                                      pInitSOC(ststorageegu);
+ 753  setInitSOCblockpeaknet3hststorageegu(ststorageegu).. vInitSOCblockpeaknet3h(ststorageegu) =e=
+ 754                                      pInitSOC(ststorageegu);
+ 755  setInitSOCblock4hststorageegu(ststorageegu).. vInitSOCblock4h(ststorageegu) =e=
+ 756                                      pInitSOC(ststorageegu);
+ 757  setInitSOCblockpeaknetramp5hststorageegu(ststorageegu).. vInitSOCblockpeaknetramp5h(ststorageegu) =e=
+ 758                                      pInitSOC(ststorageegu);
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 17
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 759  setInitSOCblock6hststorageegu(ststorageegu).. vInitSOCblock6h(ststorageegu) =e=
+ 760                                      pInitSOC(ststorageegu);
+ 761   
+ 762  defSOCtech(storagetech,h).. vStateofchargetech(storagetech,h) =e= pInitSOCtech(storagetech)$[ord(h)=pHourInitblock0h]*vEneBuiltSto(storagetech) + vInitSOCblock1htech(storagetech)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2htech(storagetech)$
       [ord(h)=pHourInitblockpeaktotal2h] + vInitSOCblockpeaknet3htech(storagetech)$[ord(h)=pHourInitblockpeaknet3h] + vInitSOCblock4htech(storagetech)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5htech(storagetech)$[ord(h)=pHourInitblockpeaknetram
       p5h] + vInitSOCblock6htech(storagetech)$[ord(h)=pHourInitblock6h] +
- 648          vStateofchargetech(storagetech, h-1)$nonInitH(h) -
- 649                 1/sqrt(pEfficiencytech(storagetech)) * vGentech(storagetech,h) +
- 650                 sqrt(pEfficiencytech(storagetech)) * vChargetech(storagetech,h);
- 651  genPlusUpResToSOCtech(storagetech,h).. vGentech(storagetech,h)+vReguptech(storagetech,h)+vFlextech(storagetech,h)+vConttech(storagetech,h) =l= vStateofchargetech(storagetech, h-1)$nonInitH(h)
- 652                       + pInitSOCtech(storagetech)$[ord(h)=pHourInitblock0h]*vEneBuiltSto(storagetech) + vInitSOCblock1htech(storagetech)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2htech(storagetech)$[ord(h)=pHourInitblockpeaktotal2h] + vInitS
+ 763          vStateofchargetech(storagetech, h-1)$nonInitH(h) -
+ 764                 1/sqrt(pEfficiencytech(storagetech)) * vGentech(storagetech,h) +
+ 765                 sqrt(pEfficiencytech(storagetech)) * vChargetech(storagetech,h);
+ 766  genPlusUpResToSOCtech(storagetech,h).. vGentech(storagetech,h)+vReguptech(storagetech,h)+vFlextech(storagetech,h)+vConttech(storagetech,h) =l= vStateofchargetech(storagetech, h-1)$nonInitH(h)
+ 767                       + pInitSOCtech(storagetech)$[ord(h)=pHourInitblock0h]*vEneBuiltSto(storagetech) + vInitSOCblock1htech(storagetech)$[ord(h)=pHourInitblock1h] + vInitSOCblockpeaktotal2htech(storagetech)$[ord(h)=pHourInitblockpeaktotal2h] + vInitS
       OCblockpeaknet3htech(storagetech)$[ord(h)=pHourInitblockpeaknet3h] + vInitSOCblock4htech(storagetech)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5htech(storagetech)$[ord(h)=pHourInitblockpeaknetramp5h] + vInitSOCblock6htech(storagetech)$[or
       d(h)=pHourInitblock6h];
- 653  setInitSOCblock1hststoragetech(ststoragetech).. vInitSOCblock1htech(ststoragetech) =e=
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 15
+ 768  setInitSOCblock1hltstoragetech(ltstoragetech).. vInitSOCblock1htech(ltstoragetech) =e= vFinalSOCblock0htech(ltstoragetech) + vChangeSOCblock0htech(ltstoragetech)*pSOCScalarblock1h
+ 769                          ;
+ 770  setInitSOCblockpeaktotal2hltstoragetech(ltstoragetech).. vInitSOCblockpeaktotal2htech(ltstoragetech) =e= vFinalSOCblock1htech(ltstoragetech) + vChangeSOCblock1htech(ltstoragetech)*pSOCScalarblockpeaktotal2h
+ 771                          ;
+ 772  setInitSOCblockpeaknet3hltstoragetech(ltstoragetech).. vInitSOCblockpeaknet3htech(ltstoragetech) =e= vFinalSOCblock1htech(ltstoragetech) + vChangeSOCblock1htech(ltstoragetech)*pSOCScalarblockpeaknet3h + vChangeSOCblockpeaktotal2htech(ltstoragetech)
+ 773                          ;
+ 774  setInitSOCblock4hltstoragetech(ltstoragetech).. vInitSOCblock4htech(ltstoragetech) =e= vFinalSOCblock1htech(ltstoragetech) + vChangeSOCblock1htech(ltstoragetech)*pSOCScalarblock4h + vChangeSOCblockpeaktotal2htech(ltstoragetech)+ vChangeSOCblockpeakn
+      et3htech(ltstoragetech)
+ 775                          ;
+ 776  setInitSOCblockpeaknetramp5hltstoragetech(ltstoragetech).. vInitSOCblockpeaknetramp5htech(ltstoragetech) =e= vFinalSOCblock4htech(ltstoragetech) + vChangeSOCblock4htech(ltstoragetech)*pSOCScalarblockpeaknetramp5h
+ 777                          ;
+ 778  setInitSOCblock6hltstoragetech(ltstoragetech).. vInitSOCblock6htech(ltstoragetech) =e= vFinalSOCblock4htech(ltstoragetech) + vChangeSOCblock4htech(ltstoragetech)*pSOCScalarblock6h + vChangeSOCblockpeaknetramp5htech(ltstoragetech)
+ 779                          ;
+ 780  defFinalSOCblock0htech(ltstoragetech,h)$[ord(h)=pHourFinalblock0h].. vFinalSOCblock0htech(ltstoragetech) =e=
+ 781                             vStateofchargetech(ltstoragetech,h);
+ 782  defChangeSOCblock0htech(ltstoragetech).. vChangeSOCblock0htech(ltstoragetech) =e= vFinalSOCblock0htech(ltstoragetech)
+ 783                                - pInitSOCtech(ltstoragetech)*vEneBuiltSto(ltstoragetech);
+ 784  defFinalSOCblock1htech(ltstoragetech,h)$[ord(h)=pHourFinalblock1h].. vFinalSOCblock1htech(ltstoragetech) =e=
+ 785                             vStateofchargetech(ltstoragetech,h);
+ 786  defChangeSOCblock1htech(ltstoragetech).. vChangeSOCblock1htech(ltstoragetech) =e= vFinalSOCblock1htech(ltstoragetech)
+ 787                                - vInitSOCblock1htech(ltstoragetech);
+ 788  defFinalSOCblockpeaktotal2htech(ltstoragetech,h)$[ord(h)=pHourFinalblockpeaktotal2h].. vFinalSOCblockpeaktotal2htech(ltstoragetech) =e=
+ 789                             vStateofchargetech(ltstoragetech,h);
+ 790  defChangeSOCblockpeaktotal2htech(ltstoragetech).. vChangeSOCblockpeaktotal2htech(ltstoragetech) =e= vFinalSOCblockpeaktotal2htech(ltstoragetech)
+ 791                                - vInitSOCblockpeaktotal2htech(ltstoragetech);
+ 792  defFinalSOCblockpeaknet3htech(ltstoragetech,h)$[ord(h)=pHourFinalblockpeaknet3h].. vFinalSOCblockpeaknet3htech(ltstoragetech) =e=
+ 793                             vStateofchargetech(ltstoragetech,h);
+ 794  defChangeSOCblockpeaknet3htech(ltstoragetech).. vChangeSOCblockpeaknet3htech(ltstoragetech) =e= vFinalSOCblockpeaknet3htech(ltstoragetech)
+ 795                                - vInitSOCblockpeaknet3htech(ltstoragetech);
+ 796  defFinalSOCblock4htech(ltstoragetech,h)$[ord(h)=pHourFinalblock4h].. vFinalSOCblock4htech(ltstoragetech) =e=
+ 797                             vStateofchargetech(ltstoragetech,h);
+ 798  defChangeSOCblock4htech(ltstoragetech).. vChangeSOCblock4htech(ltstoragetech) =e= vFinalSOCblock4htech(ltstoragetech)
+ 799                                - vInitSOCblock4htech(ltstoragetech);
+ 800  defFinalSOCblockpeaknetramp5htech(ltstoragetech,h)$[ord(h)=pHourFinalblockpeaknetramp5h].. vFinalSOCblockpeaknetramp5htech(ltstoragetech) =e=
+ 801                             vStateofchargetech(ltstoragetech,h);
+ 802  defChangeSOCblockpeaknetramp5htech(ltstoragetech).. vChangeSOCblockpeaknetramp5htech(ltstoragetech) =e= vFinalSOCblockpeaknetramp5htech(ltstoragetech)
+ 803                                - vInitSOCblockpeaknetramp5htech(ltstoragetech);
+ 804  defFinalSOCblock6htech(ltstoragetech,h)$[ord(h)=pHourFinalblock6h].. vFinalSOCblock6htech(ltstoragetech) =e=
+ 805                             vStateofchargetech(ltstoragetech,h);
+ 806  defChangeSOCblock6htech(ltstoragetech).. vChangeSOCblock6htech(ltstoragetech) =e= vFinalSOCblock6htech(ltstoragetech)
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 18
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
- 654                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
- 655  setInitSOCblockpeaktotal2hststoragetech(ststoragetech).. vInitSOCblockpeaktotal2htech(ststoragetech) =e=
- 656                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
- 657  setInitSOCblockpeaknet3hststoragetech(ststoragetech).. vInitSOCblockpeaknet3htech(ststoragetech) =e=
- 658                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
- 659  setInitSOCblock4hststoragetech(ststoragetech).. vInitSOCblock4htech(ststoragetech) =e=
- 660                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
- 661  setInitSOCblockpeaknetramp5hststoragetech(ststoragetech).. vInitSOCblockpeaknetramp5htech(ststoragetech) =e=
- 662                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
- 663  setInitSOCblock6hststoragetech(ststoragetech).. vInitSOCblock6htech(ststoragetech) =e=
- 664                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
- 665   
- 666  varCost.. vVarcostannual =e= pWeightblock0h*(sum((egu,block0h),vVarcost(egu,block0h))+sum((tech,block0h),vVarcosttech(tech,block0h)))
- 667          + pWeightblock1h*(sum((egu,block1h),vVarcost(egu,block1h))+sum((tech,block1h),vVarcosttech(tech,block1h)))
- 668          + pWeightblockpeaktotal2h*(sum((egu,blockpeaktotal2h),vVarcost(egu,blockpeaktotal2h))+sum((tech,blockpeaktotal2h),vVarcosttech(tech,blockpeaktotal2h)))
- 669          + pWeightblockpeaknet3h*(sum((egu,blockpeaknet3h),vVarcost(egu,blockpeaknet3h))+sum((tech,blockpeaknet3h),vVarcosttech(tech,blockpeaknet3h)))
- 670          + pWeightblock4h*(sum((egu,block4h),vVarcost(egu,block4h))+sum((tech,block4h),vVarcosttech(tech,block4h)))
- 671          + pWeightblockpeaknetramp5h*(sum((egu,blockpeaknetramp5h),vVarcost(egu,blockpeaknetramp5h))+sum((tech,blockpeaknetramp5h),vVarcosttech(tech,blockpeaknetramp5h)))
- 672          + pWeightblock6h*(sum((egu,block6h),vVarcost(egu,block6h))+sum((tech,block6h),vVarcosttech(tech,block6h)));
- 673  co2Ems.. vCO2emsannual =e= pWeightblock0h*(sum((egu,block0h),vCO2ems(egu,block0h))+sum((tech,block0h),vCO2emstech(tech,block0h)))
- 674          + pWeightblock1h*(sum((egu,block1h),vCO2ems(egu,block1h))+sum((tech,block1h),vCO2emstech(tech,block1h)))
- 675          + pWeightblockpeaktotal2h*(sum((egu,blockpeaktotal2h),vCO2ems(egu,blockpeaktotal2h))+sum((tech,blockpeaktotal2h),vCO2emstech(tech,blockpeaktotal2h)))
- 676          + pWeightblockpeaknet3h*(sum((egu,blockpeaknet3h),vCO2ems(egu,blockpeaknet3h))+sum((tech,blockpeaknet3h),vCO2emstech(tech,blockpeaknet3h)))
- 677          + pWeightblock4h*(sum((egu,block4h),vCO2ems(egu,block4h))+sum((tech,block4h),vCO2emstech(tech,block4h)))
- 678          + pWeightblockpeaknetramp5h*(sum((egu,blockpeaknetramp5h),vCO2ems(egu,blockpeaknetramp5h))+sum((tech,blockpeaknetramp5h),vCO2emstech(tech,blockpeaknetramp5h)))
- 679          + pWeightblock6h*(sum((egu,block6h),vCO2ems(egu,block6h))+sum((tech,block6h),vCO2emstech(tech,block6h)));
- 680   
- 681  limitHydroGenblock0h(z)..sum((hydroegu,block0h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block0h)) =l= pMaxgenhydroblock0h(z);
- 682  limitHydroGenblock1h(z)..sum((hydroegu,block1h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block1h)) =l= pMaxgenhydroblock1h(z);
- 683  limitHydroGenblockpeaktotal2h(z)..sum((hydroegu,blockpeaktotal2h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaktotal2h)) =l= pMaxgenhydroblockpeaktotal2h(z);
- 684  limitHydroGenblockpeaknet3h(z)..sum((hydroegu,blockpeaknet3h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaknet3h)) =l= pMaxgenhydroblockpeaknet3h(z);
- 685  limitHydroGenblock4h(z)..sum((hydroegu,block4h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block4h)) =l= pMaxgenhydroblock4h(z);
- 686  limitHydroGenblockpeaknetramp5h(z)..sum((hydroegu,blockpeaknetramp5h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaknetramp5h)) =l= pMaxgenhydroblockpeaknetramp5h(z);
- 687  limitHydroGenblock6h(z)..sum((hydroegu,block6h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block6h)) =l= pMaxgenhydroblock6h(z);
- 688   
- 689  rampUpblock0h(egu,block0h)$[ORD(block0h)>1].. vGen(egu,block0h)+vRegup(egu,block0h)+vFlex(egu,block0h)+vCont(egu,block0h) - vGen(egu,block0h-1) =l=
- 690                    pRamprate(egu);
- 691  rampUpblock0htech(tech,block0h)$[ORD(block0h)>1].. vGentech(tech,block0h)+vReguptech(tech,block0h)+vFlextech(tech,block0h)+vConttech(tech,block0h) - vGentech(tech,block0h-1) =l=
- 692                    pRampratetech(tech)*vN(tech);
- 693  rampUpblock1h(egu,block1h)$[ORD(block1h)>1].. vGen(egu,block1h)+vRegup(egu,block1h)+vFlex(egu,block1h)+vCont(egu,block1h) - vGen(egu,block1h-1) =l=
- 694                    pRamprate(egu);
- 695  rampUpblock1htech(tech,block1h)$[ORD(block1h)>1].. vGentech(tech,block1h)+vReguptech(tech,block1h)+vFlextech(tech,block1h)+vConttech(tech,block1h) - vGentech(tech,block1h-1) =l=
- 696                    pRampratetech(tech)*vN(tech);
- 697  rampUpblockpeaktotal2h(egu,blockpeaktotal2h)$[ORD(blockpeaktotal2h)>1].. vGen(egu,blockpeaktotal2h)+vRegup(egu,blockpeaktotal2h)+vFlex(egu,blockpeaktotal2h)+vCont(egu,blockpeaktotal2h) - vGen(egu,blockpeaktotal2h-1) =l=
- 698                    pRamprate(egu);
- 699  rampUpblockpeaktotal2htech(tech,blockpeaktotal2h)$[ORD(blockpeaktotal2h)>1].. vGentech(tech,blockpeaktotal2h)+vReguptech(tech,blockpeaktotal2h)+vFlextech(tech,blockpeaktotal2h)+vConttech(tech,blockpeaktotal2h) - vGentech(tech,blockpeaktotal2h-1) =l=
- 700                    pRampratetech(tech)*vN(tech);
- 701  rampUpblockpeaknet3h(egu,blockpeaknet3h)$[ORD(blockpeaknet3h)>1].. vGen(egu,blockpeaknet3h)+vRegup(egu,blockpeaknet3h)+vFlex(egu,blockpeaknet3h)+vCont(egu,blockpeaknet3h) - vGen(egu,blockpeaknet3h-1) =l=
- 702                    pRamprate(egu);
- 703  rampUpblockpeaknet3htech(tech,blockpeaknet3h)$[ORD(blockpeaknet3h)>1].. vGentech(tech,blockpeaknet3h)+vReguptech(tech,blockpeaknet3h)+vFlextech(tech,blockpeaknet3h)+vConttech(tech,blockpeaknet3h) - vGentech(tech,blockpeaknet3h-1) =l=
- 704                    pRampratetech(tech)*vN(tech);
- 705  rampUpblock4h(egu,block4h)$[ORD(block4h)>1].. vGen(egu,block4h)+vRegup(egu,block4h)+vFlex(egu,block4h)+vCont(egu,block4h) - vGen(egu,block4h-1) =l=
- 706                    pRamprate(egu);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 16
+ 807                                - vInitSOCblock6htech(ltstoragetech);
+ 808  setInitSOCblock1hststoragetech(ststoragetech).. vInitSOCblock1htech(ststoragetech) =e=
+ 809                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 810  setInitSOCblockpeaktotal2hststoragetech(ststoragetech).. vInitSOCblockpeaktotal2htech(ststoragetech) =e=
+ 811                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 812  setInitSOCblockpeaknet3hststoragetech(ststoragetech).. vInitSOCblockpeaknet3htech(ststoragetech) =e=
+ 813                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 814  setInitSOCblock4hststoragetech(ststoragetech).. vInitSOCblock4htech(ststoragetech) =e=
+ 815                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 816  setInitSOCblockpeaknetramp5hststoragetech(ststoragetech).. vInitSOCblockpeaknetramp5htech(ststoragetech) =e=
+ 817                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 818  setInitSOCblock6hststoragetech(ststoragetech).. vInitSOCblock6htech(ststoragetech) =e=
+ 819                                      pInitSOCtech(ststoragetech)*vEneBuiltSto(ststoragetech);
+ 820   
+ 821  varCost.. vVarcostannual =e= pWeightblock0h*(sum((egu,block0h),vVarcost(egu,block0h))+sum((tech,block0h),vVarcosttech(tech,block0h)))
+ 822          + pWeightblock1h*(sum((egu,block1h),vVarcost(egu,block1h))+sum((tech,block1h),vVarcosttech(tech,block1h)))
+ 823          + pWeightblockpeaktotal2h*(sum((egu,blockpeaktotal2h),vVarcost(egu,blockpeaktotal2h))+sum((tech,blockpeaktotal2h),vVarcosttech(tech,blockpeaktotal2h)))
+ 824          + pWeightblockpeaknet3h*(sum((egu,blockpeaknet3h),vVarcost(egu,blockpeaknet3h))+sum((tech,blockpeaknet3h),vVarcosttech(tech,blockpeaknet3h)))
+ 825          + pWeightblock4h*(sum((egu,block4h),vVarcost(egu,block4h))+sum((tech,block4h),vVarcosttech(tech,block4h)))
+ 826          + pWeightblockpeaknetramp5h*(sum((egu,blockpeaknetramp5h),vVarcost(egu,blockpeaknetramp5h))+sum((tech,blockpeaknetramp5h),vVarcosttech(tech,blockpeaknetramp5h)))
+ 827          + pWeightblock6h*(sum((egu,block6h),vVarcost(egu,block6h))+sum((tech,block6h),vVarcosttech(tech,block6h)));
+ 828  co2Ems.. vCO2emsannual =e= pWeightblock0h*(sum((egu,block0h),vCO2ems(egu,block0h))+sum((tech,block0h),vCO2emstech(tech,block0h)))
+ 829          + pWeightblock1h*(sum((egu,block1h),vCO2ems(egu,block1h))+sum((tech,block1h),vCO2emstech(tech,block1h)))
+ 830          + pWeightblockpeaktotal2h*(sum((egu,blockpeaktotal2h),vCO2ems(egu,blockpeaktotal2h))+sum((tech,blockpeaktotal2h),vCO2emstech(tech,blockpeaktotal2h)))
+ 831          + pWeightblockpeaknet3h*(sum((egu,blockpeaknet3h),vCO2ems(egu,blockpeaknet3h))+sum((tech,blockpeaknet3h),vCO2emstech(tech,blockpeaknet3h)))
+ 832          + pWeightblock4h*(sum((egu,block4h),vCO2ems(egu,block4h))+sum((tech,block4h),vCO2emstech(tech,block4h)))
+ 833          + pWeightblockpeaknetramp5h*(sum((egu,blockpeaknetramp5h),vCO2ems(egu,blockpeaknetramp5h))+sum((tech,blockpeaknetramp5h),vCO2emstech(tech,blockpeaknetramp5h)))
+ 834          + pWeightblock6h*(sum((egu,block6h),vCO2ems(egu,block6h))+sum((tech,block6h),vCO2emstech(tech,block6h)));
+ 835   
+ 836  limitHydroGenblock0h(z)..sum((hydroegu,block0h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block0h)) =l= pMaxgenhydroblock0h(z);
+ 837  limitHydroGenblock1h(z)..sum((hydroegu,block1h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block1h)) =l= pMaxgenhydroblock1h(z);
+ 838  limitHydroGenblockpeaktotal2h(z)..sum((hydroegu,blockpeaktotal2h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaktotal2h)) =l= pMaxgenhydroblockpeaktotal2h(z);
+ 839  limitHydroGenblockpeaknet3h(z)..sum((hydroegu,blockpeaknet3h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaknet3h)) =l= pMaxgenhydroblockpeaknet3h(z);
+ 840  limitHydroGenblock4h(z)..sum((hydroegu,block4h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block4h)) =l= pMaxgenhydroblock4h(z);
+ 841  limitHydroGenblockpeaknetramp5h(z)..sum((hydroegu,blockpeaknetramp5h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,blockpeaknetramp5h)) =l= pMaxgenhydroblockpeaknetramp5h(z);
+ 842  limitHydroGenblock6h(z)..sum((hydroegu,block6h)$[pGenzone(hydroegu)=ORD(z)],vGen(hydroegu,block6h)) =l= pMaxgenhydroblock6h(z);
+ 843   
+ 844  rampUpblock0h(egu,block0h)$[ORD(block0h)>1].. vGen(egu,block0h)+vRegup(egu,block0h)+vFlex(egu,block0h)+vCont(egu,block0h) - vGen(egu,block0h-1) =l=
+ 845                    pRamprate(egu);
+ 846  rampUpblock0htech(tech,block0h)$[ORD(block0h)>1].. vGentech(tech,block0h)+vReguptech(tech,block0h)+vFlextech(tech,block0h)+vConttech(tech,block0h) - vGentech(tech,block0h-1) =l=
+ 847                    pRampratetech(tech)*vN(tech);
+ 848  rampUpblock1h(egu,block1h)$[ORD(block1h)>1].. vGen(egu,block1h)+vRegup(egu,block1h)+vFlex(egu,block1h)+vCont(egu,block1h) - vGen(egu,block1h-1) =l=
+ 849                    pRamprate(egu);
+ 850  rampUpblock1htech(tech,block1h)$[ORD(block1h)>1].. vGentech(tech,block1h)+vReguptech(tech,block1h)+vFlextech(tech,block1h)+vConttech(tech,block1h) - vGentech(tech,block1h-1) =l=
+ 851                    pRampratetech(tech)*vN(tech);
+ 852  rampUpblockpeaktotal2h(egu,blockpeaktotal2h)$[ORD(blockpeaktotal2h)>1].. vGen(egu,blockpeaktotal2h)+vRegup(egu,blockpeaktotal2h)+vFlex(egu,blockpeaktotal2h)+vCont(egu,blockpeaktotal2h) - vGen(egu,blockpeaktotal2h-1) =l=
+ 853                    pRamprate(egu);
+ 854  rampUpblockpeaktotal2htech(tech,blockpeaktotal2h)$[ORD(blockpeaktotal2h)>1].. vGentech(tech,blockpeaktotal2h)+vReguptech(tech,blockpeaktotal2h)+vFlextech(tech,blockpeaktotal2h)+vConttech(tech,blockpeaktotal2h) - vGentech(tech,blockpeaktotal2h-1) =l=
+ 855                    pRampratetech(tech)*vN(tech);
+ 856  rampUpblockpeaknet3h(egu,blockpeaknet3h)$[ORD(blockpeaknet3h)>1].. vGen(egu,blockpeaknet3h)+vRegup(egu,blockpeaknet3h)+vFlex(egu,blockpeaknet3h)+vCont(egu,blockpeaknet3h) - vGen(egu,blockpeaknet3h-1) =l=
+ 857                    pRamprate(egu);
+ 858  rampUpblockpeaknet3htech(tech,blockpeaknet3h)$[ORD(blockpeaknet3h)>1].. vGentech(tech,blockpeaknet3h)+vReguptech(tech,blockpeaknet3h)+vFlextech(tech,blockpeaknet3h)+vConttech(tech,blockpeaknet3h) - vGentech(tech,blockpeaknet3h-1) =l=
+ 859                    pRampratetech(tech)*vN(tech);
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 19
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
- 707  rampUpblock4htech(tech,block4h)$[ORD(block4h)>1].. vGentech(tech,block4h)+vReguptech(tech,block4h)+vFlextech(tech,block4h)+vConttech(tech,block4h) - vGentech(tech,block4h-1) =l=
- 708                    pRampratetech(tech)*vN(tech);
- 709  rampUpblockpeaknetramp5h(egu,blockpeaknetramp5h)$[ORD(blockpeaknetramp5h)>1].. vGen(egu,blockpeaknetramp5h)+vRegup(egu,blockpeaknetramp5h)+vFlex(egu,blockpeaknetramp5h)+vCont(egu,blockpeaknetramp5h) - vGen(egu,blockpeaknetramp5h-1) =l=
- 710                    pRamprate(egu);
- 711  rampUpblockpeaknetramp5htech(tech,blockpeaknetramp5h)$[ORD(blockpeaknetramp5h)>1].. vGentech(tech,blockpeaknetramp5h)+vReguptech(tech,blockpeaknetramp5h)+vFlextech(tech,blockpeaknetramp5h)+vConttech(tech,blockpeaknetramp5h) - vGentech(tech,blockpeak
+ 860  rampUpblock4h(egu,block4h)$[ORD(block4h)>1].. vGen(egu,block4h)+vRegup(egu,block4h)+vFlex(egu,block4h)+vCont(egu,block4h) - vGen(egu,block4h-1) =l=
+ 861                    pRamprate(egu);
+ 862  rampUpblock4htech(tech,block4h)$[ORD(block4h)>1].. vGentech(tech,block4h)+vReguptech(tech,block4h)+vFlextech(tech,block4h)+vConttech(tech,block4h) - vGentech(tech,block4h-1) =l=
+ 863                    pRampratetech(tech)*vN(tech);
+ 864  rampUpblockpeaknetramp5h(egu,blockpeaknetramp5h)$[ORD(blockpeaknetramp5h)>1].. vGen(egu,blockpeaknetramp5h)+vRegup(egu,blockpeaknetramp5h)+vFlex(egu,blockpeaknetramp5h)+vCont(egu,blockpeaknetramp5h) - vGen(egu,blockpeaknetramp5h-1) =l=
+ 865                    pRamprate(egu);
+ 866  rampUpblockpeaknetramp5htech(tech,blockpeaknetramp5h)$[ORD(blockpeaknetramp5h)>1].. vGentech(tech,blockpeaknetramp5h)+vReguptech(tech,blockpeaknetramp5h)+vFlextech(tech,blockpeaknetramp5h)+vConttech(tech,blockpeaknetramp5h) - vGentech(tech,blockpeak
       netramp5h-1) =l=
- 712                    pRampratetech(tech)*vN(tech);
- 713  rampUpblock6h(egu,block6h)$[ORD(block6h)>1].. vGen(egu,block6h)+vRegup(egu,block6h)+vFlex(egu,block6h)+vCont(egu,block6h) - vGen(egu,block6h-1) =l=
- 714                    pRamprate(egu);
- 715  rampUpblock6htech(tech,block6h)$[ORD(block6h)>1].. vGentech(tech,block6h)+vReguptech(tech,block6h)+vFlextech(tech,block6h)+vConttech(tech,block6h) - vGentech(tech,block6h-1) =l=
- 716                    pRampratetech(tech)*vN(tech);
- 717   
- 718  Parameters
- 719  *DIAGNOSTIC PARAMETERS
- 720           pModelstat
- 721           pSolvestat
- 722                  ;
- 723   
- 724  Variables
- 725  *Total cost variables
- 726           vZannual                              obj func [thousandUSD per yr]
- 727                  ;
- 728   
- 729  Equations
- 730  *Cost equations
- 731           objfunc                         objective function = sum investment and variable costs
- 732           investmentcost                  calculate investment costs = fixed O&M + annualized capital costs
- 733  *Generation and reserve constraints
- 734           limitflexrestech(tech,h)        limit spin reserves by new plants by ramp rate
- 735           limitcontrestech(tech,h)        limit cont reserves by new plants by ramp rate
- 736           limitreguprestech(tech,h)       limit reg reserves by new plants by ramp rate
- 737           limitallresuptech(tech,h)       limit total generation plus reserves of new plants to capacity
- 738                   limitdacsgen(dacstech,h)
- 739  *Renewable generation
- 740           setrenewgentech(renewtech,h)    set electricity generation by new renewable generators
- 741  *Storage constraints
- 742                  limitStoTechGen(storagetech,h)
- 743                  limitStoTechCharge(storagetech,h)
- 744                  stoTechSOCLimit(storagetech,h)
- 745          limitstorageresuptech(storagetech,h)
- 746  *CO2 emissions cap
- 747           enforceco2emissionscap          restrict total co2 emissions to cap
- 748                   ;
- 749   
- 750  ******************CALCULATE COSTS (OBJ FUNC)**********
- 751  *Objective: minimize fixed + variable costs
- 752  objfunc..                vZannual =e= vFixedcostannual + vVarcostannual;
- 753  **************************************************
- 754   
- 755  ******************GENERATION AND RESERVE CONSTRAINTS******************
- 756  *Limit spinning and regulation reserves each to ramp capability and time of reserve
- 757  limitflexrestech(tech,h)$[pMaxflexoffertech(tech)>0].. vFlextech(tech,h) =l= pMaxflexoffertech(tech)*vN(tech);
- 758  limitcontrestech(tech,h)$[pMaxcontoffertech(tech)>0].. vConttech(tech,h) =l= pMaxcontoffertech(tech)*vN(tech);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 17
+ 867                    pRampratetech(tech)*vN(tech);
+ 868  rampUpblock6h(egu,block6h)$[ORD(block6h)>1].. vGen(egu,block6h)+vRegup(egu,block6h)+vFlex(egu,block6h)+vCont(egu,block6h) - vGen(egu,block6h-1) =l=
+ 869                    pRamprate(egu);
+ 870  rampUpblock6htech(tech,block6h)$[ORD(block6h)>1].. vGentech(tech,block6h)+vReguptech(tech,block6h)+vFlextech(tech,block6h)+vConttech(tech,block6h) - vGentech(tech,block6h-1) =l=
+ 871                    pRampratetech(tech)*vN(tech);
+ 872   
+ 873  Parameters
+ 874  *DIAGNOSTIC PARAMETERS
+ 875           pModelstat
+ 876           pSolvestat
+ 877                  ;
+ 878   
+ 879  Variables
+ 880  *Total cost variables
+ 881           vZannual                              obj func [thousandUSD per yr]
+ 882                  ;
+ 883   
+ 884  Equations
+ 885  *Cost equations
+ 886           objfunc                         objective function = sum investment and variable costs
+ 887           investmentcost                  calculate investment costs = fixed O&M + annualized capital costs
+ 888  *Generation and reserve constraints
+ 889           limitflexrestech(tech,h)        limit spin reserves by new plants by ramp rate
+ 890           limitcontrestech(tech,h)        limit cont reserves by new plants by ramp rate
+ 891           limitreguprestech(tech,h)       limit reg reserves by new plants by ramp rate
+ 892           limitallresuptech(tech,h)       limit total generation plus reserves of new plants to capacity
+ 893                   limitdacsgen(dacstech,h)
+ 894  *Renewable generation
+ 895           setrenewgentech(renewtech,h)    set electricity generation by new renewable generators
+ 896  *Storage constraints
+ 897                  limitStoTechGen(storagetech,h)
+ 898                  limitStoTechCharge(storagetech,h)
+ 899                  stoTechSOCLimit(storagetech,h)
+ 900          limitstorageresuptech(storagetech,h)
+ 901  *CO2 emissions cap
+ 902           enforceco2emissionscap          restrict total co2 emissions to cap
+ 903                   ;
+ 904   
+ 905  ******************CALCULATE COSTS (OBJ FUNC)**********
+ 906  *Objective: minimize fixed + variable costs
+ 907  objfunc..                vZannual =e= vFixedcostannual + vVarcostannual;
+ 908  **************************************************
+ 909   
+ 910  ******************GENERATION AND RESERVE CONSTRAINTS******************
+ 911  *Limit spinning and regulation reserves each to ramp capability and time of reserve
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 20
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
- 759  limitreguprestech(tech,h)$[pMaxregupoffertech(tech)>0].. vReguptech(tech,h) =l= pMaxregupoffertech(tech)*vN(tech);
- 760   
- 761  *Limit up reserves plus generation to spare capacity for generating technologies
- 762  limitallresuptech(gentechs,h).. vGentech(gentechs,h) + vFlextech(gentechs,h) + vConttech(gentechs,h) + vReguptech(gentechs,h) =l= pCapactech(gentechs) * vN(gentechs);
- 763   
- 764  *Limit DACS generation and reserves
- 765  limitdacsgen(dacstech,h).. vGentech(dacstech,h) =g= pCapactech(dacstech)*vN(dacstech);
- 766   
- 767  *Limit new wind and solar generation
- 768  setrenewgentech(renewtech,h)..   vGentech(renewtech,h) =l= pCapactech(renewtech)*pCf(renewtech,h)*vN(renewtech);
- 769  ********************************************************************
- 770   
- 771  ******************STORAGE CONSTRAINTS******************
- 772  *Bound generation (based on market participation) charging and SOC
- 773  limitStoTechGen(storagetech,h) .. vGentech(storagetech,h) =l= pStoinenergymarket*vPowBuiltSto(storagetech);
- 774  limitStoTechCharge(storagetech,h) .. vChargetech(storagetech,h) =l= vPowBuiltSto(storagetech)*pChargeDischargeCapRatio;
- 775  stoTechSOCLimit(storagetech,h) .. vStateofchargetech(storagetech,h) =l= vEneBuiltSto(storagetech);
- 776   
- 777  *Limit up reserves to spare capacity plus charging
- 778  limitstorageresuptech(storagetech,h) .. vReguptech(storagetech,h) + vFlextech(storagetech,h) + vConttech(storagetech,h) =l= (vPowBuiltSto(storagetech) - vGentech(storagetech,h)) + vChargetech(storagetech,h);
- 779  *******************************************************
- 780   
- 781  ******************CO2 EMISSIONS CONSTRAINT******************
- 782  *Meet emissions cap
- 783  enforceco2emissionscap.. vCO2emsannual =l= pCO2emcap;
- 784  ************************************************************
- 785   
- 786  Model ceWithED includes all equations /all/;
- 787  solve ceWithED using lp minimizing vZannual;
- 788   
- 789  pModelstat = ceWithED.Modelstat;
- 790  pSolvestat = ceWithED.solvestat;
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 18
+ 912  limitflexrestech(tech,h)$[pMaxflexoffertech(tech)>0].. vFlextech(tech,h) =l= pMaxflexoffertech(tech)*vN(tech);
+ 913  limitcontrestech(tech,h)$[pMaxcontoffertech(tech)>0].. vConttech(tech,h) =l= pMaxcontoffertech(tech)*vN(tech);
+ 914  limitreguprestech(tech,h)$[pMaxregupoffertech(tech)>0].. vReguptech(tech,h) =l= pMaxregupoffertech(tech)*vN(tech);
+ 915   
+ 916  *Limit up reserves plus generation to spare capacity for generating technologies
+ 917  limitallresuptech(gentechs,h).. vGentech(gentechs,h) + vFlextech(gentechs,h) + vConttech(gentechs,h) + vReguptech(gentechs,h) =l= pCapactech(gentechs) * vN(gentechs);
+ 918   
+ 919  *Limit DACS generation and reserves
+ 920  limitdacsgen(dacstech,h).. vGentech(dacstech,h) =g= pCapactech(dacstech)*vN(dacstech);
+ 921   
+ 922  *Limit new wind and solar generation
+ 923  setrenewgentech(renewtech,h)..   vGentech(renewtech,h) =l= pCapactech(renewtech)*pCf(renewtech,h)*vN(renewtech);
+ 924  ********************************************************************
+ 925   
+ 926  ******************STORAGE CONSTRAINTS******************
+ 927  *Bound generation (based on market participation) charging and SOC
+ 928  limitStoTechGen(storagetech,h) .. vGentech(storagetech,h) =l= pStoinenergymarket*vPowBuiltSto(storagetech);
+ 929  limitStoTechCharge(storagetech,h) .. vChargetech(storagetech,h) =l= vPowBuiltSto(storagetech)*pChargeDischargeCapRatio;
+ 930  stoTechSOCLimit(storagetech,h) .. vStateofchargetech(storagetech,h) =l= vEneBuiltSto(storagetech);
+ 931   
+ 932  *Limit up reserves to spare capacity plus charging
+ 933  limitstorageresuptech(storagetech,h) .. vReguptech(storagetech,h) + vFlextech(storagetech,h) + vConttech(storagetech,h) =l= (vPowBuiltSto(storagetech) - vGentech(storagetech,h)) + vChargetech(storagetech,h);
+ 934  *******************************************************
+ 935   
+ 936  ******************CO2 EMISSIONS CONSTRAINT******************
+ 937  *Meet emissions cap
+ 938  enforceco2emissionscap.. vCO2emsannual =l= pCO2emcap;
+ 939  ************************************************************
+ 940   
+ 941  Model ceWithED includes all equations /all/;
+ 942  solve ceWithED using lp minimizing vZannual;
+ 943   
+ 944  pModelstat = ceWithED.Modelstat;
+ 945  pSolvestat = ceWithED.solvestat;
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 21
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 Include File Summary
 
@@ -979,16 +1155,16 @@ Include File Summary
      7      467 INCLUDE        1      16  .C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\StorageEDModule.gms
      8      479 INCLUDE        1      17  .C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\EDVarsAndConstraints.gms
      9      495 INCLUDE        1      18  .C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\CETimeDependentConstraints.gms
-    10      540 GDXIN          9      45  .C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_py_gdb0.gdx
+    10      546 GDXIN          9      51  .C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_py_gdb0.gdx
 
 
 COMPILATION TIME     =        0.015 SECONDS      4 MB  30.2.0 r482c588 WEX-WEI
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 00:24:00 Page 19
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 02:36:28 Page 22
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 E x e c u t i o n
 
 
-EXECUTION TIME       =       41.438 SECONDS    182 MB  30.2.0 r482c588 WEX-WEI
+EXECUTION TIME       =       64.313 SECONDS    197 MB  30.2.0 r482c588 WEX-WEI
 
 
 USER: An Pham, Single User License                   G210526|0002AO-GEN
