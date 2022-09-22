@@ -1,4 +1,4 @@
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 1
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 1
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -56,7 +56,7 @@ INCLUDE    C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\EDAn
   52  *RENEWABLE GENERATION CAPS
   53           pMaxgenwind(z,h)                  max hourly generation for existing wind [GWh]
   54           pMaxgensolar(z,h)                 max hourly generation for existing solar [GWh]
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 2
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 2
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -108,13 +108,13 @@ GDXIN   C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_p
 --- LOAD  z = 8:z
 --- LOAD  l = 9:l
 --- LOAD  dacsegu = 6:dacsegu
---- LOAD  storageegu = 37:storageegu
+--- LOAD  storageegu = 38:storageegu
 --- LOAD  pCapac = 25:pCapac
 --- LOAD  pHr = 21:pHr
 --- LOAD  pOpcost = 24:pOpcost
 --- LOAD  pRamprate = 23:pRamprate
 --- LOAD  pCO2emrate = 22:pCO2emrate
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 3
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 3
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -122,11 +122,11 @@ C o m p i l a t i o n
 --- LOAD  pCO2cost = 20:pCO2Cost
 --- LOAD  pMaxgensolar = 27:pMaxgensolar
 --- LOAD  pMaxgenwind = 28:pMaxgenwind
---- LOAD  pStoinenergymarket = 42:pStoinenergymarket
---- LOAD  pEfficiency = 38:pEfficiency
---- LOAD  pMaxsoc = 40:pMaxsoc
---- LOAD  pMinsoc = 41:pMinsoc
---- LOAD  pCapaccharge = 39:pCapaccharge
+--- LOAD  pStoinenergymarket = 43:pStoinenergymarket
+--- LOAD  pEfficiency = 39:pEfficiency
+--- LOAD  pMaxsoc = 41:pMaxsoc
+--- LOAD  pMinsoc = 42:pMinsoc
+--- LOAD  pCapaccharge = 40:pCapaccharge
 --- LOAD  pGenzone = 26:pGenzone
 --- LOAD  pDemand = 10:pDemand
 --- LOAD  pLinesource = 35:pLinesource
@@ -172,7 +172,7 @@ C o m p i l a t i o n
  127           vStateofcharge(storageegu,h)            "energy stored in storage unit at end of hour h (GWh)"
  128           vCharge(storageegu,h)                   "charged energy by storage unit in hour h (GWh)"
  129  *EMISSIONS
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 4
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 4
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -230,7 +230,7 @@ C o m p i l a t i o n
  180  *******************************************************
  181   
  182  ******************RENEWABLE GENERATION*****************
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 5
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 5
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -288,7 +288,7 @@ C o m p i l a t i o n
  233                   pNMaxNuclear
  234                   pNMaxCC
  235                   pNMaxCCS(CCStech)
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 6
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 6
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -346,65 +346,65 @@ C o m p i l a t i o n
  286  *PLANNING RESERVE
  287           pPlanningreserve                planning margin reserve capacity [GW]
  288           ;
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 7
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 7
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
  289   
 GDXIN   C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_py_gdb0.gdx
---- LOAD  ststorageegu = 44:ststorageegu
---- LOAD  ltstorageegu = 45:ltstorageegu
---- LOAD  tech = 46:tech
---- LOAD  dacstech = 57:dacstech
---- LOAD  thermaltech = 47:thermaltech
---- LOAD  CCStech = 50:CCStech
---- LOAD  nucleartech = 48:nucleartech
---- LOAD  CCtech = 49:CCtech
---- LOAD  renewtech = 51:renewtech
---- LOAD  solartech = 53:solartech
---- LOAD  windtech = 52:windtech
---- LOAD  storagetech = 54:storagetech
---- LOAD  ststoragetech = 55:ststoragetech
---- LOAD  ltstoragetech = 56:ltstoragetech
---- LOAD  peakH = 43:peakh
---- LOAD  pNMaxWind = 73:pNMaxWind
---- LOAD  pNMaxSolar = 74:pNMaxSolar
---- LOAD  pNMaxNuclear = 75:pNMaxNuclear
---- LOAD  pNMaxCC = 77:pNMaxCC
---- LOAD  pNMaxCCS = 76:pNMaxCCS
---- LOAD  pNMaxDACS = 78:pNMaxDACS
---- LOAD  pPMaxSto = 79:pPMaxSto
---- LOAD  pEMaxSto = 80:pEMaxSto
---- LOAD  pCapactech = 65:pCapactech
---- LOAD  pHrtech = 61:pHrtech
---- LOAD  pOpcosttech = 64:pOpcosttech
---- LOAD  pFom = 67:pFom
---- LOAD  pOcc = 68:pOcc
---- LOAD  pPowOcc = 70:pPowOcc
---- LOAD  pEneOcc = 71:pEneOcc
---- LOAD  pRampratetech = 63:pRampratetech
---- LOAD  pCO2emratetech = 62:pCO2emratetech
---- LOAD  pEfficiencytech = 86:pEfficiencytech
---- LOAD  pCO2emcap = 60:pCO2emcap
---- LOAD  pCf = 72:pCf
---- LOAD  pR = 59:pR
---- LOAD  pLife = 69:pLife
---- LOAD  pLifeline = 89:pLifeline
---- LOAD  pGenzonetech = 66:pGenzonetech
---- LOAD  pLinecost = 87:pLinecost
---- LOAD  pNMaxLine = 88:pNMaxLine
---- LOAD  pRegUpReqIncRE = 81:pRegUpReqIncRE
---- LOAD  pFlexReqIncRE = 82:pFlexReqIncRE
---- LOAD  pFlexeligibletech = 84:pFlexeligibletech
---- LOAD  pConteligibletech = 85:pConteligibletech
---- LOAD  pRegeligibletech = 83:pRegeligibletech
---- LOAD  pPlanningreserve = 58:pPlanningreserve
+--- LOAD  ststorageegu = 45:ststorageegu
+--- LOAD  ltstorageegu = 46:ltstorageegu
+--- LOAD  tech = 47:tech
+--- LOAD  dacstech = 58:dacstech
+--- LOAD  thermaltech = 48:thermaltech
+--- LOAD  CCStech = 51:CCStech
+--- LOAD  nucleartech = 49:nucleartech
+--- LOAD  CCtech = 50:CCtech
+--- LOAD  renewtech = 52:renewtech
+--- LOAD  solartech = 54:solartech
+--- LOAD  windtech = 53:windtech
+--- LOAD  storagetech = 55:storagetech
+--- LOAD  ststoragetech = 56:ststoragetech
+--- LOAD  ltstoragetech = 57:ltstoragetech
+--- LOAD  peakH = 44:peakh
+--- LOAD  pNMaxWind = 74:pNMaxWind
+--- LOAD  pNMaxSolar = 75:pNMaxSolar
+--- LOAD  pNMaxNuclear = 76:pNMaxNuclear
+--- LOAD  pNMaxCC = 78:pNMaxCC
+--- LOAD  pNMaxCCS = 77:pNMaxCCS
+--- LOAD  pNMaxDACS = 79:pNMaxDACS
+--- LOAD  pPMaxSto = 80:pPMaxSto
+--- LOAD  pEMaxSto = 81:pEMaxSto
+--- LOAD  pCapactech = 66:pCapactech
+--- LOAD  pHrtech = 62:pHrtech
+--- LOAD  pOpcosttech = 65:pOpcosttech
+--- LOAD  pFom = 68:pFom
+--- LOAD  pOcc = 69:pOcc
+--- LOAD  pPowOcc = 71:pPowOcc
+--- LOAD  pEneOcc = 72:pEneOcc
+--- LOAD  pRampratetech = 64:pRampratetech
+--- LOAD  pCO2emratetech = 63:pCO2emratetech
+--- LOAD  pEfficiencytech = 87:pEfficiencytech
+--- LOAD  pCO2emcap = 61:pCO2emcap
+--- LOAD  pCf = 73:pCf
+--- LOAD  pR = 60:pR
+--- LOAD  pLife = 70:pLife
+--- LOAD  pLifeline = 90:pLifeline
+--- LOAD  pGenzonetech = 67:pGenzonetech
+--- LOAD  pLinecost = 88:pLinecost
+--- LOAD  pNMaxLine = 89:pNMaxLine
+--- LOAD  pRegUpReqIncRE = 82:pRegUpReqIncRE
+--- LOAD  pFlexReqIncRE = 83:pFlexReqIncRE
+--- LOAD  pFlexeligibletech = 85:pFlexeligibletech
+--- LOAD  pConteligibletech = 86:pConteligibletech
+--- LOAD  pRegeligibletech = 84:pRegeligibletech
+--- LOAD  pPlanningreserve = 59:pPlanningreserve
  302   
  303  *DEFINE SET EXCLUSIONS
  304  nonrenewegu(egu) = not renewegu(egu);
  305  nonstoragetech(tech) = not storagetech(tech);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 8
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 8
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -462,7 +462,7 @@ INCLUDE    C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\CEBu
  356  *Meet demand and reserves
  357           meetdemand(z,h)                   meet supply with demand
  358           meetreservemargin               meet planning reserve requirement with installed capacity
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/21/22 21:50:26 Page 9
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/22/22 01:25:42 Page 9
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -520,7 +520,7 @@ C o m p i l a t i o n
  409  meetshiftingdemand(z,h)$(mod(ord(h),pDemandShiftingBlock)=1).. sum(hh$((ord(hh)>=ord(h) and (ord(hh)<=ord(h)+pDemandShiftingBlock-1))), vShiftedDemand(z,h))=e= 0;
  410   
  411  *Meet planning reserve margin
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 10
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 10
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -578,7 +578,7 @@ C o m p i l a t i o n
  462   
  463  ********CALCULATE CO2 EMISSIONS*************
  464  calcco2emstech(tech,h) .. vCO2emstech(tech,h) =e= vGentech(tech,h)*pHrtech(tech)*pCO2emratetech(tech);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 11
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 11
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -636,7 +636,7 @@ INCLUDE    C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\CETi
  515          pInitSOCtech(storagetech)
  516          pHourInitblock0h
  517          pHourFinalblock0h
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 12
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 12
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -669,40 +669,40 @@ C o m p i l a t i o n
  543          ;
  544   
 GDXIN   C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_py_gdb0.gdx
---- LOAD  block0h = 90:block0h
---- LOAD  block1h = 91:block1h
---- LOAD  block2h = 92:block2h
---- LOAD  blockpeaktotal3h = 93:blockpeaktotal3h
---- LOAD  blockpeaknet4h = 94:blockpeaknet4h
---- LOAD  blockpeaknetramp5h = 95:blockpeaknetramp5h
---- LOAD  block6h = 96:block6h
---- LOAD  pWeightblock0h = 97:pWeightblock0h
---- LOAD  pWeightblock1h = 98:pWeightblock1h
---- LOAD  pWeightblock2h = 99:pWeightblock2h
---- LOAD  pWeightblockpeaktotal3h = 100:pWeightblockpeaktotal3h
---- LOAD  pWeightblockpeaknet4h = 101:pWeightblockpeaknet4h
---- LOAD  pWeightblockpeaknetramp5h = 102:pWeightblockpeaknetramp5h
---- LOAD  pWeightblock6h = 103:pWeightblock6h
---- LOAD  pSOCScalarblock1h = 104:pSOCScalarblock1h
---- LOAD  pSOCScalarblock2h = 105:pSOCScalarblock2h
---- LOAD  pSOCScalarblockpeaktotal3h = 106:pSOCScalarblockpeaktotal3h
---- LOAD  pSOCScalarblockpeaknet4h = 107:pSOCScalarblockpeaknet4h
---- LOAD  pSOCScalarblockpeaknetramp5h = 108:pSOCScalarblockpeaknetramp5h
---- LOAD  pSOCScalarblock6h = 109:pSOCScalarblock6h
---- LOAD  pInitSOC = 110:pInitSOC
---- LOAD  pInitSOCtech = 111:pInitSOCtech
---- LOAD  pMaxgenhydroblock0h = 112:pMaxgenhydroblock0h
---- LOAD  pMaxgenhydroblock1h = 113:pMaxgenhydroblock1h
---- LOAD  pMaxgenhydroblock2h = 114:pMaxgenhydroblock2h
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 13
+--- LOAD  block0h = 93:block0h
+--- LOAD  block1h = 94:block1h
+--- LOAD  block2h = 95:block2h
+--- LOAD  blockpeaktotal3h = 96:blockpeaktotal3h
+--- LOAD  blockpeaknet4h = 97:blockpeaknet4h
+--- LOAD  blockpeaknetramp5h = 98:blockpeaknetramp5h
+--- LOAD  block6h = 99:block6h
+--- LOAD  pWeightblock0h = 100:pWeightblock0h
+--- LOAD  pWeightblock1h = 101:pWeightblock1h
+--- LOAD  pWeightblock2h = 102:pWeightblock2h
+--- LOAD  pWeightblockpeaktotal3h = 103:pWeightblockpeaktotal3h
+--- LOAD  pWeightblockpeaknet4h = 104:pWeightblockpeaknet4h
+--- LOAD  pWeightblockpeaknetramp5h = 105:pWeightblockpeaknetramp5h
+--- LOAD  pWeightblock6h = 106:pWeightblock6h
+--- LOAD  pSOCScalarblock1h = 107:pSOCScalarblock1h
+--- LOAD  pSOCScalarblock2h = 108:pSOCScalarblock2h
+--- LOAD  pSOCScalarblockpeaktotal3h = 109:pSOCScalarblockpeaktotal3h
+--- LOAD  pSOCScalarblockpeaknet4h = 110:pSOCScalarblockpeaknet4h
+--- LOAD  pSOCScalarblockpeaknetramp5h = 111:pSOCScalarblockpeaknetramp5h
+--- LOAD  pSOCScalarblock6h = 112:pSOCScalarblock6h
+--- LOAD  pInitSOC = 113:pInitSOC
+--- LOAD  pInitSOCtech = 114:pInitSOCtech
+--- LOAD  pMaxgenhydroblock0h = 115:pMaxgenhydroblock0h
+--- LOAD  pMaxgenhydroblock1h = 116:pMaxgenhydroblock1h
+--- LOAD  pMaxgenhydroblock2h = 117:pMaxgenhydroblock2h
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 13
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
 
---- LOAD  pMaxgenhydroblockpeaktotal3h = 118:pMaxgenhydroblockpeaktotal3h
---- LOAD  pMaxgenhydroblockpeaknet4h = 116:pMaxgenhydroblockpeaknet4h
---- LOAD  pMaxgenhydroblockpeaknetramp5h = 117:pMaxgenhydroblockpeaknetramp5h
---- LOAD  pMaxgenhydroblock6h = 115:pMaxgenhydroblock6h
+--- LOAD  pMaxgenhydroblockpeaktotal3h = 121:pMaxgenhydroblockpeaktotal3h
+--- LOAD  pMaxgenhydroblockpeaknet4h = 119:pMaxgenhydroblockpeaknet4h
+--- LOAD  pMaxgenhydroblockpeaknetramp5h = 120:pMaxgenhydroblockpeaknetramp5h
+--- LOAD  pMaxgenhydroblock6h = 118:pMaxgenhydroblock6h
  553   
  554  pHourInitblock0h = smin(h$block0h(h),ord(h));
  555  pHourFinalblock0h = smax(h$block0h(h),ord(h));
@@ -752,7 +752,7 @@ C o m p i l a t i o n
  599          vFinalSOCblock1htech(storagetech)
  600          vFinalSOCblock2htech(storagetech)
  601          vFinalSOCblockpeaktotal3htech(storagetech)
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 14
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 14
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -810,7 +810,7 @@ C o m p i l a t i o n
  652          defSOCtech(storagetech,h)
  653          genPlusUpResToSOCtech(storagetech,h)
  654          setInitSOCblock1hltstoragetech(ltstoragetech)
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 15
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 15
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -868,7 +868,7 @@ C o m p i l a t i o n
  704          vStateofcharge(storageegu, h-1)$nonInitH(h) -
  705                 1/sqrt(pEfficiency(storageegu)) * vGen(storageegu,h) +
  706                 sqrt(pEfficiency(storageegu)) * vCharge(storageegu,h);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 16
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 16
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -926,7 +926,7 @@ C o m p i l a t i o n
  754                                      pInitSOC(ststorageegu);
  755  setInitSOCblockpeaknet4hststorageegu(ststorageegu).. vInitSOCblockpeaknet4h(ststorageegu) =e=
  756                                      pInitSOC(ststorageegu);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 17
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 17
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -984,7 +984,7 @@ C o m p i l a t i o n
  801                             vStateofchargetech(ltstoragetech,h);
  802  defChangeSOCblockpeaknetramp5htech(ltstoragetech).. vChangeSOCblockpeaknetramp5htech(ltstoragetech) =e= vFinalSOCblockpeaknetramp5htech(ltstoragetech)
  803                                - vInitSOCblockpeaknetramp5htech(ltstoragetech);
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 18
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 18
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -1042,7 +1042,7 @@ C o m p i l a t i o n
  854  rampUpblock2htech(tech,block2h)$[ORD(block2h)>1].. vGentech(tech,block2h)+vReguptech(tech,block2h)+vFlextech(tech,block2h)+vConttech(tech,block2h) - vGentech(tech,block2h-1) =l=
  855                    pRampratetech(tech)*vN(tech);
  856  rampUpblockpeaktotal3h(egu,blockpeaktotal3h)$[ORD(blockpeaktotal3h)>1].. vGen(egu,blockpeaktotal3h)+vRegup(egu,blockpeaktotal3h)+vFlex(egu,blockpeaktotal3h)+vCont(egu,blockpeaktotal3h) - vGen(egu,blockpeaktotal3h-1) =l=
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 19
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 19
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -1100,7 +1100,7 @@ C o m p i l a t i o n
  906  *Objective: minimize fixed + variable costs
  907  objfunc..                vZannual =e= vFixedcostannual + vVarcostannual;
  908  **************************************************
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 20
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 20
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -1142,7 +1142,7 @@ C o m p i l a t i o n
  943   
  944  pModelstat = ceWithED.Modelstat;
  945  pSolvestat = ceWithED.solvestat;
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 21
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 21
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 Include File Summary
 
@@ -1161,13 +1161,13 @@ Include File Summary
     10      546 GDXIN          9      51  .C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\EI-CE\GAMS\_gams_py_gdb0.gdx
 
 
-COMPILATION TIME     =        0.031 SECONDS      5 MB  30.2.0 r482c588 WEX-WEI
-GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/21/22 21:50:26 Page 22
+COMPILATION TIME     =        0.063 SECONDS      5 MB  30.2.0 r482c588 WEX-WEI
+GAMS 30.2.0  r482c588 Released Feb  7, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/22/22 01:25:42 Page 22
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 E x e c u t i o n
 
 
-EXECUTION TIME       =      105.454 SECONDS    276 MB  30.2.0 r482c588 WEX-WEI
+EXECUTION TIME       =      188.515 SECONDS    276 MB  30.2.0 r482c588 WEX-WEI
 
 
 USER: An Pham, Single User License                   G210526|0002AO-GEN
