@@ -6,14 +6,14 @@ import operator, os, sys, pandas as pd
 from AuxFuncs import *
 
 ########### GET SCALED DEMAND BASED ON CURRENT YEAR ############################
-#Inputs: initial demand values (1d list), annual demand growth (fraction), 
-#year of initial demand values, current CE year
-#Outputs: demand values in current CE year (1d list)
-def getDemandForFutureYear(demand,annualDemandGrowth,metYear,currYear,electrifiedDemand,
-                            transRegions,elecDemandScen):
+# Inputs: initial demand values (1d list), annual demand growth (fraction),
+# year of initial demand values, current CE year
+# Outputs: demand values in current CE year (1d list)
+def getDemandForFutureYear(demand, annualDemandGrowth, metYear, currYear, electrifiedDemand,
+                            transRegions, elecDemandScen):
     if currYear > 2050: currYear = 2050
     if electrifiedDemand:
-        demand = importHourlyEFSDemand(currYear,transRegions,elecDemandScen)
+        demand = importHourlyEFSDemand(currYear, transRegions, elecDemandScen)
     else:
         demandScalar = (1 + annualDemandGrowth)**(currYear - metYear)
         for region in demand: demand[region] *= demandScalar
@@ -21,8 +21,8 @@ def getDemandForFutureYear(demand,annualDemandGrowth,metYear,currYear,electrifie
     return demand
 
 ########### IMPORT DEMAND DATA FROM ELECTRIFICATION FUTURES STUDY ##############
-def importHourlyEFSDemand(currYear,transRegions,elecDemandScen):
-    #Initialize df
+def importHourlyEFSDemand(currYear, transRegions, elecDemandScen):
+    # Initialize df
     if currYear > 2050: currYear = 2050
     dates = pd.date_range('1/1/'+str(currYear)+' 0:00','12/31/' + str(currYear) + ' 23:00',freq='H')
     dates = dates[~((dates.month == 2) & (dates.day == 29))] #ditch leap day
@@ -33,8 +33,8 @@ def importHourlyEFSDemand(currYear,transRegions,elecDemandScen):
     rawDemand = pd.read_csv(os.path.join('Data','REEDS', filename), delimiter=',',header=0)
     rawDemand = rawDemand.loc[rawDemand['year']==currYear]
 
-    #Iterate through dict of zone:p regions (from REEDS) & aggregate demand for p-regions
-    for zone,pRegions in transRegions.items():
+    # Iterate through dict of zone:p regions (from REEDS) & aggregate demand for p-regions
+    for zone, pRegions in transRegions.items():
         for p in pRegions:
             pDemand = rawDemand[p]
             if zone in demand.columns:
@@ -48,16 +48,16 @@ def importHourlyEFSDemand(currYear,transRegions,elecDemandScen):
 #list of solar/wind IDs and their capacities in fleet (2d list), 
 #current CE year, name of model (CE versus UC)
 #Outputs: net demand (1d list w/out headers), hourly wind and solar gen (1d lists w/out headers)
-def getNetDemand(hourlyDemand,windCFs,ewdIdAndCapac,solarCFs,solarFilenameAndCapac):
-    hourlyWindGen = getHourlyGenProfile(windCFs,ewdIdAndCapac)
-    hourlySolarGen = getHourlyGenProfile(solarCFs,solarFilenameAndCapac)
+def getNetDemand(hourlyDemand, windCFs, ewdIdAndCapac, solarCFs, solarFilenameAndCapac):
+    hourlyWindGen = getHourlyGenProfile(windCFs, ewdIdAndCapac)
+    hourlySolarGen = getHourlyGenProfile(solarCFs, solarFilenameAndCapac)
     netDemand = calcNetDemand(hourlyDemand,hourlyWindGen,hourlySolarGen)
     return (netDemand,hourlyWindGen,hourlySolarGen)
 
 #Inputs: CFs (2d list w/ header), unit ids and capacities (2d list w/ header)
 #Outputs: hourly generation values (1d list w/out header)
-def getHourlyGenProfile(cfs,idAndCapacs):
-    (idCol,capacCol) = (idAndCapacs[0].index('Id'),idAndCapacs[0].index('FleetCapacity')) 
+def getHourlyGenProfile(cfs, idAndCapacs):
+    (idCol,capacCol) = (idAndCapacs[0].index('Id'), idAndCapacs[0].index('FleetCapacity'))
     totalHourlyGen = []
     for idAndCapac in idAndCapacs[1:]:
         (unitID,capac) = (idAndCapac[idCol],idAndCapac[capacCol])
@@ -70,13 +70,13 @@ def getHourlyGenProfile(cfs,idAndCapacs):
 
 #Inputs: hourly demand & wind & solar gen (1d lists w/out headers)
 #Outputs: hourly net demand (1d list w/out headers)
-def calcNetDemand(hourlyDemand,hourlyWindGen,hourlySolarGen):
+def calcNetDemand(hourlyDemand, hourlyWindGen, hourlySolarGen):
     if len(hourlyWindGen)>0 and len(hourlySolarGen)>0:
-        hourlyWindAndSolarGen = list(map(operator.add,hourlyWindGen,hourlySolarGen))
-        return list(map(operator.sub,hourlyDemand,hourlyWindAndSolarGen))
+        hourlyWindAndSolarGen = list(map(operator.add, hourlyWindGen, hourlySolarGen))
+        return list(map(operator.sub, hourlyDemand,hourlyWindAndSolarGen))
     elif len(hourlyWindGen)>0:
-        return list(map(operator.sub,hourlyDemand,hourlyWindGen))
+        return list(map(operator.sub, hourlyDemand, hourlyWindGen))
     elif len(hourlySolarGen)>0:
-        return list(map(operator.sub,hourlyDemand,hourlySolarGen))
+        return list(map(operator.sub, hourlyDemand, hourlySolarGen))
     else:
         return hourlyDemand
