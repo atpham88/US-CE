@@ -5,27 +5,27 @@ $include EDAndUCSharedFeatures.gms
 Sets
 *EXISTING GENERATORS
          nonrenewegu(egu)                existing nonrenewable generators
-                 ststorageegu(storageegu)
-                 ltstorageegu(storageegu)
+                ststorageegu(storageegu)
+                ltstorageegu(storageegu)
 *CANDIDATE TECHNOLOGIES FOR CONSTRUCTION
          tech                            candidate technologies for new construction
 *Generators
-                gentechs(tech)                                  generating techs specifically not DACS or storage
+         gentechs(tech)                  generating techs specifically not DACS or storage
          thermaltech(tech)               thermal plant types for new construction
-                 CCStech(thermaltech)
-         nucleartech(thermaltech)
-         CCtech(thermaltech)
+                CCStech(thermaltech)
+                nucleartech(thermaltech)
+                CCtech(thermaltech)
          renewtech(tech)                 renewable plant types for new construction
-                 windtech(renewtech)                       transInvestments
-                 solartech(renewtech)
+                windtech(renewtech)      transInvestments
+                solartech(renewtech)
 *Storage
          storagetech(tech)               storage plant types for new construction
-                 nonstoragetech(tech)                    non storage techs
-                 ststoragetech(storagetech)
-                 ltstoragetech(storagetech)
+         nonstoragetech(tech)            non storage techs
+                ststoragetech(storagetech)
+                ltstoragetech(storagetech)
 *CO2 removal
-                 dacstech(tech)
-                 notdacstech(tech)
+         dacstech(tech)
+         notdacstech(tech)
 *CANDIDATE TRANSMISSION LINES FOR CONSTRUCTION
 *               ltech
 *HOURS
@@ -38,7 +38,7 @@ Alias (l,ll);
 
 Parameters
 *MAX NEW UNITS TO BE BUILT
-         pNMaxWind
+                 pNMaxWind
                  pNMaxSolar
                  pNMaxNuclear
                  pNMaxCC
@@ -72,7 +72,8 @@ Parameters
 *FINANCIAL PARAMETERS
          pR                              discount rate
          pLife(tech)                     lifetime of tech [years]
-                 pLifeline
+         pLifeline
+         pH2Lifeline
          pCrf(tech)                      capital recovery factor
                  pCrfline
 *ZONAL PARAMETERS
@@ -81,11 +82,13 @@ Parameters
 *               pLinesinktech(ltech)
 *               pLinecapactech(ltech)
                 pLinecost(l)
-         pNMaxLine(l)
+                pH2Linecost(l)
+                pNMaxLine(l)
+                pNMaxH2Line(l)
 *               pPeakhtozone(peakH)
 *HOURLY RESERVE REQUIREMENTS [GW]
          pRegUpReqIncRE(renewtech,h)
-                 pFlexReqIncRE(renewtech,h)
+         pFlexReqIncRE(renewtech,h)
 *RESERVE PROVISION PARAMETERS
          pRegeligibletech(tech)          candidate plant types eligible to provide reg reserves [0] or not [1]
          pFlexeligibletech(tech)
@@ -101,6 +104,7 @@ $if not set gdxincname $abort 'no include file name for data file provided'
 $gdxin %gdxincname%
 $load ststorageegu, ltstorageegu, tech, dacstech, thermaltech, CCStech, nucleartech, CCtech, renewtech, solartech, windtech, storagetech, ststoragetech, ltstoragetech, peakH
 $load pNMaxWind, pNMaxSolar, pNMaxNuclear, pNMaxCC, pNMaxCCS, pNMaxDACS, pPMaxSto, pEMaxSto, pCapactech, pHrtech, pOpcosttech
+$load pNMaxH2Line, pH2Lifeline, pH2Linecost
 $load pFom, pOcc, pPowOcc, pEneOcc, pRampratetech, pCO2emratetech
 $load pEfficiencytech
 $load pCO2emcap, pCf, pR, pLife, pLifeline

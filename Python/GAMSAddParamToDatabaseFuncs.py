@@ -92,8 +92,9 @@ def addLineParams(db, lineLimits, transmissionEff, lineSet, zoneOrder, mwToGW):
     # Transmission line sources & sinks
     addLineSourceSink(db,lineLimits,lineSet,zoneOrder)
     # Existing h2 pipeline between zone = 0:
-    add1dParam(db, pd.Series(0, index=lineLimits['GAMS Symbol']).to_dict(), lineSet, lineLimits['GAMS Symbol'], 'pH2ExLineCapac')
-    
+    add1dParam(db, pd.Series(0, index=lineLimits['GAMS Symbol']).to_dict(), lineSet, lineLimits['GAMS Symbol'], 'pH2ExLinecapac')
+
+
 def addLineSourceSink(db,df,lineSet,zoneOrder,techLbl=''):
     add1dParam(db,getZonalParamDict(df,zoneOrder,'r'), lineSet, df['GAMS Symbol'],'pLinesource'+techLbl)
     add1dParam(db,getZonalParamDict(df,zoneOrder,'rr'), lineSet, df['GAMS Symbol'],'pLinesink'+techLbl)
@@ -217,7 +218,7 @@ def addNewLineParams(db, lineDists, lineCosts, lineSet, maxCapPerTech, buildLimi
     add1dParam(db, h2Cost.to_dict(), lineSet, h2Cost.index, 'pH2Linecost')
     add0dParam(db, 'pH2Lifeline', h2LineLife)
     # Maximum H2 pipeline capacity (metric ton)
-    add1dParam(db, maxH2LineCapac, lineSet, h2Cost.index, 'pNMaxH2Line')
+    add1dParam(db, pd.Series(maxH2LineCapac, index=h2Cost.index).to_dict(), lineSet, h2Cost.index, 'pNMaxH2Line')
 
 ##### ADD INITIAL COMMITMENT STATE FOR EXISTING GENS FOR EACH TIME BLOCK
 def addInitialOnOffForEachBlock(db, onOffInitialEachPeriod,genSet):

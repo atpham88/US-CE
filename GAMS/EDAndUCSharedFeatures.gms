@@ -43,9 +43,11 @@ Parameters
 *ZONAL PROPERTIES
                 pGenzone(egu)                                   zone in which egu is located
                 pDemand(z,h)                      hourly electricity demand [GWh]
-        pLinesource(l)                                  zone that is the source of line l
+                pH2Demand(z)
+                pLinesource(l)                                  zone that is the source of line l
                 pLinesink(l)                                    zone that is the sink of line l
                 pLinecapac(l)                                   MW capacity of line l
+                pH2ExLineCapac(l)
                 pTransEff
 *HOURLY ELECTRICITY DEMAND [GWh]
          pDemandShifter                  demand shifter (percentage)
@@ -76,8 +78,8 @@ $gdxin %gdxincname%
 $load egu, renewegu, windegu, solaregu, hydroegu, h, z, l, dacsegu, storageegu
 $load pCapac, pHr, pOpcost, pRamprate, pCO2emrate, pCO2cost
 $load pMaxgensolar, pMaxgenwind
-$load pStoinenergymarket,pEfficiency,pMaxsoc,pMinsoc,pCapaccharge
-$load pGenzone, pDemand, pLinesource, pLinesink, pLinecapac, pTransEff
+$load pStoinenergymarket, pEfficiency, pMaxsoc, pMinsoc, pCapaccharge
+$load pGenzone, pDemand, pH2Demand, pLinesource, pLinesink, pLinecapac, pH2ExLineCapac, pTransEff
 $load pDemandShifter, pDemandShiftingBlock, pCnse, pRegupreserves, pFlexreserves, pContreserves
 $load pRampratetoregreservescalar, pRampratetoflexreservescalar, pRampratetocontreservescalar
 $load pFlexeligible, pConteligible, pRegeligible
