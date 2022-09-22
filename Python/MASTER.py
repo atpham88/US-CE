@@ -63,7 +63,7 @@ def setKeyParameters():
     h2DemandScr = 'Reference'                           # Scenario for H2 demand
 
     metYear = 2012                                      # year of meteorological data used for demand and renewables
-    interconn = 'ERCOT'                                  # which interconnection to run - ERCOT, WECC, EI
+    interconn = 'WECC'                                  # which interconnection to run - ERCOT, WECC, EI
     balAuths = 'full'                                   # full: run for all BAs in interconn. TODO: add selection of a subset of BAs.
     electrifiedDemand = True                            # whether to import electrified demand futures from NREL's EFS
     elecDemandScen = 'REFERENCE'                        # 'REFERENCE','HIGH','MEDIUM' (ref is lower than med)

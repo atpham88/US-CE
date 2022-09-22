@@ -78,8 +78,9 @@ $gdxin %gdxincname%
 $load egu, renewegu, windegu, solaregu, hydroegu, h, z, l, dacsegu, storageegu
 $load pCapac, pHr, pOpcost, pRamprate, pCO2emrate, pCO2cost
 $load pMaxgensolar, pMaxgenwind
+$load pH2Demand, pH2ExLineCapac
 $load pStoinenergymarket, pEfficiency, pMaxsoc, pMinsoc, pCapaccharge
-$load pGenzone, pDemand, pH2Demand, pLinesource, pLinesink, pLinecapac, pH2ExLineCapac, pTransEff
+$load pGenzone, pDemand, pLinesource, pLinesink, pLinecapac, pTransEff
 $load pDemandShifter, pDemandShiftingBlock, pCnse, pRegupreserves, pFlexreserves, pContreserves
 $load pRampratetoregreservescalar, pRampratetoflexreservescalar, pRampratetocontreservescalar
 $load pFlexeligible, pConteligible, pRegeligible
