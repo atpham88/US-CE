@@ -4,10 +4,9 @@
 #Initialize on/off commitment state of existing units for CE model for first
 #hour in each time block (seasons + demand day + ramp day).
 
-from operator import *
-from AuxFuncs import *
-from GAMSAuxFuncs import *
 import copy, pandas as pd
+from operator import *
+from GAMSAuxFuncs import *
 
 #For first hour of each time block, gets gen stack, sorts gens by op cost, then
 #meets demand and assigns dispatched gens to "on".

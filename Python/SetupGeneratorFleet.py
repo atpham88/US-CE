@@ -1,7 +1,6 @@
 #Michael Craig, 7 July 2020
 
 import csv, os, copy, operator, random, pandas as pd, numpy as np
-from AuxFuncs import *
 
 def setupGeneratorFleet(interconn,startYear,fuelPrices,stoEff,stoMinSOC,stoFTLabels): #statesForAnalysis
     #Import NEEDS (base fleet) and strip down to 1 fuel
@@ -250,6 +249,13 @@ def addUnitCommitmentParameters(genFleet,fname):
                 genFleet.loc[index,ucHeader]=valToAdd
     return genFleet
 
+#Read CSV to 2d list. Input: full file name including dir (str). Output: 2d list.
+def readCSVto2dList(fileNameWithDir):
+    with open(fileNameWithDir,'r') as f:
+        f = csv.reader(f)
+        f = list(f)
+    return f
+
 def getMatchingPhorumValue(ucData,fuel,plantType,size,paramName):
     if plantType == 'Fuel Cell': plantType = 'Combustion Turbine'
     fuel = mapFuels()[fuel]
@@ -308,6 +314,24 @@ def addFuelPrices(genFleet,currYear,fuelPrices):
 def mapFuelsToAEOPrices():
     return {'Bituminous': 'Steam Coal', 'Petroleum Coke': 'Steam Coal','Coal':'Steam Coal',
         'Subbituminous': 'Steam Coal', 'Lignite': 'Steam Coal','Nuclear Fuel': 'Uranium'}
+
+#Convert dollar years to 2012 dollars
+#CPI from Minneapolis Fed, https://www.minneapolisfed.org/community/teaching-aids/
+#cpi-calculator-information/consumer-price-index-and-inflation-rates-1913.
+#Inputs: name of parameter of dollar year to convert, parameter value (cost)
+#Outputs: cost in 2012 dollars
+def convertCostToTgtYr(paramName,cost):    
+    paramDollarYears = {'startup':2011,'vom':2012,'fom':2012,'occ':2012,'fuel':2019,'tgt':2012}
+    targetDollarYear = 2012
+    cpiValues = {2015:237,2014:236.7,2013:233,2012:229.6,2011:224.9,2010:218.1,
+            2009:214.5,2008:215.3,2007:207.3,2006:201.6,2005:195.3,2019:255.657}
+    return doConversion(paramName,cost,paramDollarYears,targetDollarYear,cpiValues)
+
+# #Convert dollar year
+def doConversion(paramName,cost,paramDollarYears,targetDollarYear,cpiValues):
+    paramDollarYear = paramDollarYears[paramName]
+    (cpiTgtYear,cpiParamYear) = (cpiValues[targetDollarYear],cpiValues[paramDollarYear])
+    return cost*cpiTgtYear/cpiParamYear
 ################################################################################
 
 ################################################################################
@@ -358,431 +382,4 @@ def fuelMapEmissions():
             'Distillate Fuel Oil':'Other petroleum & miscellaneous','Residual Fuel Oil':'Other petroleum & miscellaneous',
             'Waste Coal':'Bituminous','Fossil Waste':'Other petroleum & miscellaneous','Non-Fossil Waste':'Other petroleum & miscellaneous',
             'Petroleum Coke':'Petroleum coke'}
-################################################################################
-
-######################## OLD CODE ##############################################
-################################################################################
-#ADD EMISSION RATES FROM EGRID TO GENERATOR FLEET
-#Adds eGRID emissions rates to generator fleet
-#IN: generator fleet (2d list), states for analysis (1d list)
-def addEmissionsRatesOLD(baseGenFleet,statesForAnalysis,runLoc):
-    (egridBoiler,egridPlant) = importeGridData(statesForAnalysis,runLoc)
-    emsHeadersToAdd=["NOxEmRate(lb/MMBtu)","SO2EmRate(lb/MMBtu)",
-                  "CO2EmRate(lb/MMBtu)"]
-    addHeaders(baseGenFleet,emsHeadersToAdd)    
-    addEmissionsRatesValues(baseGenFleet,egridBoiler,egridPlant)
-    fillMissingEmissionsRates(baseGenFleet,emsHeadersToAdd) 
-
-#Fills missing generator em rates w/ average for gens w/ same fuel and plant type.
-#IN: generator fleet (2d list), emissions headers to add (1d list)
-def fillMissingEmissionsRates(baseGenFleet,emsHeadersToAdd):
-    #Get headers and columns
-    headersToColsMapBase = mapHeadersToCols(baseGenFleet)
-    plantTypeCol = headersToColsMapBase['PlantType']
-    fuelTypeCol = headersToColsMapBase['FuelType']
-    noxCol = headersToColsMapBase[emsHeadersToAdd[0]]
-    so2Col = headersToColsMapBase[emsHeadersToAdd[1]]
-    co2Col = headersToColsMapBase[emsHeadersToAdd[2]]
-    #Find and fill missing emissions rates values
-    for idx in range(1,len(baseGenFleet)):
-        if baseGenFleet[idx][noxCol]=='NA':
-            (plantType,fuelType) = (baseGenFleet[idx][plantTypeCol],
-                                    baseGenFleet[idx][fuelTypeCol])
-            [nox,so2,co2] = getEmsRatesOfMatchingFuelAndPlantType(baseGenFleet,plantType,
-                                                                  fuelType,emsHeadersToAdd)
-            [avgnox,avgso2,avgco2] = [avgListVals(nox),avgListVals(so2),avgListVals(co2)]
-            baseGenFleet[idx][noxCol]=avgnox
-            baseGenFleet[idx][so2Col]=avgso2
-            baseGenFleet[idx][co2Col]=avgco2   
-
-#Gets emissions rates of generators w/ given plant & fuel type
-#IN: generator fleet (2d list), plant and fuel type (str), em rate headers (1d list)
-#OUT: NOx, SO2 and CO2 emissions rates (1d lists)
-def getEmsRatesOfMatchingFuelAndPlantType(baseGenFleet,plantType,fuelType,emsHeadersToAdd):
-    #Get headers
-    headersToColsMapBase = mapHeadersToCols(baseGenFleet)
-    noxCol = headersToColsMapBase[emsHeadersToAdd[0]]
-    so2Col = headersToColsMapBase[emsHeadersToAdd[1]]
-    co2Col = headersToColsMapBase[emsHeadersToAdd[2]]
-    #Get cols w/ matching fuel & plant type
-    matchingRowIdxs = getMatchingRowsFuelAndPlantType(baseGenFleet,plantType,fuelType,
-                                                      noxCol)
-    #If can't find on fuel & plant type, try just fuel type
-    if matchingRowIdxs==[]:
-        matchingRowIdxs = getMatchingRowsFuelType(baseGenFleet,fuelType,noxCol)
-    #If still can't get emissions rate, then ues other plant & fuel type:
-    #LFG - NGCT, MSW - biomass, gas & oil O/G Steam - gas O/G Steam, Non-fossil waste - 
-    if matchingRowIdxs==[] and fuelType=='Landfill Gas':
-        matchingRowIdxs = getMatchingRowsFuelAndPlantType(baseGenFleet,'Combustion Turbine',
-                                                          'Natural Gas',noxCol)
-    elif matchingRowIdxs==[] and fuelType=='MSW':
-        matchingRowIdxs = getMatchingRowsFuelAndPlantType(baseGenFleet,'Biomass',
-                                                          'Biomass',noxCol)
-    elif matchingRowIdxs==[] and fuelType=='Natural Gas& Distillate Fuel Oil& Residual Fuel Oil':
-        matchingRowIdxs = getMatchingRowsFuelAndPlantType(baseGenFleet,'O/G Steam',
-                                                          'Natural Gas',noxCol)
-    elif matchingRowIdxs==[] and fuelType=='Non-Fossil Waste':
-        matchingRowIdxs = getMatchingRowsFuelAndPlantType(baseGenFleet,'Biomass',
-                                                          'Biomass',noxCol)
-    #Get emissions rates of matching rows
-    [nox,so2,co2] = [[],[],[]]
-    for rowIdx in matchingRowIdxs:
-        row = baseGenFleet[rowIdx]
-        nox.append(row[noxCol])
-        so2.append(row[so2Col])
-        co2.append(row[co2Col])
-    return [nox,so2,co2]
-
-#Gets row indexes in generator fleet of generators that match given plant & fuel type,
-#filtering out units w/ no emissions rate data.
-#IN: generator fleet (2d list), plant and fuel type (str), col w/ nox ems rate (int)
-#OUT: row indices of matching plant & fuel type (1d list)
-def getMatchingRowsFuelAndPlantType(baseGenFleet,plantType,fuelType,noxCol):
-    headersToColsMapBase = mapHeadersToCols(baseGenFleet)
-    plantTypeCol = headersToColsMapBase['PlantType']
-    fuelTypeCol = headersToColsMapBase['FuelType']
-    matchingRowIdxs = []
-    for idx in range(len(baseGenFleet)):
-        row = baseGenFleet[idx]
-        if row[plantTypeCol]==plantType and row[fuelTypeCol]==fuelType:
-            if row[noxCol] != 'NA': #make sure has data!
-                matchingRowIdxs.append(idx)
-    return matchingRowIdxs
-
-#Gets row indexes in generator fleet of gens w/ same fuel type, filtering
-#out units w/ no emissions rate data.
-#IN: generator fleet (2d list), fuel type (str), col w/ nox ems rate (int)
-#OUT: row indices of matching fuel type (1d list)
-def getMatchingRowsFuelType(baseGenFleet,fuelType,noxCol):
-    headersToColsMapBase = mapHeadersToCols(baseGenFleet)
-    fuelTypeCol = headersToColsMapBase['FuelType']
-    matchingRowIdxs = []
-    for idx in range(len(baseGenFleet)):
-        row = baseGenFleet[idx]
-        if row[fuelTypeCol]==fuelType:
-            if row[noxCol] != 'NA': #make sure has data!
-                matchingRowIdxs.append(idx)
-    return matchingRowIdxs
-
-#Add eGRID emissions rates values to fleet, either using boiler specific 
-#data for coal & o/g steam units or plant level average data. Adds
-#ems rate in order of nox, so2, and co2, as set by ems headers in addEmissionsRates.
-#IN: generator fleet (2d list), eGRID boiler and plant data (2d lists)
-def addEmissionsRatesValues(baseFleet,egridBoiler,egridPlant):
-    headersToColsMapBase = mapHeadersToCols(baseFleet)
-    headersToColsMapEgridBlr = mapHeadersToCols(egridBoiler)
-    headersToColsMapEgridPlnt = mapHeadersToCols(egridPlant)
-    basePlantTypeCol = headersToColsMapBase['PlantType']
-    noEmissionPlantTypes = ['hydro','solar pv','wind','geothermal',
-                            'solar thermal','pumped storage','nuclear']
-    for idx in range(1,len(baseFleet)):
-        plantType = baseFleet[idx][basePlantTypeCol].lower()
-        if plantType == 'coal steam':  
-            [nox,so2,co2] = getBlrEmRates(baseFleet,idx,egridBoiler)
-        elif plantType == 'o/g steam':
-            [nox,so2,co2] = getBlrEmRates(baseFleet,idx,egridBoiler)
-            if nox == 'NA': #just test on nox, but all would be na
-                [nox,so2,co2] = getPlantEmRates(baseFleet,idx,egridPlant)
-        elif plantType in noEmissionPlantTypes:
-            [nox,so2,co2] = [0,0,0]
-        else:
-            [nox,so2,co2] = getPlantEmRates(baseFleet,idx,egridPlant)
-        #Some plants have no emissions info, so end up w/ zero emission values - 
-        #fill in 'NA' if so.
-        if [nox,so2,co2] == [0,0,0] and plantType not in noEmissionPlantTypes:
-            [nox,so2,co2]=['NA','NA','NA']
-        baseFleet[idx].extend([nox,so2,co2])
-
-#Look for boiler-level match of given gen in gen fleet to eGRID data, and return emissions 
-#rates if find match.
-#IN: gen fleet (2d list), idx for row in gen fleet (int), boiler data (2d list)
-#OUT: boiler-level nox, so2 & co2 ems rates (1d list)
-def getBlrEmRates(baseFleet,idx,egridBoiler):
-    #Setup necessary data
-    headersToColsMapBase = mapHeadersToCols(baseFleet)
-    headersToColsMapEgridBlr = mapHeadersToCols(egridBoiler)
-    (baseOrisCol,baseUnitCol) = (headersToColsMapBase["ORIS Plant Code"],
-                                 headersToColsMapBase["Unit ID"])
-    (egridOrisCol,egridBlrCol) = (headersToColsMapEgridBlr["DOE/EIA ORIS plant or facility code"],
-                                  headersToColsMapEgridBlr["Boiler ID"])
-    (egridBlrORISIDs,egridBlrIDs) = (colTo1dList(egridBoiler,egridOrisCol),
-                                   colTo1dList(egridBoiler,egridBlrCol))    
-    #eGrid ORIS IDs are given w/ .0 @ end (e.g., 5834.0). So convert to int and back to str.
-    removeTrailingDecimalFromEgridORIS(egridBlrORISIDs)
-    #Do mapping
-    (baseOrisID,baseUnitID) = (baseFleet[idx][baseOrisCol],baseFleet[idx][baseUnitCol])
-    try:
-        egridBlrRow = search2Lists(egridBlrORISIDs, egridBlrIDs, baseOrisID, baseUnitID)
-        [nox,so2,co2] = calculateEmissionsRatesBlr(egridBoiler,egridBlrRow)
-    except:
-        # print('No matching boiler for: ORIS' + str(baseOrisID) + ' Blr' + str(baseUnitID))
-        [nox,so2,co2] = ['NA','NA','NA']
-    return [nox,so2,co2]
-
-#Looks for plant-level match of given unit in gen fleet to eGRID plant data,
-#and returns plant-level ems rate of matching plant if found.
-#IN: gen fleet (2d list), idx for row in gen fleet (int), plant data (2d list)
-#OUT: plant-level nox, so2 & co2 ems rate (1d list)
-def getPlantEmRates(baseFleet,idx,egridPlant):
-    #Setup necessary data
-    headersToColsMapBase = mapHeadersToCols(baseFleet)
-    headersToColsMapEgridPlnt = mapHeadersToCols(egridPlant)
-    baseOrisCol = headersToColsMapBase["ORIS Plant Code"]
-    egridOrisCol = headersToColsMapEgridPlnt["DOE/EIA ORIS plant or facility code"]
-    egridORISIDs = colTo1dList(egridPlant,egridOrisCol)   
-    #eGrid ORIS IDs are given w/ .0 @ end (e.g., 5834.0). So convert to int and back to str.
-    # removeTrailingDecimalFromEgridORIS(egridORISIDs)
-    #Do mapping
-    baseOrisID = baseFleet[idx][baseOrisCol]
-    try:
-        egridPlantRow = egridORISIDs.index(baseOrisID)
-        [nox,so2,co2] = calculateEmissionsRatesPlnt(egridPlant,egridPlantRow)
-    except:
-        # print('No matching plant for: ORIS' + str(baseOrisID))
-        [nox,so2,co2] = ['NA','NA','NA']
-    return [nox,so2,co2]
-    
-#Gets boiler-level emissions rates.
-#IN: eGRID boiler data (2d list), row in boiler data (int)
-#OUT: boiler-level emissions rates [lb/mmbtu] (1d list)
-def calculateEmissionsRatesBlr(egridBoiler,egridBoilerRow):
-    scaleTonsToLbs = 2000
-    #Define headers
-    htInputHeader = 'Boiler unadjusted annual best heat input (MMBtu)'
-    noxHeader = 'Boiler unadjusted annual best NOx emissions (tons)'
-    so2Header = 'Boiler unadjusted annual best SO2 emissions (tons)'
-    co2Header = 'Boiler unadjusted annual best CO2 emissions (tons)'
-    #Calculate values
-    headersToColsMap = mapHeadersToCols(egridBoiler)
-    (htinputCol,noxCol,so2Col,co2Col) = (headersToColsMap[htInputHeader],
-                                        headersToColsMap[noxHeader],
-                                        headersToColsMap[so2Header],
-                                        headersToColsMap[co2Header])
-    blrData = egridBoiler[egridBoilerRow]
-    (htInput,noxEms,so2Ems,co2Ems) = (blrData[htinputCol],blrData[noxCol],
-                                      blrData[so2Col],blrData[co2Col])
-    #Str nums have commas in them - use helper function to turn into numbers 
-    (htInput,noxEms,so2Ems,co2Ems) = (toNum(htInput),toNum(noxEms),toNum(so2Ems),
-                                      toNum(co2Ems))
-    (noxEmsRate,so2EmsRate,co2EmsRate) = (noxEms/htInput*scaleTonsToLbs, 
-                                          so2Ems/htInput*scaleTonsToLbs,
-                                          co2Ems/htInput*scaleTonsToLbs)
-    return [noxEmsRate,so2EmsRate,co2EmsRate]
-
-#Gets plant-level ems rates.
-#IN: eGRID plant data (2d list), row in plant data (int)
-#OUT: plant-level nox, so2 and co2 ems rates [lb/mmbtu] (1d list)
-def calculateEmissionsRatesPlnt(egridPlant,egridPlantRow):
-    #Define headers
-    noxEmsRateHeader = 'Plant annual NOx input emission rate (lb/MMBtu)'
-    so2EmsRateHeader = 'Plant annual SO2 input emission rate (lb/MMBtu)'
-    co2EmsRateHeader = 'Plant annual CO2 input emission rate (lb/MMBtu)'
-    #Get values
-    headersToColsMap = mapHeadersToCols(egridPlant)
-    (noxCol,so2Col,co2Col) = (headersToColsMap[noxEmsRateHeader],
-                              headersToColsMap[so2EmsRateHeader],
-                              headersToColsMap[co2EmsRateHeader])
-    plantData = egridPlant[egridPlantRow]
-    (noxEmsRate,so2EmsRate,co2EmsRate) = [plantData[noxCol],plantData[so2Col],plantData[co2Col]]
-    #Ems rate nums have commas - use helper func to turn into numbers
-    (noxEmsRate,so2EmsRate,co2EmsRate) = (toNum(noxEmsRate),
-                                          toNum(so2EmsRate),
-                                          toNum(co2EmsRate))
-    return [noxEmsRate,so2EmsRate,co2EmsRate]
-################################################################################
-
-################################################################################
-def stripDownGenFleet(genFleet,greenField):
-    rows = list()
-    for ft in ['Natural Gas','Wind','Solar']:
-        gens = genFleet.loc[genFleet['FuelType'] == ft]
-        if ft == 'Natural Gas': 
-            gens.iloc[0]['OpCost($/MWh)'] = 9999
-        rows.append(gens.iloc[0])
-    genFleet = pd.DataFrame(rows)
-    genFleet['Capacity (MW)'] = 0.1
-    return genFleet
-################################################################################
-
-################################################################################
-#IMPORT DATA
-#Import base generator fleet from NEEDS
-#OUT: gen fleet (2d list)
-def importNEEDSFleet(runLoc):
-    if runLoc == 'pc': dirName = 'C:\\Users\\mtcraig\\Desktop\\EPP Research\\Databases\\NEEDS'  
-    else: dirName = 'Data' 
-    fileName = 'needs_v515_nocommas.csv'
-    fullFileName = os.path.join(dirName,fileName)
-    return readCSVto2dList(fullFileName)
-
-def importTestFleet(runLoc):
-    if runLoc == 'pc': dirName = 'C:\\Users\\mtcraig\\Desktop\\EPP Research\\Databases\\CETestFleet'
-    else: dirName = ''
-    fileName = 'testFleetTiny.csv'
-    fullFileName = os.path.join(dirName,fileName)
-    return readCSVto2dList(fullFileName)    
-
-#Import eGRID boiler and plant level data, then isolate plants and boilers in state
-#IN: states for analysis (1d list)
-#OUT: eGRID boiler and plant data (2d lists)
-def importeGridData(statesForAnalysis,runLoc):
-    if runLoc == 'pc': dirName = 'C:\\Users\\mtcraig\\Desktop\\EPP Research\\Databases\\eGRID2015'
-    else: dirName = os.path.join('Data','eGRID2015')
-    egridBoiler = importeGridBoilerData(dirName)
-    egridPlant = importeGridPlantData(dirName)
-    egridStateColName = 'Plant state abbreviation'
-    statesForAnalysisAbbrev = getStateAbbrevs(statesForAnalysis)
-    isolateGensInStates(egridBoiler,statesForAnalysisAbbrev,egridStateColName)
-    isolateGensInStates(egridPlant,statesForAnalysisAbbrev,egridStateColName)
-    return (egridBoiler,egridPlant)
-
-#Import eGRID boiler data and remove extra headers
-#IN: directory w/ egrid data (str)
-#OUT: boiler data (2d list)
-def importeGridBoilerData(dirName):
-    fileName = 'egrid2012_data_boiler.csv'
-    fullFileName = os.path.join(dirName,fileName)
-    boilerData = readCSVto2dList(fullFileName)
-    boilerDataSlim = elimExtraneousHeaderInfo(boilerData,'eGRID2012 file boiler sequence number')
-    return boilerDataSlim
-
-#Import eGRID plant data and remove extra headers
-#IN: directory w/ egrid data (str)
-#OUT: plant data (2d list)
-def importeGridPlantData(dirName):
-    fileName = 'egrid2012_data_plant.csv'
-    fullFileName = os.path.join(dirName,fileName)
-    plantData = readCSVto2dList(fullFileName)
-    plantDataSlim = elimExtraneousHeaderInfo(plantData,'eGRID2012 file plant sequence number')
-    return plantDataSlim
-
-#Eliminates first several rows in egrid CSV that has no useful info
-#IN: eGRID fleet (2d list), value in col 0 in first row w/ valid data that want
-#to save (str)
-#OUT: eGRID fleet (2d list)
-def elimExtraneousHeaderInfo(egridFleet,valueInFirstValidRow):
-    for idx in range(len(egridFleet)):
-        if egridFleet[idx][0]==valueInFirstValidRow:
-            egridFleetSlim = copy.deepcopy(egridFleet[idx:])
-    return egridFleetSlim
-
-#Removes retired units from fleet based on input year
-#IN: gen fleet (2d list), year below which retired units should be removed
-#from fleet (int)
-def removeRetiredUnits(baseGenFleet,retirementYearScreen):
-    colName = "Retirement Year"
-    colNum = baseGenFleet[0].index(colName)
-    rowsToRemove= []
-    for rowIdx in range(1,len(baseGenFleet)):
-        retireYear = baseGenFleet[rowIdx][colNum]
-        if int(retireYear)<retirementYearScreen: rowsToRemove.append(rowIdx)
-    if rowsToRemove != []: removeRows(baseGenFleet,rowsToRemove)
-
-#Isolates fleet to generators in states of interest
-#IN: gen fleet (2d list), states for analyiss (1d list), col name w/ state data
-#(str)
-#OUT: gen fleet (2d list)
-def isolateGensInStates(baseGenFleet,statesForAnalysis,colName):
-    rowsToRemove = identifyRowsToRemove(baseGenFleet,statesForAnalysis,
-                                        colName)
-    removeRows(baseGenFleet,rowsToRemove)
-    return baseGenFleet
-
-#Isolates fleet to generators in power system of interest
-#IN: gen fleet (2d list), power sys for analyiss (1d list)
-#OUT: gen fleet (2d list)
-def isolateGensInPowerSystem(baseGenFleet,powerSystemsForAnalysis):
-    colName = "Region Name"
-    rowsToRemove = identifyRowsToRemove(baseGenFleet,powerSystemsForAnalysis,
-                                        colName)
-    removeRows(baseGenFleet,rowsToRemove)
-    return baseGenFleet
-################################################################################
-
-
-################################################################################
-#GENERAL UTILITY FUNCTIONS
-#Get abbreviations (which eGRID uses but NEEDS does not)
-#IN: states for analysis (1d list)
-#OUT: map of states names to state abbreviations (dict)
-def getStateAbbrevs(statesForAnalysis): 
-    stateAbbreviations = {'Virginia':'VA','North Carolina':'NC','South Carolina':'SC',
-                         'Georgia':'GA','Mississippi':'MS','Alabama':'AL','Louisiana':'LA',
-                         'Missouri':'MO','Arkansas':'AR','Illinois':'IL',
-                         'Kentucky':'KY','Tennessee':'TN','Texas':'TX'}
-    statesForAnalysisAbbrev = []
-    for state in statesForAnalysis:
-        statesForAnalysisAbbrev.append(stateAbbreviations[state])
-    return statesForAnalysisAbbrev
-
-#Returns a list of rows to remove for values in a given column that don't 
-#equal any value in valuesToKeep.
-#IN: any 2d list, values in specified column to keep (1d list), col name (str)
-#OUT: row indices to remove (1d list)
-def identifyRowsToRemove(list2d,valuesToKeep,colName):
-    headersToColsMap = mapHeadersToCols(list2d)
-    colNumber = headersToColsMap[colName]
-    rowsToRemove=[]
-    for row in range(1,len(list2d)):
-        if list2d[row][colNumber] not in valuesToKeep:
-            rowsToRemove.append(row)
-    return rowsToRemove
-
-#IN: data (2d list), row idx to remove (1d list)
-def removeRows(baseGenFleet,rowsToRemove):
-    for row in reversed(rowsToRemove):
-        baseGenFleet.pop(row)
-
-#Returns a dictionary mapping headers to column numbers
-#IN: fleet (2d list)
-#OUT: map of header name to header # (dict)
-def mapHeadersToCols(fleet):
-    headers = fleet[0]
-    headersToColsMap = dict()
-    for colNum in range(len(headers)):
-        header = headers[colNum]
-        headersToColsMap[header] = colNum
-    return headersToColsMap
-
-#IN: data (2d list), headers to add to first row of data (1d list)
-def addHeaders(fleet,listOfHeaders):
-    for header in listOfHeaders:
-        fleet[0].append(header)
-
-#Returns average of values in input 1d list
-def avgListVals(listOfVals):
-    (total,count) = (0,0)
-    for val in listOfVals:
-        total += float(val)
-        count += 1
-    return total/count
-
-#Removes '.0' from end of ORIS IDs in eGRID
-def removeTrailingDecimalFromEgridORIS(egridORISIDs):
-    for idx in range(1,len(egridORISIDs)):
-        egridORISIDs[idx] = egridORISIDs[idx][:-2]
-
-#Converts a string w/ commas in it to a float
-def toNum(s):
-    numSegments = s.split(',')
-    result = ""
-    for segment in numSegments:
-        result += segment
-    return float(result)
-
-#Return row idx (or False) where list1=data1 and list2=data2
-def search2Lists(list1,list2,data1,data2):
-    if (data1 not in list1) or (data2 not in list2):
-            return False
-    for idx in range(len(list1)):
-        if list1[idx] == data1 and list2[idx] == data2:
-            return idx
-    return False
-    
-#Convert specified column in 2d list to a 1-d list
-def colTo1dList(data,colNum):
-    listWithColData = []
-    for dataRow in data:
-        listWithColData.append(dataRow[colNum])
-    return listWithColData
 ################################################################################

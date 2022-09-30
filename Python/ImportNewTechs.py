@@ -3,15 +3,15 @@
 #Function imports data for new technologies eligible for construction in capacity expansion model
 
 import os, pandas as pd
-from AuxFuncs import *
 from SetupGeneratorFleet import *
 
-def getNewTechs(regElig,regCostFrac,currYear,incITC,stoInCE,seasStoInCE,fuelPrices,yearIncDACS,
-                incNuc,transRegions,contFlexInelig,onlyNSPSUnits=True,allowCoalWithoutCCS=False,firstYearForCCS=2030):
+def getNewTechs(regElig,regCostFrac,currYear,stoInCE,seasStoInCE,fuelPrices,yearIncDACS,
+                incNuc,transRegions,contFlexInelig,onlyNSPSUnits=True,allowCoalWithoutCCS=False,
+                firstYearForCCS=2030,newPlantDataDir=os.path.join('Data','NewPlantData')):
     if currYear > 2050: currYear = 2050
     #Read in new techs and add parameters
-    newTechsCE = pd.read_excel(os.path.join('Data','NewPlantData','NewTechFramework.xlsx'))
-    newTechsCE = inputValuesForCurrentYear(newTechsCE,'Data\\NewPlantData',currYear)
+    newTechsCE = pd.read_excel(os.path.join(newPlantDataDir,'NewTechFramework.xlsx'))
+    newTechsCE = extractATBDataForCurrentYear(newTechsCE,newPlantDataDir,currYear)
     newTechsCE = addUnitCommitmentParameters(newTechsCE,'PhorumUCParameters.csv') 
     newTechsCE = addUnitCommitmentParameters(newTechsCE,'StorageUCParameters.csv')
     newTechsCE = addFuelPrices(newTechsCE,currYear,fuelPrices)
@@ -21,8 +21,7 @@ def getNewTechs(regElig,regCostFrac,currYear,incITC,stoInCE,seasStoInCE,fuelPric
     newTechsCE = addRegResCostAndElig(newTechsCE,regElig,regCostFrac)
     newTechsCE = addReserveEligibility(newTechsCE,contFlexInelig)
     #Discount costs
-    for c,l in zip(['CAPEX(2012$/MW)','FOM(2012$/MW/yr)'],['occ','fom']):
-        newTechsCE[c] = convertCostToTgtYr(l,newTechsCE[c])
+    for c,l in zip(['CAPEX(2012$/MW)','FOM(2012$/MW/yr)'],['occ','fom']): newTechsCE[c] = convertCostToTgtYr(l,newTechsCE[c])
     #Filter plants
     if allowCoalWithoutCCS == False: newTechsCE = newTechsCE.loc[newTechsCE['PlantType'] != 'Coal Steam']
     if onlyNSPSUnits: newTechsCE = newTechsCE.loc[newTechsCE['NSPSCompliant'] == 'Yes']
@@ -35,23 +34,51 @@ def getNewTechs(regElig,regCostFrac,currYear,incITC,stoInCE,seasStoInCE,fuelPric
     newTechsCE.reset_index(inplace=True,drop=True)
     return newTechsCE
 
-def inputValuesForCurrentYear(newTechsCE,newPlantDataDir,currYear):
-    if currYear > 2050: currYear = 2050
-    inputFiles = newTechsCE['DataSource'].unique()
-    for inputFile in inputFiles:
-        #Load annual new plant data and get column #s of 2d list
-        annualData = readCSVto2dList(os.path.join(newPlantDataDir,inputFile+'.csv'))
-        (forecastTechCol,forecastParamCol) = (annualData[0].index('PlantType'),annualData[0].index('Parameter'))
-        yearCol = annualData[0].index(str(currYear)) if str(currYear) in annualData[0] else len(annualData[0])-1
-        #Input data into new plant df
-        for row in annualData[1:]: newTechsCE.loc[newTechsCE['PlantType']==row[forecastTechCol],row[forecastParamCol]] = float(row[yearCol])
+def extractATBDataForCurrentYear(newTechsCE,newPlantDataDir,currYear,scenario='Moderate'):
+    #Create mapping from our technologies to names in ATB
+    ptToATBTechAlias = {'Solar PV':'Utility PV','Wind':'Land-Based Wind','Battery Storage':'Utility-Scale Battery Storage','Nuclear':'Nuclear',
+                    'Coal Steam CCS':'Coal','Combined Cycle':'Natural Gas','Combined Cycle CCS':'Natural Gas','Combustion Turbine':'Natural Gas'}
+    feToATBTechDetail = {'Solar PV':'Class5','Wind':'Class5','Battery Storage':'4Hr Battery Storage','Nuclear':'Nuclear',
+                    'Coal Steam CCS':'CCS90AvgCF','Combined Cycle':'CCAvgCF','Combined Cycle CCS':'CCCCSAvgCF','Combustion Turbine':'CTAvgCF'}
+    ptToATBHRs = {'Coal Steam CCS':'Coal-90%-CCS','Combined Cycle':'NG F-Frame CC','Combined Cycle CCS':'NG F-Frame CC 90% CCS','Combustion Turbine':'NG F-Frame CT','Nuclear':'Nuclear - AP1000'}
+
+    #Import ATB
+    atb = pd.read_csv(os.path.join(newPlantDataDir,'ATBe.csv'),index_col=0,header=0)
+    hrs = pd.read_csv(os.path.join(newPlantDataDir,'ATBHeatRatesJuly2022Edition.csv'),index_col=0,skiprows=1,header=0) #MMBtu/MWh
+
+    #Filter ATB rows
+    atb = atb.loc[atb['core_metric_variable']==currYear]
+    atb = atb.loc[atb['core_metric_case']=='Market'] 
+    atb = atb.loc[atb['scenario']==scenario]
+    hrs = hrs.loc[hrs['scenario']==scenario]
+    hrs = hrs[str(currYear)]
+
+    #Add values for each plant type
+    for pt in newTechsCE['PlantType']:
+        if pt in ptToATBTechAlias:
+            #Get rows for tech type
+            techRows = atb.loc[atb['technology_alias']==ptToATBTechAlias[pt]]
+            techRows = techRows.loc[techRows['techdetail']==feToATBTechDetail[pt]]
+
+            #Extract parameters (use .iloc[0] because of redundancies in data that do not change values of our parameters of interest)
+            cap = techRows.loc[techRows['core_metric_parameter']=='CAPEX']['value'].iloc[0] #$/kW
+            fom = techRows.loc[techRows['core_metric_parameter']=='Fixed O&M']['value'].iloc[0] #$/kW-yr
+            vom = techRows.loc[techRows['core_metric_parameter']=='Variable O&M']['value'].iloc[0] if 'Variable O&M' in techRows['core_metric_parameter'].unique() else 0 #$/MWh
+
+            #Get heat rate from separate file
+            hr = hrs[ptToATBHRs[pt]] if pt in ptToATBHRs else 0
+
+            #Add parameters
+            newTechsCE.loc[newTechsCE['PlantType']==pt,'CAPEX(2012$/MW)'] = cap*1000 #$/kW to $/MW
+            newTechsCE.loc[newTechsCE['PlantType']==pt,'FOM(2012$/MW/yr)'] = fom*1000 #$/kW-yr to $/MW-yr
+            newTechsCE.loc[newTechsCE['PlantType']==pt,'VOM(2012$/MWh)'] = vom #already in $/MWh
+            newTechsCE.loc[newTechsCE['PlantType']==pt,'Heat Rate (Btu/kWh)'] = hr*1000
     return newTechsCE
 
 #Add DACS parameters to new techs. DACS gen & capac values are negative in optim, so 
 #all cost values (op, fom, cap) are negative (so that gen or cap * cost = positive) and emission rate is 
 #positive (so that gen * ER = negative). Data based on Keith's Joule paper.
 def addDACS(newTechsCE,fuelPrices,currYear):
-    if currYear > 2050: currYear = 2050
     dacsCap = -500
     #CO2 ems removal rate NET of emissions from NG for heat. 
     #Keith: 1 t CO2 removal requires 366 kWh e [burned 5.25 GJ NG is also captured; not included in 1 t co2]
@@ -74,9 +101,11 @@ def addDACS(newTechsCE,fuelPrices,currYear):
     newRow = {'PlantType':['DAC'],'DataSource':['handCalc'],'FuelType':['DAC'],'Capacity (MW)':[dacsCap],
         'Heat Rate (Btu/kWh)':[dacsHR],'CAPEX(2012$/MW)':[-capCost],'FOM(2012$/MW/yr)':[0],'VOM(2012$/MWh)':[-totalOpCost],
         'NSPSCompliant':['Yes'],'CO2EmRate(lb/MMBtu)':[dacsNetEmsRate],'Lifetime(years)':[30],
-        'FuelPrice($/MMBtu)':[0],'RampRate(MW/hr)':[abs(dacsCap)],'MinLoad(MWh)':0,'MinDownTime(hrs)':0,'StartCost($)':0}
+        'FuelPrice($/MMBtu)':[0],'RampRate(MW/hr)':[abs(dacsCap)],'MinLoad(MWh)':[0],'MinDownTime(hrs)':[0],'StartCost($)':[0]}
     newTechsCE = pd.concat([newTechsCE,pd.DataFrame(newRow)])
     newTechsCE.reset_index(drop=True,inplace=True)
+    print('made UC params [0] instead of 0')
+    print(newTechsCE.iloc[-1])
     return newTechsCE
 
 #For each non-wind & non-solar tech option, repeat per region. (New W&S use lat/long coords later.)

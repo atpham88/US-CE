@@ -7,10 +7,7 @@
 #Contingency: 3% load
 #Flexibility: geometric sum of 70th percentile of 1-hour forecast errors for wind and solar
 
-import csv, os, datetime, copy, operator
-import pandas as pd
-from AuxFuncs import *
-import numpy as np
+import csv, os, datetime, copy, operator, pandas as pd, numpy as np
 
 ########## CALCULATE WWSIS RESERVES ############################################
 #Loads raw data, gets gen errors, and returns reserve 

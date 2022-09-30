@@ -8,7 +8,6 @@
 
 import sys, os, csv, operator, copy, time, random, warnings, numpy as np, datetime as dt, pandas as pd
 from os import path; from netCDF4 import Dataset; from gams import *
-from AuxFuncs import *
 from GAMSAuxFuncs import *
 from SetupGeneratorFleet import *
 from ProcessHydro import processHydro
@@ -35,13 +34,10 @@ from InitializeOnOffExistingGensCE import initializeOnOffExistingGens
 from ReservesWWSIS import calcWWSISReserves
 from GetIncResForAddedRE import getIncResForAddedRE
 from SaveCEOperationalResults import saveCapacExpOperationalData
-from ImportStorageParams import *
 from WriteTimeDependentConstraints import writeTimeDependentConstraints
 from WriteBuildVariable import writeBuildVariable
 from CreateEmptyReserveDfs import createEmptyReserveDfs
 from SetupTransmissionAndZones import setupTransmissionAndZones, defineTransmissionRegions
-# from resultsanalysis_function_automated import results_summary
-# from resultsanalysis_function_automated_mulStep import results_summary_mul
 
 # SET OPTIONS
 warnings.filterwarnings("ignore")
@@ -56,17 +52,21 @@ lbToShortTon = 2000
 # ##### UNIVERSAL PARAMETERS ####################################################
 # ###############################################################################
 def setKeyParameters():
+    # ### RUNNING ON SC OR LOCAL
+    runOnSC = False                                     # whether running on supercomputer
+
     #### STUDY AREA AND METEOROLOGICAL-DEPENDENT DATA
     metYear = 2012 #year of meteorological data used for demand and renewables
     interconn = 'EI'                                    # which interconnection to run - ERCOT, WECC, EI
     balAuths = 'full'                                   # full: run for all BAs in interconn. TODO: add selection of a subset of BAs.
+    
     electrifiedDemand = True                            # whether to import electrified demand futures from NREL's EFS
     elecDemandScen = 'REFERENCE'                        # 'REFERENCE','HIGH','MEDIUM' (ref is lower than med)
-    reSourceMERRA = True                                # == True: use MERRA as renewable data source, == False: use NSDB and Wind Toolkit
-
     annualDemandGrowth = 0                              # fraction demand growth per year - ignored if use EFS data (electrifieDemand=True)
     metYear = 2012 if electrifiedDemand else metYear    # EFS data is for 2012; ensure met year is 2012
-    reDownFactor = 10                                  # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
+    
+    reSourceMERRA = True                                # == True: use MERRA as renewable data source, == False: use NSDB and Wind Toolkit
+    reDownFactor = 3                                  # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
 
     # ### BUILD SCENARIO
     buildLimitsCase = 1                               # 1 = reference case,
@@ -75,32 +75,15 @@ def setKeyParameters():
                                                         # 4 = limited hydrogen storage,
                                                         # 5 = limited transmission
 
-    # ### PLANNING SYSTEM SCENARIO
-    emissionSystem = 'NetZero'                          # "NetZero" = net zero,
-                                                        # "Negative" = negative emission system
-
-    # ### NEGATIVE EMISSION SCENARIO
-    planNESystem = 2050                                 # Year that negative emission system is planned
-
-    # ### RUNNING ON SC OR LOCAL
-    runOnSC = False                                     # whether running on supercomputer
+    # ### START YEAR, END YEAR, AND STEPS FOR CE
+    startYear, endYear, yearStepCE = 2020, 2051, 10
 
     # ### CO2 EMISSION CAPS AND DACS TREATMENT [https://www.eia.gov/environment/emissions/state/, table 3]
-    if interconn == 'ERCOT':
-        co2Ems2020 =  130594820                          #METRIC TONS. Initial emission for ERCOT: 130594820.
-    elif interconn == 'EI':
-        co2Ems2020 =  1274060000
-    elif interconn == 'WECC':
-        co2Ems2020 =  248800000                        #2019. METRIC TONS. wa,or,ca,nm,az,nv,ut,co,wy,id,mt
+    if interconn == 'ERCOT': co2EmsInitial =  130594820     #METRIC TONS. Initial emission for ERCOT: 130594820.
+    elif interconn == 'EI': co2EmsInitial =  1274060000
+    elif interconn == 'WECC': co2EmsInitial =  248800000    #2019. METRIC TONS. wa,or,ca,nm,az,nv,ut,co,wy,id,mt
 
-    if emissionSystem == 'NetZero':
-        co2EmsCapInFinalYear = 0                        # .9*co2Ems2020    # cap on co2 emissions in final year of CE
-    elif emissionSystem == 'Negative':
-        if interconn == 'ERCOT':
-            co2EmsCapInFinalYear = -90 * 1e6
-        elif interconn == 'EI':
-            co2EmsCapInFinalYear = -724.6662647 * 1e6
-
+    co2EmsInFinalYear = .1                               #final CO2 emissions cap as fraction of initial CO2 ems
     yearIncDACS = 2050                                  #year to include DACS - set beyond end period if don't want DACS
 
     # ### CE AND UCED/ED OPTIONS
@@ -111,11 +94,8 @@ def setKeyParameters():
 
     # ### CE OPTIONS
     runCE, ceOps = True, 'ED'                           # ops are 'ED' or 'UC' (econ disp or unit comm constraints)
-    # numBlocks, daysPerBlock, daysPerPeak = 1, 360, 1                              # num rep time blocks, days per rep block, and days per peak block in CE
     numBlocks, daysPerBlock, daysPerPeak = 4, 4, 1                              # num rep time blocks, days per rep block, and days per peak block in CE
     fullYearCE = True if (numBlocks == 1 and daysPerBlock > 300) else False     # whether running full year in CE
-    startYear, endYear, yearStepCE = 2020, 2041, 2
-    mulStep = (yearStepCE*2 < (endYear - startYear))                       
     removeHydro = False                                  #whether to remove hydropower from fleet & subtract generation from demand, or to include hydro as dispatchable in CE w/ gen limit
     greenField = False                                  # whether to run greenField (set to True) or brownfield (False)
     includeRes = False                                  # whether to include reserves in CE & dispatch models (if False, multiplies reserve timeseries by 0)
@@ -123,9 +103,9 @@ def setKeyParameters():
     retireByAge = True                                  # whether to retire by age or not
     planningReserveMargin = 0.1375                      # fraction of peak demand; ERCOT targeted planning margin
     retirementCFCutoff = .3                             # retire units w/ CF lower than given value
-    discountRate = 0.07 #fraction    
     ptEligRetCF = ['Coal Steam']                        # which plant types retire based on capacity factor (economics)
-    incITC,incNuc = False,False                          # include Investment Tax Credit or not; include nuclear as new investment option or not
+    discountRate = 0.07 
+    incNuc = False                                      # include nuclear as new investment option or not
 
     # ### ED/UCED OPTIONS
     runFirstYear = False                                # whether to run first year of dispatch
@@ -145,8 +125,7 @@ def setKeyParameters():
     demandShiftingBlock = 4                             # moving shifting demand window (hours)
         
     # ### LIMITS ON TECHNOLOGY DEPLOYMENT (max added MW per CE run (W&S by cell))
-    #wind: 2000, solar: 17000
-    maxCapPerTech = {'Wind': 20000 * reDownFactor, 'Solar': 170000 * reDownFactor, 'Thermal': 999999, 'Combined Cycle': 50000,
+    maxCapPerTech = {'Wind': 2000 * reDownFactor, 'Solar': 17000 * reDownFactor, 'Thermal': 999999, 'Combined Cycle': 50000,
                      'Storage': 100000, 'Dac': -9999999, 'CCS': 999999, 'Nuclear': 999999, 'Battery Storage': 10000,
                      'Hydrogen': 10000, 'Transmission': 10000} 
     if buildLimitsCase == 2: maxCapPerTech['Nuclear'] = 9000 
@@ -159,11 +138,11 @@ def setKeyParameters():
     if ucOrED != 'None': sys.exit('ED and UC.gms need to be checked for DACS constraints')
 
     return (buildLimitsCase, greenField, includeRes, useCO2Price, runCE, ceOps, stoInCE, seasStoInCE, ucOrED, numBlocks,
-            daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsCapInFinalYear, co2Ems2020,
-            planNESystem, emissionSystem, startYear, endYear, yearStepCE, retirementCFCutoff, retireByAge, planningReserveMargin,
+            daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsInFinalYear, co2EmsInitial,
+            startYear, endYear, yearStepCE, retirementCFCutoff, retireByAge, planningReserveMargin,
             discountRate, annualDemandGrowth, stoMkts, stoFTLabels, stoPTLabels, initSOCFraction, tzAnalysis, maxCapPerTech,
-            runCE, runFirstYear, metYear, ptEligRetCF, incITC, stoMinSOC, reDownFactor, demandShifter, demandShiftingBlock,
-            runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, interconn, balAuths, mulStep, reSourceMERRA, 
+            runCE, runFirstYear, metYear, ptEligRetCF, stoMinSOC, reDownFactor, demandShifter, demandShiftingBlock,
+            runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, interconn, balAuths, reSourceMERRA, 
             transmissionEff, removeHydro)
 
 def importFuelPrices(fuelPriceScenario):
@@ -210,73 +189,37 @@ def defineReserveParameters(stoMkts,stoFTLabels):
 def masterFunction():
     # Import key parameters
     (buildLimitsCase, greenField, includeRes, useCO2Price, runCE, ceOps, stoInCE, seasStoInCE, ucOrED, numBlocks,
-     daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsCapInFinalYear, co2Ems2020,
-     planNESystem, emissionSystem, startYear, endYear, yearStepCE, retirementCFCutoff, retireByAge, planningReserveMargin,
+     daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsInFinalYear, co2EmsInitial,
+     startYear, endYear, yearStepCE, retirementCFCutoff, retireByAge, planningReserveMargin,
      discountRate, annualDemandGrowth, stoMkts, stoFTLabels, stoPTLabels, initSOCFraction, tzAnalysis, maxCapPerTech,
-     runCE, runFirstYear, metYear, ptEligRetCF, incITC, stoMinSOC, reDownFactor, demandShifter, demandShiftingBlock,
-     runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, interconn, balAuths, mulStep, reSourceMERRA, 
+     runCE, runFirstYear, metYear, ptEligRetCF, stoMinSOC, reDownFactor, demandShifter, demandShiftingBlock,
+     runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, interconn, balAuths, reSourceMERRA, 
      transmissionEff, removeHydro) = setKeyParameters()
 
     (regLoadFrac, contLoadFrac, regErrorPercentile, flexErrorPercentile, regElig, contFlexInelig, regCostFrac,
         rrToRegTime, rrToFlexTime, rrToContTime) = defineReserveParameters(stoMkts, stoFTLabels)
 
     # Create results directory
-    buildScen = {1:'reference', 2:'lNuclear',3: 'lNuclearCCS', 4: 'lH2', 5: 'lTrans'}[buildLimitsCase]
-    if emissionSystem == 'Negative':
-        resultsDirAll = 'Results_' + interconn + '_' + emissionSystem+ str(int(co2EmsCapInFinalYear/1e6)) + '_' + 'DACS' + str(yearIncDACS) + 'NEin' + str(planNESystem) + '_' + buildScen + '_' + str(electrifiedDemand) + elecDemandScen
-    elif emissionSystem == 'NetZero':
-        resultsDirAll = 'Results_' + interconn + '_' + emissionSystem + '_' + 'DACS' + str(yearIncDACS) + '_' + buildScen + '_' + str(electrifiedDemand) + elecDemandScen
-
+    buildScen = {1:'Ref', 2:'Nuc',3: 'NucCCS', 4: 'H2', 5: 'Trans'}[buildLimitsCase]
+    resultsDirAll = 'Results_' + interconn + '_CO2Dec' + str(int(co2EmsInFinalYear*100)) + '_BldLim' + buildScen + '_' + str(electrifiedDemand) + (elecDemandScen if electrifiedDemand else '')
     if not os.path.exists(resultsDirAll): os.makedirs(resultsDirAll)
+    pd.Series(co2EmsInitial).to_csv(os.path.join(resultsDirAll,'initialCO2Ems.csv'))
 
     # Setup initial fleet and demand
     (genFleet, demandProfile, transRegions,pRegionShapes, lineLimits, lineDists, 
         lineCosts) = getInitialFleetDemandTransmission(startYear, fuelPrices, electrifiedDemand,
-                                                                           elecDemandScen, compressFleet, resultsDirAll,
-                                                                           regElig, regCostFrac, metYear, stoMinSOC, greenField,
-                                                                           interconn, balAuths, contFlexInelig, stoFTLabels, stoPTLabels)
+                                                       elecDemandScen, compressFleet, resultsDirAll,
+                                                       regElig, regCostFrac, metYear, stoMinSOC, greenField,
+                                                       interconn, balAuths, contFlexInelig, stoFTLabels, stoPTLabels)
 
     # Run CE and/or ED/UCED
     for currYear in range(startYear, endYear, yearStepCE):
-        # Set CO2 cap and demand for year
-        if currYear <=2050:
-            currCo2Cap = co2Ems2020 + (co2EmsCapInFinalYear - co2Ems2020)/((endYear-1) - startYear) * (currYear - startYear)
-            currCo2CapZero = co2Ems2020 + (0 - co2Ems2020) / (2050 - startYear) * (currYear - startYear)
-        elif currYear > 2050:
-            currCo2Cap = co2Ems2020 + (co2EmsCapInFinalYear - co2Ems2020) / (2050 - startYear) * (2050 - startYear)
-
-        Co2CapZero2030 = co2Ems2020 + (0 - co2Ems2020)/(((endYear - 1) - 1) - startYear) * (2030 - startYear)
-        Co2Cap2040planNE2030 = Co2CapZero2030 - (Co2CapZero2030 - co2EmsCapInFinalYear) / 2
-
-        if emissionSystem == 'Negative':
-            if planNESystem == 2030:
-                if currYear < 2040:
-                    currCo2Cap = currCo2CapZero
-                elif currYear == 2040:
-                    currCo2Cap = Co2Cap2040planNE2030
-            elif planNESystem == 2040:
-                if currYear < 2050:
-                    currCo2Cap = currCo2CapZero
-            elif planNESystem == 2050:
-                if currYear <= 2050:
-                    currCo2Cap = currCo2CapZero
-
-        if not mulStep:
-            if emissionSystem == 'Negative':
-                if planNESystem == 2020 or planNESystem == 2050:
-                    if currYear == 2030 or currYear == 2040:
-                        continue
-                elif planNESystem == 2030:
-                    if currYear == 2040:
-                        continue
-                elif planNESystem == 2040:
-                    if currYear == 2030:
-                        continue
-
+        # Set CO2 cap
+        currCo2Cap = co2EmsInitial + (co2EmsInFinalYear*co2EmsInitial - co2EmsInitial)/((endYear-1) - startYear) * (currYear - startYear)
         print('Entering year ', currYear, ' with CO2 cap (million tons):', round(currCo2Cap/1e6))
 
         # Create results directory
-        resultsDir = os.path.join(resultsDirAll,str(currYear) + 'CO2Cap' + str(int(co2EmsCapInFinalYear/1e6)))
+        resultsDir = os.path.join(resultsDirAll,str(currYear) + 'CO2Cap' + str(int(currCo2Cap/1e6)))
         if not os.path.exists(resultsDir): os.makedirs(resultsDir)
         
         # Scale up demand profile if needed
@@ -288,15 +231,7 @@ def masterFunction():
         if currYear > startYear and runCE:
             print('Starting CE')
             #Initialize results & inputs
-            if mulStep:
-                if currYear == startYear + yearStepCE:
-                    priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
-            else:
-                if planNESystem == currYear:
-                    priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
-
-                elif planNESystem == 2020 or planNESystem == 2050 or emissionSystem == 'NetZero':
-                    priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None,
+            if currYear == startYear + yearStepCE: priorCEModel, priorHoursCE, genFleetPriorCE = None, None, None
 
             (genFleet, genFleetPriorCE, lineLimits,
              priorCEModel, priorHoursCE) = runCapacityExpansion(genFleet, demandProfile, startYear, currYear, planningReserveMargin,
@@ -304,11 +239,11 @@ def masterFunction():
                                                                 fullYearCE, retirementCFCutoff, retireByAge, tzAnalysis, resultsDir,
                                                                 maxCapPerTech, regLoadFrac, contLoadFrac, regErrorPercentile, flexErrorPercentile,
                                                                 rrToRegTime, rrToFlexTime, rrToContTime, regElig, regCostFrac, ptEligRetCF,
-                                                                genFleetPriorCE, priorCEModel, priorHoursCE, incITC, metYear, stoInCE, seasStoInCE,
+                                                                genFleetPriorCE, priorCEModel, priorHoursCE, metYear, stoInCE, seasStoInCE,
                                                                 ceOps, stoMkts, initSOCFraction, includeRes, reDownFactor, incNuc, demandShifter,
                                                                 demandShiftingBlock, runOnSC, interconn, yearIncDACS, transRegions,pRegionShapes,
-                                                                lineLimits, lineDists, lineCosts, contFlexInelig, buildLimitsCase, emissionSystem,
-                                                                planNESystem, co2EmsCapInFinalYear, electrifiedDemand, elecDemandScen, reSourceMERRA, 
+                                                                lineLimits, lineDists, lineCosts, contFlexInelig, buildLimitsCase, 
+                                                                electrifiedDemand, elecDemandScen, reSourceMERRA, 
                                                                 stoFTLabels, transmissionEff, removeHydro)
 
         # Run dispatch
@@ -318,13 +253,6 @@ def masterFunction():
                         tzAnalysis, resultsDir, stoMkts, metYear, regLoadFrac, contLoadFrac, interconn, regErrorPercentile, reSourceMERRA,
                         flexErrorPercentile, includeRes, rrToRegTime, rrToFlexTime, rrToContTime, regCostFrac,
                         ucOrED, initSOCFraction, includeRes)
-
-    # if mulStep:
-    #     results_summary_mul(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear,
-    #                         yearIncDACS, electrifiedDemand, elecDemandScen,interconn)
-    # else:
-    #     results_summary(buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear,
-    #                     yearIncDACS, electrifiedDemand, elecDemandScen,interconn)
 
 # ###############################################################################
 # ###############################################################################
@@ -374,20 +302,21 @@ def getInitialFleetDemandTransmission(startYear, fuelPrices, electrifiedDemand, 
 def runCapacityExpansion(genFleet, demand, startYear, currYear, planningReserveMargin, discountRate, fuelPrices, currCo2Cap, numBlocks,
                          daysPerBlock, daysPerPeak, fullYearCE, retirementCFCutoff, retireByAge, tzAnalysis, resultsDirOrig, maxCapPerTech,
                          regLoadFrac,contLoadFrac, regErrorPercentile, flexErrorPercentile, rrToRegTime, rrToFlexTime,  rrToContTime,
-                         regElig, regCostFrac, ptEligRetCF, genFleetPriorCE, priorCEModel, priorHoursCE, incITC, metYear, stoInCE, seasStoInCE,
+                         regElig, regCostFrac, ptEligRetCF, genFleetPriorCE, priorCEModel, priorHoursCE, metYear, stoInCE, seasStoInCE,
                          ceOps, stoMkts, initSOCFraction, includeRes, reDownFactor, incNuc, demandShifter, demandShiftingBlock, runOnSC,
                          interconn, yearIncDACS, transRegions, pRegionShapes, lineLimits, lineDists, lineCosts, contFlexInelig,
-                         buildLimitsCase, emissionSystem, planNESystem, co2EmsCapInFinalYear, electrifiedDemand, elecDemandScen, reSourceMERRA, 
+                         buildLimitsCase, electrifiedDemand, elecDemandScen, reSourceMERRA, 
                          stoFTLabels, transmissionEff, removeHydro):
-    # Create results directory
+    # Create results directory and save initial inputs
     resultsDir = os.path.join(resultsDirOrig, 'CE')
     if not os.path.exists(resultsDir): os.makedirs(resultsDir)
     print('Entering CE loop for year ' + str(currYear))
     lineLimits.to_csv(os.path.join(resultsDir,'lineLimitsForCE' + str(currYear) + '.csv'))
+    pd.Series(maxCapPerTech).to_csv(os.path.join(resultsDir,'buildLimitsForCE' + str(currYear) + '.csv'))
+    pd.Series(currCo2Cap).to_csv(os.path.join(resultsDir,'co2CapCE' + str(currYear) + '.csv'))
 
-    # Update new technology and fuel price data
-    write2dListToCSV([[currCo2Cap]], os.path.join(resultsDir, 'co2CapCE' + str(currYear) + '.csv'))
-    newTechsCE = getNewTechs(regElig, regCostFrac, currYear, incITC, stoInCE, seasStoInCE,
+    # Update new technology and fuel price data    
+    newTechsCE = getNewTechs(regElig, regCostFrac, currYear, stoInCE, seasStoInCE,
                              fuelPrices, yearIncDACS, incNuc, transRegions, contFlexInelig)
     genFleet = updateFuelPricesAndCosts(genFleet, currYear, fuelPrices, regCostFrac)
 
@@ -449,8 +378,8 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear, planningReserveM
                      ['demand', 'windGen', 'solarGen','windAndSolarNewCFs','newTechs','contRes','regUpRes','flexRes', 'regUpInc', 'flexInc', 'hydroGen']):
         df.to_csv(os.path.join(resultsDir, n + 'CE' + str(currYear) + '.csv'))
     hoursForCE.to_csv(os.path.join(resultsDir, 'hoursCEByBlock' + str(currYear) + '.csv'))
-    write2dListToCSV([[planningReserve]],os.path.join(resultsDir, 'planningReserveCE' + str(currYear) + '.csv'))
-    write2dListToCSV([[k, v] for k, v in socScalars.items()],os.path.join(resultsDir, 'socScalars' + str(currYear) + '.csv'))
+    pd.Series(planningReserve).to_csv(os.path.join(resultsDir,'planningReserveCE' + str(currYear) + '.csv'))
+    pd.DataFrame([[k, v] for k, v in socScalars.items()],columns=['block','scalar']).to_csv(os.path.join(resultsDir,'socScalarsCE' + str(currYear) + '.csv'))
 
     # ######### RUN CAPACITY EXPANSION
     print('Running CE for ' + str(currYear))
@@ -471,7 +400,7 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear, planningReserveM
     capacExpModel, ms, ss = runGAMS('CEWith{o}.gms'.format(o=ceOps), ws, db)
 
     # ########## SAVE AND PROCESS CE RESULTS
-    write2dListToCSV([['ms', 'ss'], [ms, ss]], os.path.join(resultsDir, 'msAndSsCE' + str(currYear) + '.csv'))
+    pd.Series([ms,ss],index=['ms','ss']).to_csv(os.path.join(resultsDir, 'msAndSsCE' + str(currYear) + '.csv'))
     saveCapacExpOperationalData(capacExpModel, genFleetForCE, newTechsCE, hoursForCE, transRegions, lineLimits, resultsDir, 'CE', currYear)
     newGens,newStoECap,newStoPCap,newLines = saveCEBuilds(capacExpModel, resultsDir, currYear)
     genFleet = addNewGensToFleet(genFleet, newGens, newStoECap, newStoPCap, newTechsCE, currYear)
@@ -491,8 +420,8 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear, planningReserveM
 def createGAMSWorkspaceAndDatabase(runOnSC):
     # currDir = os.getcwd()
     if runOnSC:
-        gamsFileDir = '/home/anph/projects/NETs/EI-CE/GAMS'
-        gamsSysDir = '/home/anph/gams_35_1'
+        gamsFileDir = '/home/mtcraig/MacroCEM/GAMS'
+        gamsSysDir = '/home/mtcraig/gams40_3'
     else:
         gamsFileDir = 'C:\\Users\\mtcraig\\Desktop\\Research\\Models\\MacroCEM\\GAMS'
         gamsSysDir = 'C:\\GAMS\\win64\\31.1'
@@ -594,108 +523,95 @@ def ceTimeDependentConstraints(db, hoursForCE, blockWeights, socScalars, ceOps, 
 # ###############################################################################
 # ###############################################################################
 
-# ###############################################################################
+# ################################{###############################################
 # ###### RUN DISPATCH ###########################################################
 # ###############################################################################
-def runDispatch(genFleet, hourlyDemand, currYear, demandShifter, demandShiftingBlock, runOnSC, fuelPrices, currCo2Cap, useCO2Price,
-                tzAnalysis, resultsDir, stoMkts, metYear, regLoadFrac, contLoadFrac, interconn, regErrorPercentile, reSourceMERRA,
-                flexErrorPercentile, rrToRegTime, rrToFlexTime, rrToContTime, regCostFrac, ucOrED, initSOCFraction, includeRes,
-                firstDay=0, lastDay=364, daysOpt=364, daysLA=1):
-    resultsDir = os.path.join(resultsDir, 'Dispatch')
-    if not os.path.exists(resultsDir): os.makedirs(resultsDir)
-    print('Entering dispatch for year ' + str(currYear))
+# def runDispatch(genFleet, hourlyDemand, currYear, demandShifter, demandShiftingBlock, runOnSC, fuelPrices, currCo2Cap, useCO2Price,
+#                 tzAnalysis, resultsDir, stoMkts, metYear, regLoadFrac, contLoadFrac, interconn, regErrorPercentile, reSourceMERRA,
+#                 flexErrorPercentile, rrToRegTime, rrToFlexTime, rrToContTime, regCostFrac, ucOrED, initSOCFraction, includeRes,
+#                 firstDay=0, lastDay=364, daysOpt=364, daysLA=1):
+#     resultsDir = os.path.join(resultsDir, 'Dispatch')
+#     if not os.path.exists(resultsDir): os.makedirs(resultsDir)
+#     print('Entering dispatch for year ' + str(currYear))
 
-    # Remove retired units from fleet
-    genFleet = getOnlineGenFleet(genFleet, currYear)
-    genFleet.to_csv(os.path.join(resultsDir, 'genFleetForDispatch' + str(currYear) + '.csv'))
+#     # Remove retired units from fleet
+#     genFleet = getOnlineGenFleet(genFleet, currYear)
+#     genFleet.to_csv(os.path.join(resultsDir, 'genFleetForDispatch' + str(currYear) + '.csv'))
 
-    # Get renewable generation
-    windGen, solarGen, windGenRegion, solarGenRegion, latlonRegion = getREGen(genFleet, tzAnalysis, metYear, currYear, pRegionShapes,reSourceMERRA)
-    hourlyWindGen.to_csv(path.join(resultsDir, 'windGenDispatch'+str(currYear)+'.csv'))
-    hourlySolarGen.to_csv(path.join(resultsDir, 'solarGenDispatch'+str(currYear)+'.csv'))
-    write2dListToCSV([hourlyDemand], os.path.join(resultsDir, 'demandDispatch' + str(currYear) + '.csv'))
+#     # Get renewable generation
+#     windGen, solarGen, windGenRegion, solarGenRegion, latlonRegion = getREGen(genFleet, tzAnalysis, metYear, currYear, pRegionShapes,reSourceMERRA)
+#     hourlyWindGen.to_csv(path.join(resultsDir, 'windGenDispatch'+str(currYear)+'.csv'))
+#     hourlySolarGen.to_csv(path.join(resultsDir, 'solarGenDispatch'+str(currYear)+'.csv'))
+#     write2dListToCSV([hourlyDemand], os.path.join(resultsDir, 'demandDispatch' + str(currYear) + '.csv'))
 
-    # Get reserves
-    if includeRes:
-        hourlyReserves, resComps = calcWWSISReserves(hourlyWindGen, hourlySolarGen, hourlyDemand,
-                                                     regLoadFrac, contLoadFrac, regErrorPercentile, flexErrorPercentile)
-    else:
-        hourlyReserves, resComps, regUpInc, flexInc = createEmptyReserveDfs(hourlyWindGen)
+#     # Get reserves
+#     if includeRes:
+#         hourlyReserves, resComps = calcWWSISReserves(hourlyWindGen, hourlySolarGen, hourlyDemand,
+#                                                      regLoadFrac, contLoadFrac, regErrorPercentile, flexErrorPercentile)
+#     else:
+#         hourlyReserves, resComps, regUpInc, flexInc = createEmptyReserveDfs(hourlyWindGen)
 
-    hourlyReserves.to_csv(path.join(resultsDir, 'resDispatch'+str(currYear)+'.csv'))
-    resComps.to_csv(path.join(resultsDir, 'resCompsDispatch'+str(currYear)+'.csv'))
+#     hourlyReserves.to_csv(path.join(resultsDir, 'resDispatch'+str(currYear)+'.csv'))
+#     resComps.to_csv(path.join(resultsDir, 'resCompsDispatch'+str(currYear)+'.csv'))
 
-    # Update fuel prices
-    genFleet = updateFuelPricesAndCosts(genFleet, currYear, fuelPrices, regCostFrac)
+#     # Update fuel prices
+#     genFleet = updateFuelPricesAndCosts(genFleet, currYear, fuelPrices, regCostFrac)
 
-    # Combine wind & solar generators
-    genFleet = combineWindSolarStoPlants(genFleet)
-    genFleet.to_csv(path.join(resultsDir, 'genFleetDispatch' + str(currYear) + '.csv'))
+#     # Combine wind & solar generators
+#     genFleet = combineWindSolarStoPlants(genFleet)
+#     genFleet.to_csv(path.join(resultsDir, 'genFleetDispatch' + str(currYear) + '.csv'))
 
-    # Set CO2 price
-    co2Price = convertCo2CapToPrice(genFleet, hourlyWindGen, hourlySolarGen, hourlyDemand, currCo2Cap) if useCO2Price else 0
-    print('CO2 price:', co2Price, '$/ton')
-    write2dListToCSV([[co2Price]], path.join(resultsDir, 'co2PriceDispatch' + str(currYear) + '.csv'))
+#     # Set CO2 price
+#     co2Price = convertCo2CapToPrice(genFleet, hourlyWindGen, hourlySolarGen, hourlyDemand, currCo2Cap) if useCO2Price else 0
+#     print('CO2 price:', co2Price, '$/ton')
+#     write2dListToCSV([[co2Price]], path.join(resultsDir, 'co2PriceDispatch' + str(currYear) + '.csv'))
 
-    # Setup result dataframes
-    daysToRun = range(firstDay, lastDay, daysOpt)
-    dispatchResults = dict()
-    for k in ['vGen', 'vRegup', 'vFlex', 'vCont', 'vTurnon', 'vTurnoff', 'vOnoroff', 'vCharge', 'vStateofcharge']:
-        dispatchResults[k] = pd.DataFrame(columns=genFleet['GAMS Symbol'], index=hourlyWindGen.index)
-    sysResults = pd.DataFrame(columns=['vNse', 'vZ', 'mcGen', 'mcRegup', 'mcFlex', 'mcCont'], index=hourlyWindGen.index)
-    msAndSs = pd.DataFrame(columns=['ms', 'ss'], index=daysToRun)
+#     # Setup result dataframes
+#     daysToRun = range(firstDay, lastDay, daysOpt)
+#     dispatchResults = dict()
+#     for k in ['vGen', 'vRegup', 'vFlex', 'vCont', 'vTurnon', 'vTurnoff', 'vOnoroff', 'vCharge', 'vStateofcharge']:
+#         dispatchResults[k] = pd.DataFrame(columns=genFleet['GAMS Symbol'], index=hourlyWindGen.index)
+#     sysResults = pd.DataFrame(columns=['vNse', 'vZ', 'mcGen', 'mcRegup', 'mcFlex', 'mcCont'], index=hourlyWindGen.index)
+#     msAndSs = pd.DataFrame(columns=['ms', 'ss'], index=daysToRun)
 
-    # Run dispatch for each day of year
-    for day in daysToRun:
-        # Get time series for current days
-        hours = list(range(day*24, (day + daysOpt + daysLA)*24))
-        dayDtIdx = hourlyWindGen.index[hours]
-        wind, solar = hourlyWindGen.loc[dayDtIdx].sum(axis=1).values, hourlySolarGen.loc[dayDtIdx].sum(axis=1).values
-        demand = [hourlyDemand[i] for i in hours]
-        reserves = hourlyReserves.loc[dayDtIdx]
+#     # Run dispatch for each day of year
+#     for day in daysToRun:
+#         # Get time series for current days
+#         hours = list(range(day*24, (day + daysOpt + daysLA)*24))
+#         dayDtIdx = hourlyWindGen.index[hours]
+#         wind, solar = hourlyWindGen.loc[dayDtIdx].sum(axis=1).values, hourlySolarGen.loc[dayDtIdx].sum(axis=1).values
+#         demand = [hourlyDemand[i] for i in hours]
+#         reserves = hourlyReserves.loc[dayDtIdx]
 
-        # Set initial conditions (all returned as pd Series w/ gen index)
-        if day == firstDay:  # first day, therefore no initial conditions defined. MW energy values
-            (onOffInitial, genAboveMinInitial, mdtCarriedInitial,
-                socInitial) = setInitCondsFirstDay(genFleet, initSOCFraction)
-        else: # MW energy values
-            (onOffInitial, genAboveMinInitial, mdtCarriedInitial,
-                socInitial) = setInitConds(dayDtIdx, genFleet, dispatchResults)
-        # ############# RUN DISPATCH
-        print('Running ' + ucOrED + ' for ' + str(day))
-        ws, db, gamsFileDir = createGAMSWorkspaceAndDatabase(runOnSC)
-        genSet, hourSet, hourSymbols = edAndUCSharedFeatures(db, genFleet, hours, demand, reserves, demandShifter, demandShiftingBlock,
-                                                             rrToRegTime, rrToFlexTime, rrToContTime, 0, solar, wind)  # 0 is for co2Price
+#         # Set initial conditions (all returned as pd Series w/ gen index)
+#         if day == firstDay:  # first day, therefore no initial conditions defined. MW energy values
+#             (onOffInitial, genAboveMinInitial, mdtCarriedInitial,
+#                 socInitial) = setInitCondsFirstDay(genFleet, initSOCFraction)
+#         else: # MW energy values
+#             (onOffInitial, genAboveMinInitial, mdtCarriedInitial,
+#                 socInitial) = setInitConds(dayDtIdx, genFleet, dispatchResults)
+#         # ############# RUN DISPATCH
+#         print('Running ' + ucOrED + ' for ' + str(day))
+#         ws, db, gamsFileDir = createGAMSWorkspaceAndDatabase(runOnSC)
+#         genSet, hourSet, hourSymbols = edAndUCSharedFeatures(db, genFleet, hours, demand, reserves, demandShifter, demandShiftingBlock,
+#                                                              rrToRegTime, rrToFlexTime, rrToContTime, 0, solar, wind)  # 0 is for co2Price
 
-        stoGenSet, stoGenSymbols = storageSetsParamsVariables(db, genFleet, stoMkts)
-        if ucOrED == 'UC': 
-            ucFeatures(db, genFleet, genSet)
-            uc(db, stoGenSet, genSet, socInitial, onOffInitial, genAboveMinInitial, mdtCarriedInitial)
-        else:
-            ed(db, socInitial, stoGenSet)
-        opsModel, ms, ss = runGAMS(ucOrED + '.gms', ws, db)
+#         stoGenSet, stoGenSymbols = storageSetsParamsVariables(db, genFleet, stoMkts)
+#         if ucOrED == 'UC': 
+#             ucFeatures(db, genFleet, genSet)
+#             uc(db, stoGenSet, genSet, socInitial, onOffInitial, genAboveMinInitial, mdtCarriedInitial)
+#         else:
+#             ed(db, socInitial, stoGenSet)
+#         opsModel, ms, ss = runGAMS(ucOrED + '.gms', ws, db)
 
-        # ########### SAVE RESULTS
-        msAndSs.loc[day] = [ms, ss]
-        dispatchResults, sysResults = saveDispatchResults(dispatchResults, sysResults, opsModel, hourlyWindGen.index, dayDtIdx)
-        writeDispatchResults(dispatchResults, sysResults, msAndSs, resultsDir, currYear)
+#         # ########### SAVE RESULTS
+#         msAndSs.loc[day] = [ms, ss]
+#         dispatchResults, sysResults = saveDispatchResults(dispatchResults, sysResults, opsModel, hourlyWindGen.index, dayDtIdx)
+#         writeDispatchResults(dispatchResults, sysResults, msAndSs, resultsDir, currYear)
 
 # ###############################################################################
 # ###############################################################################
-# ###############################################################################
-
-################################################################################
-# def checkfunction(ceModel,hoursForCE,gens,resultsDir,modelName,year,genFleetForCE,newTechsCE):
-#  sysResults = saveSystemResults(ceModel,hoursForCE)
-#  resultsCEgen = saveGeneratorResults(ceModel,gens,hoursForCE,resultsDir,modelName,year,newTechs=False)
-# result = saveCapacExpOperationalData(ceModel,genFleetForCE,newTechsCE,hoursForCE,resultsDir,modelName,year)
-#    resultsCEgen.to_csv(r'C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\resultsCEgen.txt')
-#   sysResults.to_csv(r'C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\sysResults.txt')
-#   result.to_csv(r'C:\Users\atpha\Documents\Postdocs\Projects\NETs\Model\sysResults.txt')
-
-################################################################################
-################################################################################
-################################################################################
+# ###############################}################################################
 
 masterFunction()
 

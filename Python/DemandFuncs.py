@@ -3,7 +3,6 @@
 #Functions related to electricity demand profile
 
 import operator, os, sys, pandas as pd
-from AuxFuncs import *
 
 ########### GET SCALED DEMAND BASED ON CURRENT YEAR ############################
 #Inputs: initial demand values (1d list), annual demand growth (fraction), 

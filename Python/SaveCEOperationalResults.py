@@ -1,6 +1,5 @@
 #Michael Craig
 
-from AuxFuncs import *
 from GAMSAuxFuncs import *
 import copy, csv, pandas as pd,os,numpy as np
 
@@ -10,7 +9,7 @@ def saveCapacExpOperationalData(ceModel,genFleet,newTechsCE,hoursForCE,transRegi
     saveZonalSystemResults(ceModel,transRegions,hoursForCE,resultsDir,modelName,year)
     saveLineFlows(ceModel,lineLimits,hoursForCE,resultsDir,modelName,year)
     for n in ['vCO2emsannual','vZannual', 'vVarcostannual','vFixedcostannual']:
-        write2dListToCSV([[extract0dVarResultsFromGAMSModel(ceModel,n)]],os.path.join(resultsDir,n + modelName + str(year) + '.csv'))
+        pd.Series(extract0dVarResultsFromGAMSModel(ceModel,n),index=[n]).to_csv(os.path.join(resultsDir,n + modelName + str(year) + '.csv'))
 
 def saveGeneratorResults(ceModel,gens,hoursForCE,resultsDir,modelName,year,newTechs=False):
     for v in ['vGen','vRegup','vFlex','vCont','vTurnon','vTurnoff','vOnoroff','vCharge','vStateofcharge']:

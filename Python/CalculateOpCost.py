@@ -2,7 +2,6 @@
 #Calculate operational costs of fleet
 
 from operator import *
-from AuxFuncs import *
 
 #Returns 1d list of fleet's op costs ($/MWh) w/ or w/out co2 price ($/ton)
 #Op cost = HR * FC + VOM [ + Co2EmsRate * CO2Price]

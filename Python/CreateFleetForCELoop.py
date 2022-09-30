@@ -4,8 +4,7 @@
 #Determines which units retire due to age, and also accounts for past retirements
 #for age and economic reasons.
 
-import os, copy
-from AuxFuncs import *
+import os, copy, pandas as pd
 
 ################## CREATE FLEET FOR CURRENT CE LOOP ############################
 #Inputs: gen fleet (2d list), current CE year, list of units retired each year (2d list)
@@ -27,7 +26,7 @@ def getOnlineGenFleet(genFleet,currYear):
 #Marks units that retire in gen fleet and saves them in list
 def markAndSaveRetiredUnitsFromAge(genFleet,currYear):
     if currYear > 2050: currYear = 2050
-    lifetimes = importPlantTypeLifetimes()
+    lifetimes = pd.read_csv(os.path.join('Data','LifetimesExistingPlants.csv'),index_col=0)['Lifetime(yrs)'].to_dict()
     lifetimes = genFleet['PlantType'].map(lifetimes)
     retirements = (lifetimes + genFleet['On Line Year']) < currYear
     retirements = retirements.loc[genFleet['Retired']==False]
@@ -38,18 +37,4 @@ def markAndSaveRetiredUnitsFromAge(genFleet,currYear):
                     genFleet.loc[retirements.index,'Unit ID']).tolist()
     # capacExpRetiredUnitsByAge.append(['UnitsRetiredByAge' + str(currYear)] + retirements)
     return genFleet
-
-#Import lifetimes for each plant type
-def importPlantTypeLifetimes():
-    lifetimeData = readCSVto2dList(os.path.join('Data','LifetimesExistingPlants.csv'))
-    return convert2dListToDictionaryWithIntVals(lifetimeData,'PlantType','Lifetime(yrs)')
-
-#Converts Zx2 2d list to dictionary
-#Inputs: 2d list (2 cols), header of col w/ keys, header of col w/ vals
-#Outputs: dictionary
-def convert2dListToDictionaryWithIntVals(list2d,keyHeader,valHeader):
-    dictResult = dict()
-    (keyCol,valCol) = (list2d[0].index(keyHeader),list2d[0].index(valHeader))
-    for row in list2d[1:]: dictResult[row[keyCol]] = int(row[valCol])
-    return dictResult
 ################################################################################

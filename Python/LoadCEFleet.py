@@ -2,7 +2,6 @@
 #Jan 25, 2017
 #Loads CE fleet w/out retired units for given year for input to UC model
 
-from AuxFuncs import *
 import os,csv
 
 ################################################################################

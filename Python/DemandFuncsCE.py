@@ -5,7 +5,6 @@
 #planning reserve margin. 
 
 import copy, os, pandas as pd, numpy as np
-from AuxFuncs import *
 
 ########### SELECT WEEKS FOR EXPANSION #########################################
 def getHoursForCE(demand,netDemand,windGen,solarGen,daysPerRepBlock,
@@ -31,8 +30,8 @@ def getHoursForCE(demand,netDemand,windGen,solarGen,daysPerRepBlock,
         dfNoSpecial = pd.concat([dfNet,dfTotal],axis=1)
     #Get representative hours for each block and weighting factors
     blockRepNetDemand,blockAllNetDemand = getRepBlockHoursByNLDC(dfNet,dfNoSpecial,daysPerRepBlock,numBlocks)
-    blockWeights,weightsList = calculateBlockWeights(dfTotal,blockRepNetDemand,blockAllNetDemand)
-    write2dListToCSV(weightsList,os.path.join(resultsDir,'blockWeightsCE' + str(currYear) + '.csv'))
+    blockWeights = calculateBlockWeights(dfTotal,blockRepNetDemand,blockAllNetDemand)
+    pd.Series(blockWeights).to_csv(os.path.join(resultsDir,'blockWeightsCE' + str(currYear) + '.csv'))
     #Get all hours by going from dfs to 1-8760 values
     if len(blockRepNetDemand) == 1: #if running full year, add demand here
         blockRepNetDemand[0] = dfNoSpecial.loc[blockRepNetDemand[0].index]
@@ -185,52 +184,15 @@ def setSOCScalars(specialBlocks,firstHours,daysPerRepBlock):
         nameCtr += 1
     return socScalarsAll,lastRepBlockNames,specialBlocksPrior
 
-# #Now sort all periods chronologically, get corresponding hour numbers, and save with new names
-# def getHoursInBlocks(allPeriods,dates,blocks):
-#     df = allPeriods.sort_index()
-#     hourNums = pd.DataFrame({'num':list(range(1,len(dates)+1))},index=dates)
-#     hourNums = hourNums.loc[df.index]
-#     hoursForCE = hourNums['num'].tolist()
-#     peakDemandHour = hourNums.loc[df['demand(MW)'].idxmax()].values[0]
-#     allHours = dict()
-#     for b in blocks: 
-#         hours = hourNums.loc[blocks[b].index]
-#         allHours[b] = hours['num'].tolist()
-#     return hoursForCE,allHours,peakDemandHour
-
 ########### CALCULATE blockAL WEIGHTS TO SCALE REP. DEMAND TO block VALUE ####
 #Inputs: hourly demand in curr CE year (1d list w/out headers), 1d list of 
 #representative hours per block (1-8760 basis), 1d list of regular (i.e. non-rep) 
 #hours per block (1-8760 basis)
 #Outputs: map of block to weight to scale rep demand to full block demand (scalar)
 def calculateBlockWeights(dfTotal,blockRepNetDemand,blockAllNetDemand):
-    blockDemandWeights,weightsList = dict(),[['block','blockWeight']]
+    blockDemandWeights = dict()
     for block in blockRepNetDemand:
         repDemand = dfTotal.loc[blockRepNetDemand[block].index].sum().values[0]
         blockDemand = dfTotal.loc[blockAllNetDemand[block].index].sum().values[0]
         blockDemandWeights[block] = blockDemand/repDemand
-        weightsList.append([block,blockDemandWeights[block]])
-    return blockDemandWeights,weightsList
-
-# def setSOCScalars(specialBlocks,firstHours,daysPerRepBlock):    
-#     socScalarsAll,lastRepBlockNames,nameCtr,specialBlocksPrior,specialBlocksPriorList = dict(),dict(),0,dict(),list()
-#     for i in range(firstHours.shape[0]):
-#         origName = firstHours.iloc[i]
-#         name = origName+str(nameCtr) if origName in specialBlocks else nameCtr
-#         if i>0: 
-#             hoursBeforeBlock = firstHours.index[i] - (lastRepBlockFirstHour + pd.Timedelta(hours=daysPerRepBlock*24))
-#             socScalarsAll[name] = (hoursBeforeBlock/pd.Timedelta(hours=1))/(daysPerRepBlock*24) 
-#             lastRepBlockNames[name] = lastRepBlockName 
-#         if origName not in specialBlocks:
-#             lastRepBlockFirstHour,lastRepBlockName = firstHours.index[i],str(name)
-#             specialBlocksPrior[name] = specialBlocksPriorList
-#             specialBlocksPriorList = list()
-#         else:
-#             specialBlocksPrior[name] = list()
-#             specialBlocksPriorList.append(name)
-#         nameCtr += 1
-#     print(specialBlocksPrior)
-#     print(firstHours)
-#     aa
-#     return socScalarsAll,lastRepBlockNames,specialBlocksPrior
-        
+    return blockDemandWeights

@@ -1,9 +1,5 @@
-import os, copy, datetime
+import os, copy, datetime, pandas as pd, datetime as dt, numpy as np
 from os import path
-from AuxFuncs import *
-import pandas as pd
-import datetime as dt
-import numpy as np
 from netCDF4 import Dataset
 from GetRenewableCFs import *
 

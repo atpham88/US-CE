@@ -1,5 +1,4 @@
-import pandas as pd
-import numpy as np
+import pandas as pd, numpy as np
 
 def createEmptyReserveDfs(windGenRegion,newCfs=None):
     #Reserves

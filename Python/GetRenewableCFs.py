@@ -1,11 +1,6 @@
-import os, copy, datetime
+import os, copy, datetime, pandas as pd, geopandas as gpd, datetime as dt, numpy as np
 from os import path
 from statistics import mode
-from AuxFuncs import *
-import pandas as pd
-import geopandas as gpd
-import datetime as dt
-import numpy as np
 from netCDF4 import Dataset
 
 #Output: dfs of wind and solar generation (8760 dt rows, arbitrary cols)

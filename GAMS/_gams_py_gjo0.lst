@@ -1,4 +1,4 @@
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 1
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 1
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -56,7 +56,7 @@ INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\EDAndUCSharedF
   52  *RENEWABLE GENERATION CAPS
   53           pMaxgenwind(z,h)                  max hourly generation for existing wind [GWh]
   54           pMaxgensolar(z,h)                 max hourly generation for existing solar [GWh]
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 2
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 2
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -114,7 +114,7 @@ GDXIN   C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
 --- LOAD  pOpcost = 23:pOpcost
 --- LOAD  pRamprate = 22:pRamprate
 --- LOAD  pCO2emrate = 21:pCO2emrate
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 3
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 3
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -172,7 +172,7 @@ C o m p i l a t i o n
  127           vStateofcharge(storageegu,h)            "energy stored in storage unit at end of hour h (GWh)"
  128           vCharge(storageegu,h)                   "charged energy by storage unit in hour h (GWh)"
  129  *EMISSIONS
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 4
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 4
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -230,7 +230,7 @@ C o m p i l a t i o n
  180  *******************************************************
  181   
  182  ******************RENEWABLE GENERATION*****************
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 5
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 5
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -288,7 +288,7 @@ C o m p i l a t i o n
  233                   pNMaxNuclear
  234                   pNMaxCC
  235                   pNMaxCCS(CCStech)
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 6
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 6
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -346,7 +346,7 @@ C o m p i l a t i o n
  286  *PLANNING RESERVE
  287           pPlanningreserve                planning margin reserve capacity [GW]
  288           ;
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 7
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 7
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -404,7 +404,7 @@ GDXIN   C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
  303  *DEFINE SET EXCLUSIONS
  304  nonrenewegu(egu) = not renewegu(egu);
  305  nonstoragetech(tech) = not storagetech(tech);
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 8
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 8
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -462,7 +462,7 @@ INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CEBuildVariabl
  356  *Meet demand and reserves
  357           meetdemand(z,h)                   meet supply with demand
  358           meetreservemargin               meet planning reserve requirement with installed capacity
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/19/22 17:26:37 Page 9
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                               09/29/22 12:41:30 Page 9
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -520,7 +520,7 @@ C o m p i l a t i o n
  409  meetshiftingdemand(z,h)$(mod(ord(h),pDemandShiftingBlock)=1).. sum(hh$((ord(hh)>=ord(h) and (ord(hh)<=ord(h)+pDemandShiftingBlock-1))), vShiftedDemand(z,h))=e= 0;
  410   
  411  *Meet planning reserve margin
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 10
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 10
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -578,7 +578,7 @@ C o m p i l a t i o n
  462   
  463  ********CALCULATE CO2 EMISSIONS*************
  464  calcco2emstech(tech,h) .. vCO2emstech(tech,h) =e= vGentech(tech,h)*pHrtech(tech)*pCO2emratetech(tech);
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 11
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 11
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -636,7 +636,7 @@ INCLUDE    C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\CETimeDependen
  515          pInitSOCtech(storagetech)
  516          pHourInitblock0h
  517          pHourFinalblock0h
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 12
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 12
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -694,7 +694,7 @@ GDXIN   C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
  551  pHourInitblockpeaktotal2h = smin(h$blockpeaktotal2h(h),ord(h));
  552  pHourFinalblockpeaktotal2h = smax(h$blockpeaktotal2h(h),ord(h));
  553  pHourInitblockpeaknet3h = smin(h$blockpeaknet3h(h),ord(h));
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 13
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 13
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -752,7 +752,7 @@ C o m p i l a t i o n
  604          setInitSOCblock6hststoragetech(ststoragetech)
  605          rampUpblock0h(egu,block0h)
  606          rampUpblock1h(egu,block1h)
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 14
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 14
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -810,7 +810,7 @@ C o m p i l a t i o n
       OCblockpeaknet3htech(storagetech)$[ord(h)=pHourInitblockpeaknet3h] + vInitSOCblock4htech(storagetech)$[ord(h)=pHourInitblock4h] + vInitSOCblockpeaknetramp5htech(storagetech)$[ord(h)=pHourInitblockpeaknetramp5h] + vInitSOCblock6htech(storagetech)$[or
       d(h)=pHourInitblock6h];
  653  setInitSOCblock1hststoragetech(ststoragetech).. vInitSOCblock1htech(ststoragetech) =e=
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 15
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 15
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -868,7 +868,7 @@ C o m p i l a t i o n
  704                    pRampratetech(tech)*vN(tech);
  705  rampUpblock4h(egu,block4h)$[ORD(block4h)>1].. vGen(egu,block4h)+vRegup(egu,block4h)+vFlex(egu,block4h)+vCont(egu,block4h) - vGen(egu,block4h-1) =l=
  706                    pRamprate(egu);
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 16
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 16
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -926,7 +926,7 @@ C o m p i l a t i o n
  756  *Limit spinning and regulation reserves each to ramp capability and time of reserve
  757  limitflexrestech(tech,h)$[pMaxflexoffertech(tech)>0].. vFlextech(tech,h) =l= pMaxflexoffertech(tech)*vN(tech);
  758  limitcontrestech(tech,h)$[pMaxcontoffertech(tech)>0].. vConttech(tech,h) =l= pMaxcontoffertech(tech)*vN(tech);
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 17
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 17
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -963,7 +963,7 @@ C o m p i l a t i o n
  788   
  789  pModelstat = ceWithED.Modelstat;
  790  pSolvestat = ceWithED.solvestat;
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 18
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 18
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 Include File Summary
 
@@ -982,17 +982,17 @@ Include File Summary
     10      540 GDXIN          9      45  .C:\Users\mtcraig\Desktop\Research\Models\MacroCEM\GAMS\_gams_py_gdb0.gdx
 
 
-COMPILATION TIME     =        0.078 SECONDS      7 MB  31.1.1 r4b06116 WEX-WEI
-GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/19/22 17:26:37 Page 19
+COMPILATION TIME     =        0.016 SECONDS      4 MB  31.1.1 r4b06116 WEX-WEI
+GAMS 31.1.1  r4b06116 Released May 16, 2020 WEX-WEI x86 64bit/MS Windows                                                                                                                                                              09/29/22 12:41:30 Page 19
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 E x e c u t i o n
 
 
-EXECUTION TIME       =      513.312 SECONDS    703 MB  31.1.1 r4b06116 WEX-WEI
+EXECUTION TIME       =       82.812 SECONDS    195 MB  31.1.1 r4b06116 WEX-WEI
 
 
-USER: Michael Craig, Single User License University oG190927/0001AO-GEN
-      Ann Arbor, School for Environment and Sustainability      DC15152
+USER: MUD- 5 User License                            G220428|0002AO-GEN
+      University of Michigan, School for Environment and SustDC15152-S1
       License for teaching and research at degree granting institutions
 
 
