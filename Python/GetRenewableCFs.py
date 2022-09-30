@@ -33,9 +33,8 @@ def getREInFleet(reType, genFleet):
 # Get all necessary information from powGen netCDF files, VRE capacity factors and lat/lons
 # Outputs: numpy arrays of lats and lons, and then a dictionary w/ wind and solar cfs
 # as an np array of axbxc, where a/b/c = # lats/# longs/# hours in year
-def loadMerraData(reYear, pRegionShapes):
+def loadMerraData(reYear, pRegionShapes, dataDir=os.path.join('Data','MERRA')):
     #File and dir
-    dataDir = 'Data\\MERRA'
     solarFile, windFile = path.join(dataDir, str(reYear) + '_solar_generation_cf_US.nc'), path.join(dataDir, str(reYear) + '_wind_generation_cf_US.nc')
     # Error Handling
     if not (path.exists(solarFile) and path.exists(windFile)):
