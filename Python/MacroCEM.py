@@ -51,15 +51,13 @@ lbToShortTon = 2000
 # ###################################################################4############
 # ##### UNIVERSAL PARAMETERS ####################################################
 # ###############################################################################
-def setKeyParameters():
+def setKeyParameters(interconn):
     # ### RUNNING ON SC OR LOCAL
     runOnSC = False                                     # whether running on supercomputer
 
     #### STUDY AREA AND METEOROLOGICAL-DEPENDENT DATA
     metYear = 2012 #year of meteorological data used for demand and renewables
-    interconn = 'EI'                                    # which interconnection to run - ERCOT, WECC, EI
-    balAuths = 'full'                                   # full: run for all BAs in interconn. TODO: add selection of a subset of BAs.
-    
+
     electrifiedDemand = True                            # whether to import electrified demand futures from NREL's EFS
     elecDemandScen = 'REFERENCE'                        # 'REFERENCE','HIGH','MEDIUM' (ref is lower than med)
     annualDemandGrowth = 0                              # fraction demand growth per year - ignored if use EFS data (electrifieDemand=True)
@@ -67,6 +65,8 @@ def setKeyParameters():
     
     reSourceMERRA = True                                # == True: use MERRA as renewable data source, == False: use NSDB and Wind Toolkit
     reDownFactor = 3                                  # downscaling factor for W&S new CFs; 1 means full resolution, 2 means half resolution, 3 is 1/3 resolution, etc
+
+    balAuths = 'full'                                   # full: run for all BAs in interconn. TODO: add selection of a subset of BAs.
 
     # ### BUILD SCENARIO
     buildLimitsCase = 1                               # 1 = reference case,
@@ -83,7 +83,6 @@ def setKeyParameters():
     elif interconn == 'EI': co2EmsInitial =  1274060000
     elif interconn == 'WECC': co2EmsInitial =  248800000    #2019. METRIC TONS. wa,or,ca,nm,az,nv,ut,co,wy,id,mt
 
-    co2EmsInFinalYear = .1                               #final CO2 emissions cap as fraction of initial CO2 ems
     yearIncDACS = 2050                                  #year to include DACS - set beyond end period if don't want DACS
 
     # ### CE AND UCED/ED OPTIONS
@@ -138,12 +137,11 @@ def setKeyParameters():
     if ucOrED != 'None': sys.exit('ED and UC.gms need to be checked for DACS constraints')
 
     return (buildLimitsCase, greenField, includeRes, useCO2Price, runCE, ceOps, stoInCE, seasStoInCE, ucOrED, numBlocks,
-            daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsInFinalYear, co2EmsInitial,
+            daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsInitial,
             startYear, endYear, yearStepCE, retirementCFCutoff, retireByAge, planningReserveMargin,
             discountRate, annualDemandGrowth, stoMkts, stoFTLabels, stoPTLabels, initSOCFraction, tzAnalysis, maxCapPerTech,
             runCE, runFirstYear, metYear, ptEligRetCF, stoMinSOC, reDownFactor, demandShifter, demandShiftingBlock,
-            runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, interconn, balAuths, reSourceMERRA, 
-            transmissionEff, removeHydro)
+            runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, balAuths, reSourceMERRA, transmissionEff, removeHydro)
 
 def importFuelPrices(fuelPriceScenario):
     fuelPrices = pd.read_csv(os.path.join('Data', 'Energy_Prices_Electric_Power.csv'), skiprows=4, index_col=0)
@@ -186,16 +184,18 @@ def defineReserveParameters(stoMkts,stoFTLabels):
 # ###############################################################################
 # ##### MASTER FUNCTION #########################################################
 # ###############################################################################
-def masterFunction():
+#Main function to call. 
+#Inputs: interconnection (EI, WECC, ERCOT); CO2 emissions in final year as fraction
+#of initial CO2 emissions.
+def runMacroCEM(interconn,co2EmsInFinalYear):
     # Import key parameters
     (buildLimitsCase, greenField, includeRes, useCO2Price, runCE, ceOps, stoInCE, seasStoInCE, ucOrED, numBlocks,
-     daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsInFinalYear, co2EmsInitial,
+     daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsInitial,
      startYear, endYear, yearStepCE, retirementCFCutoff, retireByAge, planningReserveMargin,
      discountRate, annualDemandGrowth, stoMkts, stoFTLabels, stoPTLabels, initSOCFraction, tzAnalysis, maxCapPerTech,
      runCE, runFirstYear, metYear, ptEligRetCF, stoMinSOC, reDownFactor, demandShifter, demandShiftingBlock,
-     runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, interconn, balAuths, reSourceMERRA, 
-     transmissionEff, removeHydro) = setKeyParameters()
-
+     runOnSC, yearIncDACS, electrifiedDemand, elecDemandScen, balAuths, reSourceMERRA, 
+     transmissionEff, removeHydro) = setKeyParameters(interconn)
     (regLoadFrac, contLoadFrac, regErrorPercentile, flexErrorPercentile, regElig, contFlexInelig, regCostFrac,
         rrToRegTime, rrToFlexTime, rrToContTime) = defineReserveParameters(stoMkts, stoFTLabels)
 
@@ -613,5 +613,4 @@ def ceTimeDependentConstraints(db, hoursForCE, blockWeights, socScalars, ceOps, 
 # ###############################################################################
 # ###############################}################################################
 
-masterFunction()
-
+if __name__ == "__main__": runMacroCEM()

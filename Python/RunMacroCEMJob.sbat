@@ -1,0 +1,48 @@
+#!/bin/bash
+
+#SBATCH --job-name=macrocemruns
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem-per-cpu=16GB 
+#SBATCH --time=72:00:00
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --account=mtcraig1
+#SBATCH --partition=standard-oc
+
+module load python3.9-anaconda/2021.11
+source /home/mtcraig/MacroCEM/env/bin/activate
+module load RestrictedLicense cplex/20.1.0
+export PYTHONPATH=/home/mtcraig/gams40_3/apifiles/Python/api_39
+export PYTHONPATH=/home/mtcraig/gams40_3/apifiles/Python/gams:$PYTHONPATH
+
+#set inputs to Python script
+interconn=$1
+co2cap=$2
+echo "Running: $interconn $co2cap"
+
+#echo commands to stdout
+set -x
+
+#set working dir
+export TMPDIR=$(mktemp -d /tmp/mtcraig.$SLURM_JOBID.XXXXXX)
+echo "Temporary directory: $TMPDIR"
+cd $TMPDIR
+
+#copy files to working directory
+cp -rf /home/mtcraig/MacroCEM/* $TMPDIR
+
+#run script with inputs
+python $WDIR/RunMacroCEM.py $interconn $co2cap
+
+#copy output folder to persistent space
+folderName="ResultsS"$interconn"C"$co2cap
+cp -rf $TMPDIR/$folderName/ /home/mtcraig/Results/MacroCEM/
+	
+#go back to home
+cd
+
+#remove temporary directory
+rm -rf $TMPDIR
+
+exit
