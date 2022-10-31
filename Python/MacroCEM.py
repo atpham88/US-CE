@@ -187,7 +187,7 @@ def defineReserveParameters(stoMkts,stoFTLabels):
 #Main function to call. 
 #Inputs: interconnection (EI, WECC, ERCOT); CO2 emissions in final year as fraction
 #of initial CO2 emissions.
-def runMacroCEM(interconn,co2EmsInFinalYear):
+def macroCEM(interconn,co2EndPercent):
     # Import key parameters
     (buildLimitsCase, greenField, includeRes, useCO2Price, runCE, ceOps, stoInCE, seasStoInCE, ucOrED, numBlocks,
      daysPerBlock, daysPerPeak, fullYearCE, incNuc, compressFleet, fuelPrices, co2EmsInitial,
@@ -200,8 +200,9 @@ def runMacroCEM(interconn,co2EmsInFinalYear):
         rrToRegTime, rrToFlexTime, rrToContTime) = defineReserveParameters(stoMkts, stoFTLabels)
 
     # Create results directory
-    buildScen = {1:'Ref', 2:'Nuc',3: 'NucCCS', 4: 'H2', 5: 'Trans'}[buildLimitsCase]
-    resultsDirAll = 'Results_' + interconn + '_CO2Dec' + str(int(co2EmsInFinalYear*100)) + '_BldLim' + buildScen + '_' + str(electrifiedDemand) + (elecDemandScen if electrifiedDemand else '')
+    resultsDirAll = 'Results'+interconn+'C'+str(co2EndPercent)
+    # buildScen = {1:'Ref', 2:'Nuc',3: 'NucCCS', 4: 'H2', 5: 'Trans'}[buildLimitsCase]
+    # resultsDirAll = 'Results_' + interconn + '_CO2Dec' + str(int(co2EmsInFinalYear*100)) + '_BldLim' + buildScen + '_' + str(electrifiedDemand) + (elecDemandScen if electrifiedDemand else '')
     if not os.path.exists(resultsDirAll): os.makedirs(resultsDirAll)
     pd.Series(co2EmsInitial).to_csv(os.path.join(resultsDirAll,'initialCO2Ems.csv'))
 
@@ -215,11 +216,11 @@ def runMacroCEM(interconn,co2EmsInFinalYear):
     # Run CE and/or ED/UCED
     for currYear in range(startYear, endYear, yearStepCE):
         # Set CO2 cap
-        currCo2Cap = co2EmsInitial + (co2EmsInFinalYear*co2EmsInitial - co2EmsInitial)/((endYear-1) - startYear) * (currYear - startYear)
+        currCo2Cap = co2EmsInitial + (co2EndPercent/100*co2EmsInitial - co2EmsInitial)/((endYear-1) - startYear) * (currYear - startYear)
         print('Entering year ', currYear, ' with CO2 cap (million tons):', round(currCo2Cap/1e6))
 
         # Create results directory
-        resultsDir = os.path.join(resultsDirAll,str(currYear) + 'CO2Cap' + str(int(currCo2Cap/1e6)))
+        resultsDir = os.path.join(resultsDirAll,str(currYear))
         if not os.path.exists(resultsDir): os.makedirs(resultsDir)
         
         # Scale up demand profile if needed
@@ -420,7 +421,7 @@ def runCapacityExpansion(genFleet, demand, startYear, currYear, planningReserveM
 def createGAMSWorkspaceAndDatabase(runOnSC):
     # currDir = os.getcwd()
     if runOnSC:
-        gamsFileDir = '/home/mtcraig/MacroCEM/GAMS'
+        gamsFileDir = 'GAMS'
         gamsSysDir = '/home/mtcraig/gams40_3'
     else:
         gamsFileDir = 'C:\\Users\\mtcraig\\Desktop\\Research\\Models\\MacroCEM\\GAMS'
@@ -613,4 +614,4 @@ def ceTimeDependentConstraints(db, hoursForCE, blockWeights, socScalars, ceOps, 
 # ###############################################################################
 # ###############################}################################################
 
-if __name__ == "__main__": runMacroCEM()
+if __name__ == "__main__": macroCEM()

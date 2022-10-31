@@ -6,9 +6,9 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem-per-cpu=16GB 
 #SBATCH --time=72:00:00
-#SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --account=mtcraig1
-#SBATCH --partition=standard-oc
+#SBATCH --mail-type=END,FAIL
+#SBATCH --account=mtcraig0
+#SBATCH --partition=standard
 
 module load python3.9-anaconda/2021.11
 source /home/mtcraig/MacroCEM/env/bin/activate
@@ -30,14 +30,15 @@ echo "Temporary directory: $TMPDIR"
 cd $TMPDIR
 
 #copy files to working directory
-cp -rf /home/mtcraig/MacroCEM/* $TMPDIR
+cp -rf /home/mtcraig/MacroCEM/Python/* $TMPDIR
 
 #run script with inputs
-python $WDIR/RunMacroCEM.py $interconn $co2cap
+python $TMPDIR/RunMacroCEM.py $interconn $co2cap
 
 #copy output folder to persistent space
-folderName="ResultsS"$interconn"C"$co2cap
-cp -rf $TMPDIR/$folderName/ /home/mtcraig/Results/MacroCEM/
+resultsFolder="Results"$interconn"C"$co2cap
+echo "Results directory: $resultsFolder"
+cp -rf $TMPDIR/$resultsFolder/ /home/mtcraig/MacroCEMResults/
 	
 #go back to home
 cd

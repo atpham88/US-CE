@@ -270,6 +270,8 @@ def add0dParam(db,paramName,paramValue,paramDescrip=''):
     addedParam.add_record().value = paramValue
     if len(addedParam.get_symbol_dvs())>0: print('Domain violations in ' + paramName)
 
+#Dictionary: set element : parameter value for that set element
+#gen1:capac of generator 1; gen2:capacity of generator 2; 
 def add1dParam(db,paramDict,idxSet,setSymbols,paramName,paramDescrip=''):
     addedParam = db.add_parameter_dc(paramName,[idxSet],paramDescrip)
     for idx in setSymbols: addedParam.add_record(str(idx)).value = paramDict[idx]
