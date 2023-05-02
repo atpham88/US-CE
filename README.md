@@ -12,7 +12,7 @@ Several data sets are too large to upload to Github. Those datasets are availabl
 
 To run the model, you will need to update directory pointers in the function createGAMSWorkspaceAndDatabase(). The flag indicates whether you are running locally or on a supercomputer.
 
-For a model description, see "Cost and Deployment Consequences of Advanced Planning for Negative Emissions U.S. Power Systems" (in review at One Earth). 
+For a model description, see "Cost and Deployment Consequences of Advanced Planning for Negative Emissions U.S. Power Systems" (in review at Applied Energy). 
 
 For instructions on running the model on UM's Great Lakes, see https://docs.google.com/document/d/1KPp2_wskzxDN-fcjcDMen4qCwcCDc1mkLoAPXx5-90c/edit.
 
